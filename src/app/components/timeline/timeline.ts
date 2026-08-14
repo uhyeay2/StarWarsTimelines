@@ -1,7 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { CANON_VIEWS, CanonView, matchesCanonView } from '../../models/canon';
+import { LibraryItem } from '../../models/library-item';
 import {
   collectFacetOptions,
   createEmptyFilters,
@@ -9,7 +10,11 @@ import {
   matchesFilters,
   TimelineFilters,
 } from '../../models/timeline-filters';
+import { TrackingStatus } from '../../models/tracking-status';
+import { AuthService } from '../../services/auth.service';
+import { LibraryService } from '../../services/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
+import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../filter-group/filter-group';
 
@@ -21,17 +26,50 @@ import { FilterGroup } from '../filter-group/filter-group';
 })
 export class Timeline {
   private readonly eventsService = inject(TimelineEventsService);
+  private readonly auth = inject(AuthService);
+  private readonly libraryService = inject(LibraryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly views = CANON_VIEWS;
   protected readonly events = toSignal(this.eventsService.getEvents(), { initialValue: [] });
   readonly filters = signal<TimelineFilters>(createEmptyFilters());
+  private readonly user = toSignal(this.auth.currentUser$);
+  private readonly tracked = signal<readonly LibraryItem[]>([]);
+
+  readonly sourceIds = input<readonly string[] | null>(null);
+  readonly heading = input('Galactic Timeline');
+  readonly description = input(
+    'Scroll through the history of the galaxy, filtered by continuity and your chosen events, sources, characters, and more.',
+  );
+
+  readonly isLoggedIn = computed(() => this.user() !== null);
+  private readonly userId = computed(() => this.user()?.id ?? null);
+
+  readonly sourceStatus = computed(() => {
+    const statusBySourceId: Record<string, TrackingStatus> = {};
+    for (const item of this.tracked()) {
+      statusBySourceId[item.id] = item.status;
+    }
+    return statusBySourceId;
+  });
 
   constructor() {
     this.applyViewParam(this.route.snapshot.queryParamMap);
     this.route.queryParamMap
       .pipe(takeUntilDestroyed())
       .subscribe((params) => this.applyViewParam(params));
+
+    effect((onCleanup) => {
+      const userId = this.user()?.id ?? null;
+      if (!userId) {
+        this.tracked.set([]);
+        return;
+      }
+      const subscription = this.libraryService
+        .getTracked(userId)
+        .subscribe((items) => this.tracked.set(items));
+      onCleanup(() => subscription.unsubscribe());
+    });
   }
 
   private applyViewParam(params: ParamMap): void {
@@ -41,8 +79,18 @@ export class Timeline {
     }
   }
 
+  protected readonly sourceFilteredEvents = computed(() => {
+    const ids = this.sourceIds();
+    if (ids === null || ids.length === 0) {
+      return this.events();
+    }
+    return this.events().filter(
+      (event) => event.source.sourceId !== undefined && ids.includes(event.source.sourceId),
+    );
+  });
+
   protected readonly continuityEvents = computed(() =>
-    this.events().filter((event) => matchesCanonView(event.canon, this.filters().canonView)),
+    this.sourceFilteredEvents().filter((event) => matchesCanonView(event.canon, this.filters().canonView)),
   );
 
   protected readonly facetOptions = computed(() => collectFacetOptions(this.continuityEvents()));
@@ -61,7 +109,7 @@ export class Timeline {
   });
 
   protected readonly filteredEvents = computed(() =>
-    this.events()
+    this.sourceFilteredEvents()
       .filter((event) => matchesFilters(event, this.filters()))
       .sort((a, b) => a.year - b.year),
   );
@@ -94,6 +142,28 @@ export class Timeline {
         : [...current, value];
       return { ...filters, [key]: next };
     });
+  }
+
+  addToLibrary(event: TimelineEvent): void {
+    const userId = this.userId();
+    const sourceId = event.source.sourceId;
+    if (!userId || !sourceId) {
+      return;
+    }
+    this.libraryService
+      .addTracked(userId, sourceId)
+      .subscribe((items) => this.tracked.set(items));
+  }
+
+  updateStatus(event: TimelineEvent, status: TrackingStatus): void {
+    const userId = this.userId();
+    const sourceId = event.source.sourceId;
+    if (!userId || !sourceId) {
+      return;
+    }
+    this.libraryService
+      .setStatus(userId, sourceId, status)
+      .subscribe((items) => this.tracked.set(items));
   }
 
   clearFilters(): void {

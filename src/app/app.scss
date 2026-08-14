@@ -33,6 +33,12 @@
   color: #ffe68a;
 }
 
+.site-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .site-nav {
   display: flex;
   gap: 1.25rem;
@@ -52,4 +58,46 @@
 .site-nav a.active {
   color: #ffd54a;
   border-bottom: 2px solid #ffd54a;
+}
+
+.site-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  padding-left: 1.25rem;
+}
+
+.user-name {
+  color: #e6e8ee;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.login-link {
+  color: #ffd54a;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.login-link:hover {
+  color: #ffe68a;
+}
+
+.logout-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #c5c8d3;
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.logout-button:hover {
+  border-color: #ffd54a;
+  color: #ffd54a;
 }

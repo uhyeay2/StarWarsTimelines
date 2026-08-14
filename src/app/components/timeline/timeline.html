@@ -1,10 +1,7 @@
 <section class="timeline-page">
   <header class="page-header">
-    <h1>Galactic Timeline</h1>
-    <p>
-      Scroll through the history of the galaxy, filtered by continuity and your
-      chosen events, sources, characters, and more.
-    </p>
+    <h1>{{ heading() }}</h1>
+    <p>{{ description() }}</p>
   </header>
 
   <div class="timeline-layout">
@@ -100,7 +97,11 @@
                 [selectedLocations]="filters().locations"
                 [selectedCharacters]="filters().characters"
                 [selectedVehicles]="filters().vehicles"
-                (toggleFacet)="onToggleFacet($event)" />
+                [status]="sourceStatus()[event.source.sourceId ?? '']"
+                [canTrack]="isLoggedIn() && !!event.source.sourceId"
+                (toggleFacet)="onToggleFacet($event)"
+                (addToLibrary)="addToLibrary(event)"
+                (statusChange)="updateStatus(event, $event)" />
             </li>
           }
         </ol>

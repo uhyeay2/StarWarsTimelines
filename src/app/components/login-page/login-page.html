@@ -1,0 +1,44 @@
+<section class="login-page">
+  <div class="login-card">
+    <h1>Log in</h1>
+    <p class="login-hint">Use a demo account to explore your personal library.</p>
+
+    <form (ngSubmit)="login()" #loginForm="ngForm">
+      <label class="login-field">
+        <span>Username</span>
+        <input
+          name="username"
+          [(ngModel)]="username"
+          required
+          autocomplete="username" />
+      </label>
+
+      <label class="login-field">
+        <span>Password</span>
+        <input
+          name="password"
+          type="password"
+          [(ngModel)]="password"
+          required
+          autocomplete="current-password" />
+      </label>
+
+      @if (error()) {
+        <p class="login-error" role="alert">{{ error() }}</p>
+      }
+
+      <button class="btn btn-primary" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
+
+    <div class="demo-accounts">
+      <p>Demo accounts</p>
+      <ul>
+        <li><strong>padme</strong> / naboo</li>
+        <li><strong>luke</strong> / tatooine</li>
+        <li><strong>rey</strong> / jakku</li>
+      </ul>
+    </div>
+  </div>
+</section>

@@ -7,7 +7,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'Origins of the Jedi Order',
     description:
       'Force-sensitive pilgrims gather on Tython, beginning the study of the light side and founding the ancient order that would become the Jedi.',
-    source: { title: 'Dawn of the Jedi', medium: 'Comic' },
+    source: { title: 'Dawn of the Jedi', medium: 'Comic', sourceId: 'material-dawn-of-the-jedi' },
     locations: ['Tython'],
     characters: ['The Prime Jedi', 'Rusk'],
     vehicles: [],
@@ -20,7 +20,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'Revan and the Exile of the Sith',
     description:
       'The former Jedi Revan hunts the Sith Emperor across the Outer Rim, facing a darkness far older than the Republic ever imagined.',
-    source: { title: 'The Old Republic: Revan', medium: 'Book' },
+    source: { title: 'The Old Republic: Revan', medium: 'Book', sourceId: 'material-revan' },
     locations: ['Dromund Kaas', 'Coruscant'],
     characters: ['Revan', 'Scourge', 'The Sith Emperor'],
     vehicles: ['Ebon Hawk', 'Interdictor-class cruiser'],
@@ -33,7 +33,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Ruusan Reformation',
     description:
       'With the Sith believed destroyed on Ruusan, the Republic disbands the Army of Light as Darth Bane rebuilds the Sith in secret.',
-    source: { title: 'Darth Bane: Path of Destruction', medium: 'Book' },
+    source: { title: 'Darth Bane: Path of Destruction', medium: 'Book', sourceId: 'material-darth-bane' },
     locations: ['Ruusan', 'Coruscant'],
     characters: ['Darth Bane', 'Lord Kaan'],
     vehicles: ['Acclamator-class assault ship'],
@@ -46,7 +46,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Invasion of Naboo',
     description:
       'The Trade Federation blockades and invades Naboo, setting the stage for the return of the Sith and the rise of Anakin Skywalker.',
-    source: { title: 'Star Wars: Episode I - The Phantom Menace', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode I - The Phantom Menace', medium: 'Movie', sourceId: 'material-episode-i' },
     locations: ['Naboo', 'Otoh Gunga', 'Theed'],
     characters: ['Qui-Gon Jinn', 'Obi-Wan Kenobi', 'Padme Amidala', 'Darth Maul'],
     vehicles: ['Radiant VII', 'Sith Infiltrator', 'Naboo N-1 starfighter'],
@@ -59,7 +59,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Battle of Geonosis',
     description:
       'The first great battle of the Clone Wars erupts in the Geonosian arena as the Grand Army of the Republic is unveiled against the Separatist droid armies.',
-    source: { title: 'Star Wars: Episode II - Attack of the Clones', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode II - Attack of the Clones', medium: 'Movie', sourceId: 'material-episode-ii' },
     locations: ['Geonosis', 'Petranaki arena'],
     characters: ['Anakin Skywalker', 'Obi-Wan Kenobi', 'Padme Amidala', 'Yoda', 'Count Dooku'],
     vehicles: ['LAAT/i gunship', 'Acclamator-class assault ship', 'Droid control ship'],
@@ -72,7 +72,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Siege of Mandalore',
     description:
       'Ahsoka Tano and Bo-Katan Kryze lead a Clone army in a climactic assault on Mandalore to capture Darth Maul as the Clone Wars draw to a close.',
-    source: { title: 'Star Wars: The Clone Wars', medium: 'Animated Show' },
+    source: { title: 'Star Wars: The Clone Wars', medium: 'Animated Show', sourceId: 'material-clone-wars' },
     locations: ['Mandalore', 'Sundari'],
     characters: ['Ahsoka Tano', 'Bo-Katan Kryze', 'Darth Maul'],
     vehicles: ['The Tribunal', 'LAAT/i gunship', 'Gauntlet fighter'],
@@ -85,7 +85,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'Order 66',
     description:
       'Palpatine activates the Clone army contingency to exterminate the Jedi across the galaxy, extinguishing the order in a single sweeping betrayal.',
-    source: { title: 'Star Wars: Episode III - Revenge of the Sith', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode III - Revenge of the Sith', medium: 'Movie', sourceId: 'material-episode-iii' },
     locations: ['Coruscant', 'Utapau', 'Mygeeto', 'Felucia', 'Kashyyyk'],
     characters: ['Emperor Palpatine', 'Anakin Skywalker', 'Mace Windu', 'The Jedi Order'],
     vehicles: ['Venator-class Star Destroyer', 'LAAT/i gunship'],
@@ -98,7 +98,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Destruction of Alderaan',
     description:
       'The Death Star obliterates Alderaan as a demonstration of Imperial power, galvanizing the galaxy against the Empire.',
-    source: { title: 'Star Wars: Episode IV - A New Hope', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode IV - A New Hope', medium: 'Movie', sourceId: 'material-episode-iv' },
     locations: ['Alderaan', 'Alderaan system'],
     characters: ['Princess Leia Organa', 'Grand Moff Tarkin'],
     vehicles: ['Death Star', 'Tantive IV'],
@@ -111,7 +111,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Battle of Yavin',
     description:
       'Rebel pilots, led by Luke Skywalker, launch a desperate trench run against the Death Star, destroying the superweapon and igniting a galaxy-wide rebellion.',
-    source: { title: 'Star Wars: Episode IV - A New Hope', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode IV - A New Hope', medium: 'Movie', sourceId: 'material-episode-iv' },
     locations: ['Yavin Prime', 'Yavin 4'],
     characters: ['Luke Skywalker', 'Han Solo', 'Princess Leia Organa', 'Darth Vader'],
     vehicles: ['Millennium Falcon', 'Death Star', 'T-65 X-wing starfighter', 'TIE/LN fighter'],
@@ -124,7 +124,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Battle of Hoth',
     description:
       'The Empire storms the Rebel base on Hoth in a massive ground assault, forcing the Alliance to scatter across the galaxy.',
-    source: { title: 'Star Wars: Episode V - The Empire Strikes Back', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode V - The Empire Strikes Back', medium: 'Movie', sourceId: 'material-episode-v' },
     locations: ['Hoth', 'Echo Base'],
     characters: ['Luke Skywalker', 'Han Solo', 'Princess Leia Organa', 'Darth Vader'],
     vehicles: ['AT-AT walker', 'T-47 snowspeeder', 'Executor'],
@@ -137,7 +137,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Battle of Endor',
     description:
       'The Rebel Alliance destroys the second Death Star and defeats the Imperial fleet over Endor, sealing the Empire fate and the fall of Emperor Palpatine.',
-    source: { title: 'Star Wars: Episode VI - Return of the Jedi', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode VI - Return of the Jedi', medium: 'Movie', sourceId: 'material-episode-vi' },
     locations: ['Endor', 'Death Star II'],
     characters: ['Luke Skywalker', 'Han Solo', 'Princess Leia Organa', 'Darth Vader', 'Emperor Palpatine'],
     vehicles: ['Millennium Falcon', 'Death Star II', 'Executor', 'A-wing starfighter'],
@@ -150,7 +150,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Rescue',
     description:
       'Din Djarin and his allies board Moff Gideon cruiser to rescue Grogu, defeating the Imperial warlord and reuniting the Mandalorian with his foundling.',
-    source: { title: 'The Mandalorian', medium: 'Live Action Show' },
+    source: { title: 'The Mandalorian', medium: 'Live Action Show', sourceId: 'material-mandalorian' },
     locations: ['Nevarro', 'Gideon light cruiser'],
     characters: ['Din Djarin', 'Grogu', 'Bo-Katan Kryze', 'Moff Gideon'],
     vehicles: ['Razor Crest', 'Arquitens-class light cruiser'],
@@ -163,7 +163,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Battle of Exegol',
     description:
       'The Resistance strikes at the hidden Sith world of Exegol, where the resurrected Palpatine commands the Final Order fleet of Star Destroyers.',
-    source: { title: 'Star Wars: Episode IX - The Rise of Skywalker', medium: 'Movie' },
+    source: { title: 'Star Wars: Episode IX - The Rise of Skywalker', medium: 'Movie', sourceId: 'material-episode-ix' },
     locations: ['Exegol', 'Kijimi'],
     characters: ['Rey', 'Ben Solo', 'Emperor Palpatine', 'Lando Calrissian', 'Poe Dameron'],
     vehicles: ['T-70 X-wing starfighter', 'TIE whisper', 'Xyston-class Star Destroyer'],
@@ -176,7 +176,7 @@ export const TIMELINE_EVENTS: readonly TimelineEvent[] = [
     title: 'The Second Galactic Civil War',
     description:
       'Jacen Solo falls to the dark side and seizes control of the Galactic Alliance, plunging the galaxy into a bitter civil war that divides the Jedi.',
-    source: { title: 'Legacy of the Force: Betrayal', medium: 'Book' },
+    source: { title: 'Legacy of the Force: Betrayal', medium: 'Book', sourceId: 'material-legacy-betrayal' },
     locations: ['Coruscant', 'Kashyyyk'],
     characters: ['Jacen Solo', 'Jaina Solo', 'Luke Skywalker', 'Mara Jade Skywalker'],
     vehicles: ['Imperial-class Star Destroyer', 'StealthX starfighter'],

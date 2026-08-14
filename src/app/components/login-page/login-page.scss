@@ -1,0 +1,97 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.login-page {
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.login-card h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem;
+  margin: 0 0 0.4rem;
+  color: #fff;
+}
+
+.login-hint {
+  color: #8a8f9e;
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  color: #c5c8d3;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.login-field input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: #e6e8ee;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.login-field input:focus {
+  border-color: #ffd54a;
+}
+
+.login-error {
+  color: #ff8a80;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.login-card .btn-primary {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.demo-accounts {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-accounts p {
+  margin: 0 0 0.5rem;
+  color: #8a8f9e;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.demo-accounts ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #c5c8d3;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.demo-accounts strong {
+  color: #ffd54a;
+}

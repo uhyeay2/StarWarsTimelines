@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { TrackingStatus } from '../../models/tracking-status';
 import { TimelineEventItem, ToggleFacetEvent } from './timeline-event-item';
 
 describe('TimelineEventItem', () => {
@@ -86,5 +87,71 @@ describe('TimelineEventItem', () => {
     ) as HTMLElement;
     falcon.click();
     expect(emissions).toEqual([{ key: 'vehicles', value: 'Millennium Falcon' }]);
+  });
+
+  it('shows no status badge when no status is provided', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.status-badge')).toBeNull();
+  });
+
+  it('shows a status badge with the matching style when a status is provided', () => {
+    fixture.componentRef.setInput('status', 'In progress');
+    fixture.detectChanges();
+    const badge = fixture.nativeElement.querySelector('.status-badge') as HTMLElement;
+    expect(badge).toBeTruthy();
+    expect(badge.textContent?.trim()).toBe('In progress');
+    expect(badge.classList.contains('status-badge--in-progress')).toBe(true);
+  });
+
+  it('applies the completed and wish-listed badge styles', () => {
+    fixture.componentRef.setInput('status', 'Completed');
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement.querySelector('.status-badge') as HTMLElement).classList.contains(
+        'status-badge--completed',
+      ),
+    ).toBe(true);
+
+    fixture.componentRef.setInput('status', 'Wish Listed');
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement.querySelector('.status-badge') as HTMLElement).classList.contains(
+        'status-badge--wish-listed',
+      ),
+    ).toBe(true);
+  });
+
+  it('shows no tracking controls when the user cannot track', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.add-to-library-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.status-select')).toBeNull();
+  });
+
+  it('shows an add to library button when tracking is available and the item is untracked', () => {
+    let emitted = false;
+    component.addToLibrary.subscribe(() => (emitted = true));
+    fixture.componentRef.setInput('canTrack', true);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('.add-to-library-button') as HTMLElement;
+    expect(button).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.status-select')).toBeNull();
+    button.click();
+    expect(emitted).toBe(true);
+  });
+
+  it('shows a status select and emits status changes when the item is tracked', () => {
+    let emitted: TrackingStatus | undefined;
+    component.statusChange.subscribe((status) => (emitted = status));
+    fixture.componentRef.setInput('canTrack', true);
+    fixture.componentRef.setInput('status', 'In progress');
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement;
+    expect(select).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.add-to-library-button')).toBeNull();
+    expect(select.value).toBe('In progress');
+
+    select.value = 'Completed';
+    select.dispatchEvent(new Event('change'));
+    expect(emitted).toBe('Completed');
   });
 });

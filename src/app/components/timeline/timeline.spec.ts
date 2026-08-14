@@ -3,6 +3,11 @@ import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/ro
 import { BehaviorSubject, of } from 'rxjs';
 import { vi } from 'vitest';
 import { TimelineEvent } from '../../models/timeline-event';
+import { LibraryItem } from '../../models/library-item';
+import { TrackingStatus } from '../../models/tracking-status';
+import { User } from '../../models/user';
+import { AuthService } from '../../services/auth.service';
+import { LibraryService } from '../../services/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from './timeline';
 
@@ -12,7 +17,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     canon: ['Canon'],
     title: 'Canon Only',
     description: '',
-    source: { title: 'Source A', medium: 'Movie' },
+    source: { title: 'Source A', medium: 'Movie', sourceId: 'material-a' },
     locations: ['Naboo'],
     characters: ['Padme Amidala'],
     vehicles: [],
@@ -24,7 +29,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     canon: ['Legends'],
     title: 'Legends Only',
     description: '',
-    source: { title: 'Source B', medium: 'Book' },
+    source: { title: 'Source B', medium: 'Book', sourceId: 'material-b' },
     locations: ['Coruscant'],
     characters: ['Darth Maul'],
     vehicles: ['Sith Infiltrator'],
@@ -36,7 +41,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     canon: ['Canon', 'Legends'],
     title: 'Both',
     description: '',
-    source: { title: 'Source C', medium: 'Movie' },
+    source: { title: 'Source C', medium: 'Movie', sourceId: 'material-c' },
     locations: ['Naboo', 'Coruscant'],
     characters: ['Padme Amidala', 'Darth Maul'],
     vehicles: ['Sith Infiltrator'],
@@ -51,23 +56,28 @@ describe('Timeline', () => {
   let routeQueryParams: BehaviorSubject<ParamMap>;
   let routerMock: { navigate: ReturnType<typeof vi.fn> };
 
+  function setupTimeline(providers: unknown[]): Promise<void> {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [Timeline], providers });
+    return TestBed.compileComponents();
+  }
+
   beforeEach(async () => {
     routeQueryParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
     routerMock = { navigate: vi.fn() };
-    await TestBed.configureTestingModule({
-      imports: [Timeline],
-      providers: [
-        { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: { queryParamMap: convertToParamMap({}) },
-            queryParamMap: routeQueryParams,
-          },
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser$: of(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
         },
-        { provide: Router, useValue: routerMock },
-      ],
-    }).compileComponents();
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
 
     fixture = TestBed.createComponent(Timeline);
     component = fixture.componentInstance;
@@ -86,6 +96,27 @@ describe('Timeline', () => {
   it('shows only canon events by default, sorted chronologically', () => {
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('shows only events from the given source ids', () => {
+    fixture.componentRef.setInput('sourceIds', ['material-a']);
+    fixture.detectChanges();
+    expect(eventTitles()).toEqual(['Canon Only']);
+  });
+
+  it('shows all events when no source ids are provided', () => {
+    fixture.componentRef.setInput('sourceIds', null);
+    fixture.componentRef.setInput('sourceIds', []);
+    fixture.detectChanges();
+    expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('renders the heading and description inputs', () => {
+    fixture.componentRef.setInput('heading', 'Known Timeline');
+    fixture.componentRef.setInput('description', 'My watched events.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toBe('Known Timeline');
+    expect(fixture.nativeElement.textContent).toContain('My watched events.');
   });
 
   it('applies the canon view from the view query param', () => {
@@ -229,5 +260,111 @@ describe('Timeline', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.clear-button')).toBeNull();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('does not show tracking controls when logged out', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.status-badge').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.add-to-library-button').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.status-select').length).toBe(0);
+  });
+
+  it('shows the tracking status select on events when the user is logged in', async () => {
+    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser$: of(user) } },
+      {
+        provide: LibraryService,
+        useValue: {
+          getTracked: () =>
+            of([
+              {
+                id: 'material-a',
+                title: 'Source A',
+                medium: 'Movie',
+                status: 'In progress',
+                favorite: false,
+              },
+            ]),
+        },
+      },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const selects = [...fixture.nativeElement.querySelectorAll('.status-select')] as HTMLSelectElement[];
+    expect(selects.length).toBe(1);
+    expect(selects[0].value).toBe('In progress');
+    expect(fixture.nativeElement.querySelectorAll('.add-to-library-button').length).toBe(1);
+  });
+
+  it('adds an event source to the library and updates its status when logged in', async () => {
+    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+    const trackedItems: LibraryItem[] = [];
+    const libraryMock = {
+      getTracked: vi.fn(() => of([...trackedItems])),
+      addTracked: vi.fn((_userId: string, id: string) => {
+        trackedItems.push({ id, title: 'Source', medium: 'Movie', status: 'Wish Listed', favorite: false });
+        return of([...trackedItems]);
+      }),
+      setStatus: vi.fn((_userId: string, id: string, status: TrackingStatus) => {
+        const index = trackedItems.findIndex((item) => item.id === id);
+        trackedItems[index] = { ...trackedItems[index], status };
+        return of([...trackedItems]);
+      }),
+    };
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser$: of(user) } },
+      { provide: LibraryService, useValue: libraryMock },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.status-select').length).toBe(0);
+
+    const addButtons = [...fixture.nativeElement.querySelectorAll('.add-to-library-button')] as HTMLElement[];
+    expect(addButtons.length).toBe(2);
+    addButtons[0].click();
+    fixture.detectChanges();
+
+    expect(libraryMock.addTracked).toHaveBeenCalledWith('user-padme', 'material-c');
+    const selects = [...fixture.nativeElement.querySelectorAll('.status-select')] as HTMLSelectElement[];
+    expect(selects.length).toBe(1);
+    expect(selects[0].value).toBe('Wish Listed');
+
+    selects[0].value = 'Completed';
+    selects[0].dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 'material-c', 'Completed');
+    expect((fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement).value).toBe(
+      'Completed',
+    );
   });
 });

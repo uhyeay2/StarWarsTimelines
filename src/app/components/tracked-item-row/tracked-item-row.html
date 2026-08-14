@@ -1,0 +1,54 @@
+<div
+  class="tracked-item-row"
+  [class.tracked-item-row--dragging]="dragging()"
+  [attr.draggable]="showReorder() ? 'true' : null"
+  (dragstart)="emitDragStart()"
+  (dragover)="emitDragOver($event)"
+  (dragend)="emitDragEnd()"
+  (drop)="emitDrop()">
+  @if (showReorder()) {
+    <span class="drag-handle" aria-hidden="true">⠿</span>
+  }
+  <div class="item-info">
+    <span class="item-title">{{ item().title }}</span>
+    <span class="medium-chip">{{ item().medium }}</span>
+  </div>
+  <div class="item-controls">
+    @if (showReorder()) {
+      <button
+        type="button"
+        class="move-button"
+        [disabled]="first()"
+        [attr.aria-label]="'Move ' + item().title + ' up'"
+        (click)="emitMoveUp()">▲</button>
+      <button
+        type="button"
+        class="move-button"
+        [disabled]="last()"
+        [attr.aria-label]="'Move ' + item().title + ' down'"
+        (click)="emitMoveDown()">▼</button>
+    }
+    <select
+      class="status-select"
+      [attr.aria-label]="'Status for ' + item().title"
+      (change)="onStatusChange($event)">
+      @for (status of statuses; track status) {
+        <option [value]="status" [selected]="item().status === status">{{ status }}</option>
+      }
+    </select>
+    <button
+      type="button"
+      class="favorite-button"
+      [class.favorite-button--active]="item().favorite"
+      [attr.aria-pressed]="item().favorite"
+      [attr.aria-label]="(item().favorite ? 'Remove ' : 'Add ') + item().title + ' to favorites'"
+      (click)="toggleFavorite()">
+      <span aria-hidden="true">{{ item().favorite ? '★' : '☆' }}</span>
+    </button>
+    <button
+      type="button"
+      class="remove-button"
+      [attr.aria-label]="'Remove ' + item().title + ' from tracking'"
+      (click)="emitRemove()">✕</button>
+  </div>
+</div>

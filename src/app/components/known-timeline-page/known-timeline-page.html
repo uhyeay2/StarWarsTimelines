@@ -1,0 +1,37 @@
+<section class="known-timeline-page">
+  @if (!user()) {
+    <div class="login-prompt">
+      <p>Log in to build your known timeline from your tracked events.</p>
+      <a class="btn btn-primary" routerLink="/login">Log in</a>
+    </div>
+  } @else {
+    <div class="known-timeline-layout">
+      <div class="status-toggles" role="group" aria-label="Which tracked statuses to include">
+        <span class="status-toggles-label">Include</span>
+        <button
+          type="button"
+          class="status-toggle"
+          [class.status-toggle--active]="includeCompleted()"
+          [attr.aria-pressed]="includeCompleted()"
+          (click)="toggleStatus('completed')">Completed</button>
+        <button
+          type="button"
+          class="status-toggle"
+          [class.status-toggle--active]="includeInProgress()"
+          [attr.aria-pressed]="includeInProgress()"
+          (click)="toggleStatus('inProgress')">In Progress</button>
+        <button
+          type="button"
+          class="status-toggle"
+          [class.status-toggle--active]="includeWishListed()"
+          [attr.aria-pressed]="includeWishListed()"
+          (click)="toggleStatus('wishListed')">Wish Listed</button>
+      </div>
+
+      <app-timeline
+        [sourceIds]="consumedIds()"
+        [heading]="'Known Timeline'"
+        [description]="'Events from the source material you are watching, reading, or have finished. Add or adjust progress from My Tracked Events.'" />
+    </div>
+  }
+</section>
