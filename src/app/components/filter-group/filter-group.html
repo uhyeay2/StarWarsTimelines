@@ -1,0 +1,57 @@
+<div class="filter-group">
+  <div class="filter-group-row">
+    <button
+      type="button"
+      class="filter-group-trigger"
+      [attr.aria-expanded]="open()"
+      aria-haspopup="listbox"
+      (click)="togglePanel()">
+      <span class="filter-group-label">{{ label() }}</span>
+      @if (selectedCount() > 0) {
+        <span class="filter-group-count">{{ selectedCount() }}</span>
+      }
+      <span class="filter-group-chevron" aria-hidden="true">&#9662;</span>
+    </button>
+
+    @if (selectedCount() > 0) {
+      <button
+        type="button"
+        class="filter-group-clear-trigger"
+        [attr.aria-label]="'Clear ' + label()"
+        title="Clear {{ label() }}"
+        (click)="clearSelection()">
+        &#10005;
+      </button>
+    }
+  </div>
+
+  @if (open()) {
+    <div class="filter-group-panel">
+      <div class="filter-group-search">
+        <input
+          type="text"
+          [attr.aria-label]="'Search ' + label()"
+          placeholder="Search..."
+          [value]="query()"
+          (input)="query.set($any($event.target).value)" />
+      </div>
+
+      <div class="filter-group-options" role="listbox" aria-multiselectable="true">
+        @for (option of filteredOptions(); track option) {
+          <label
+            class="filter-option"
+            [class.filter-option--selected]="selected().includes(option)">
+            <input
+              type="checkbox"
+              [checked]="selected().includes(option)"
+              (change)="toggle(option)" />
+            <span class="filter-option-label">{{ option }}</span>
+          </label>
+        }
+        @if (filteredOptions().length === 0) {
+          <p class="filter-group-empty">No matches.</p>
+        }
+      </div>
+    </div>
+  }
+</div>

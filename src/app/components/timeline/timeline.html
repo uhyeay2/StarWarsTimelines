@@ -1,0 +1,110 @@
+<section class="timeline-page">
+  <header class="page-header">
+    <h1>Galactic Timeline</h1>
+    <p>
+      Scroll through the history of the galaxy, filtered by continuity and your
+      chosen events, sources, characters, and more.
+    </p>
+  </header>
+
+  <div class="timeline-layout">
+    <aside class="filter-panel" aria-label="Filters">
+      <div class="filter-panel-header">
+        <h2>Filters</h2>
+        @if (hasActiveFilters()) {
+          <button class="clear-button" type="button" (click)="clearFilters()">Clear all</button>
+        }
+      </div>
+
+      <div class="view-toggle" role="group" aria-label="Continuity view">
+        @for (view of views; track view) {
+          <button
+            type="button"
+            class="view-button"
+            [class.view-button--active]="filters().canonView === view"
+            (click)="selectView(view)">
+            {{ view }}
+          </button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="advanced-toggle"
+        [attr.aria-expanded]="advancedOpen()"
+        (click)="toggleAdvanced()">
+        <span class="advanced-toggle-label">Advanced Filters</span>
+        @if (activeFacetCount() > 0) {
+          <span class="advanced-toggle-count">{{ activeFacetCount() }}</span>
+        }
+        <span
+          class="advanced-toggle-chevron"
+          [class.advanced-toggle-chevron--open]="advancedOpen()"
+          aria-hidden="true">&#9662;</span>
+      </button>
+
+      @if (advancedOpen()) {
+        <div class="advanced-filters">
+          @if (facetOptions().mediums.length) {
+            <app-filter-group
+              label="Medium"
+              [options]="facetOptions().mediums"
+              [selected]="filters().mediums"
+              (selectedChange)="updateFilter('mediums', $event)" />
+          }
+
+          @if (facetOptions().sources.length) {
+            <app-filter-group
+              label="Source"
+              [options]="facetOptions().sources"
+              [selected]="filters().sources"
+              (selectedChange)="updateFilter('sources', $event)" />
+          }
+
+          @if (facetOptions().locations.length) {
+            <app-filter-group
+              label="Location"
+              [options]="facetOptions().locations"
+              [selected]="filters().locations"
+              (selectedChange)="updateFilter('locations', $event)" />
+          }
+
+          @if (facetOptions().characters.length) {
+            <app-filter-group
+              label="Characters"
+              [options]="facetOptions().characters"
+              [selected]="filters().characters"
+              (selectedChange)="updateFilter('characters', $event)" />
+          }
+
+          @if (facetOptions().vehicles.length) {
+            <app-filter-group
+              label="Vehicles"
+              [options]="facetOptions().vehicles"
+              [selected]="filters().vehicles"
+              (selectedChange)="updateFilter('vehicles', $event)" />
+          }
+        </div>
+      }
+    </aside>
+
+    <div class="timeline-content">
+      @if (filteredEvents().length === 0) {
+        <p class="empty-state">No events match your filters.</p>
+      } @else {
+        <ol class="timeline-list">
+          @for (event of filteredEvents(); track event.id) {
+            <li class="timeline-item">
+              <app-timeline-event-item
+                [event]="event"
+                [selectedLocations]="filters().locations"
+                [selectedCharacters]="filters().characters"
+                [selectedVehicles]="filters().vehicles"
+                (toggleFacet)="onToggleFacet($event)" />
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  </div>
+</section>

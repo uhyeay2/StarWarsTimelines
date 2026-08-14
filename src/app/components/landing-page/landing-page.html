@@ -1,0 +1,24 @@
+<section class="hero">
+  <p class="tagline">A long time ago, in a galaxy far, far away...</p>
+  <h1 class="title">Star Wars Timelines</h1>
+  <p class="subtitle">
+    Journey through the eras of the galaxy — from the dawn of the Jedi to the
+    rise and fall of the Empire and beyond.
+  </p>
+  <div class="actions">
+    <a
+      class="btn btn-primary"
+      routerLink="/timeline"
+      [queryParams]="{ view: 'Canon' }">Explore Canon Timeline</a>
+    <a
+      class="btn btn-secondary"
+      routerLink="/timeline"
+      [queryParams]="{ view: 'Legends' }">Explore Legends Timeline</a>
+  </div>
+</section>
+
+<section class="features">
+  @for (feature of features; track feature.title) {
+    <app-feature-card [title]="feature.title" [description]="feature.description" />
+  }
+</section>
