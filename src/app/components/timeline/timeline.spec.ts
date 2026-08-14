@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
+import { vi } from 'vitest';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from './timeline';
@@ -48,9 +49,11 @@ describe('Timeline', () => {
   let component: Timeline;
   let fixture: ComponentFixture<Timeline>;
   let routeQueryParams: BehaviorSubject<ParamMap>;
+  let routerMock: { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     routeQueryParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+    routerMock = { navigate: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [Timeline],
       providers: [
@@ -62,6 +65,7 @@ describe('Timeline', () => {
             queryParamMap: routeQueryParams,
           },
         },
+        { provide: Router, useValue: routerMock },
       ],
     }).compileComponents();
 
@@ -88,6 +92,21 @@ describe('Timeline', () => {
     routeQueryParams.next(convertToParamMap({ view: 'Legends' }));
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Legends Only']);
+  });
+
+  it('updates the view query param when the canon filter changes', () => {
+    fixture.detectChanges();
+    component.selectView('Legends');
+    expect(routerMock.navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { view: 'Legends' } }),
+    );
+
+    component.selectView('Canon & Legends');
+    expect(routerMock.navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { view: 'Canon & Legends' } }),
+    );
   });
 
   it('shows only legends events when the Legends view is selected', () => {

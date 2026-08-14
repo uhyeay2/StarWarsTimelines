@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { CANON_VIEWS, CanonView, matchesCanonView } from '../../models/canon';
 import {
   collectFacetOptions,
@@ -22,6 +22,7 @@ import { FilterGroup } from '../filter-group/filter-group';
 export class Timeline {
   private readonly eventsService = inject(TimelineEventsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   protected readonly views = CANON_VIEWS;
   protected readonly events = toSignal(this.eventsService.getEvents(), { initialValue: [] });
   readonly filters = signal<TimelineFilters>(createEmptyFilters());
@@ -69,6 +70,12 @@ export class Timeline {
 
   selectView(view: CanonView): void {
     this.filters.update((filters) => ({ ...filters, canonView: view }));
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   toggleAdvanced(): void {
