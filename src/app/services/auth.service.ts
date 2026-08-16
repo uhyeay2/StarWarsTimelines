@@ -18,6 +18,15 @@ interface LoginResponse {
   };
 }
 
+interface AccountResponse {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string;
+  emailVerified: boolean;
+  role: number;
+}
+
 export interface RegisterRequest {
   username: string;
   displayName?: string;
@@ -116,6 +125,73 @@ export class AuthService {
       );
   }
 
+  getAccount(userId: string): Observable<User> {
+    return this.http
+      .get<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}`)
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(
+            () =>
+              new Error(
+                this.readProblemDetail(error, 'Unable to load your account details. Please try again.'),
+              ),
+          ),
+        ),
+        map((response) => this.applyAccount(response)),
+      );
+  }
+
+  updateDisplayName(userId: string, displayName: string): Observable<User> {
+    return this.http
+      .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/display-name`, { displayName })
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(
+            () =>
+              new Error(
+                this.readProblemDetail(error, 'Unable to update your display name. Please try again.'),
+              ),
+          ),
+        ),
+        map((response) => this.applyAccount(response)),
+      );
+  }
+
+  updateEmail(userId: string, email: string): Observable<User> {
+    return this.http
+      .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/email`, { email })
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(
+            () =>
+              new Error(
+                this.readProblemDetail(error, 'Unable to update your email address. Please try again.'),
+              ),
+          ),
+        ),
+        map((response) => this.applyAccount(response)),
+      );
+  }
+
+  updatePassword(userId: string, currentPassword: string, newPassword: string): Observable<void> {
+    return this.http
+      .put<void>(`${environment.apiBaseUrl}/api/users/${userId}/password`, {
+        currentPassword,
+        newPassword,
+      })
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(
+            () =>
+              new Error(
+                this.readProblemDetail(error, 'Unable to change your password. Please try again.'),
+              ),
+          ),
+        ),
+        map(() => undefined),
+      );
+  }
+
   logout(): Observable<void> {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
@@ -126,6 +202,10 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return this.currentUserSubject.value !== null;
+  }
+
+  getCurrentUser(): User | null {
+    return this.restoreUser();
   }
 
   getToken(): string | null {
@@ -157,6 +237,21 @@ export class AuthService {
       displayName: response.displayName,
       role: (role ?? 'Standard') as UserRole,
     };
+  }
+
+  private applyAccount(response: AccountResponse): User {
+    const role = USER_ROLES[response.role];
+    const user: User = {
+      id: response.id,
+      username: response.username,
+      displayName: response.displayName,
+      email: response.email,
+      emailVerified: response.emailVerified,
+      role: (role ?? 'Standard') as UserRole,
+    };
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    this.currentUserSubject.next(user);
+    return user;
   }
 
   private readProblemDetail(error: HttpErrorResponse, fallback: string): string {

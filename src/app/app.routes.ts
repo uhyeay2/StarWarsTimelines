@@ -50,6 +50,14 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/account-settings-page/account-settings-page').then(
+        (m) => m.AccountSettingsPage,
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

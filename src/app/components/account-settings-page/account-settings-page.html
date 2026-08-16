@@ -1,0 +1,155 @@
+<section class="settings-page">
+  <div class="page-header">
+    <h1>Account settings</h1>
+    <p>Manage your profile and password.</p>
+  </div>
+
+  @if (loading()) {
+    <p class="settings-loading" role="status">Loading your account…</p>
+  } @else if (loadError()) {
+    <div class="settings-login-prompt">
+      <p>{{ loadError() }}</p>
+      <a routerLink="/login" class="btn btn-primary">Log in</a>
+    </div>
+  } @else if (account(); as account) {
+    <div class="settings-card">
+      <h2>Profile</h2>
+
+      <div class="settings-field">
+        <span>Username</span>
+        <p class="settings-username">{{ account.username }}</p>
+      </div>
+
+      <form class="settings-form" (ngSubmit)="updateDisplayName()" #displayNameForm="ngForm">
+        <label class="settings-field">
+          <span>Display name</span>
+          <input
+            name="displayName"
+            [(ngModel)]="displayName"
+            required
+            autocomplete="name" />
+        </label>
+        @if (displayNameError()) {
+          <p class="settings-error" role="alert">{{ displayNameError() }}</p>
+        }
+        @if (displayNameSaved()) {
+          <p class="settings-success" role="status">Your display name was updated.</p>
+        }
+        <button class="btn btn-primary" type="submit" [disabled]="displayNameSaving()">
+          {{ displayNameSaving() ? 'Saving…' : 'Save display name' }}
+        </button>
+      </form>
+
+      <form class="settings-form" (ngSubmit)="updateEmail()" #emailForm="ngForm">
+        <label class="settings-field">
+          <span>Email</span>
+          <input
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            required
+            autocomplete="email" />
+        </label>
+        <p class="settings-email-status">
+          @if (account.emailVerified) {
+            <span class="settings-badge settings-badge--verified">Verified</span>
+          } @else {
+            <span class="settings-badge settings-badge--unverified">Unverified</span>
+          }
+          <span class="settings-email-note">
+            @if (account.emailVerified) {
+              Changing your email requires verifying the new address before you can log in again.
+            } @else {
+              Check your inbox for a verification link before logging in again.
+            }
+          </span>
+        </p>
+        @if (emailError()) {
+          <p class="settings-error" role="alert">{{ emailError() }}</p>
+        }
+        @if (emailSaved()) {
+          <p class="settings-success" role="status">
+            We emailed a verification link to {{ email() }}.
+          </p>
+        }
+        <button class="btn btn-primary" type="submit" [disabled]="emailSaving()">
+          {{ emailSaving() ? 'Saving…' : 'Save email' }}
+        </button>
+      </form>
+    </div>
+
+    <div class="settings-card">
+      <h2>Change password</h2>
+
+      <form class="settings-form" (ngSubmit)="updatePassword()" #passwordForm="ngForm">
+        <div class="settings-field">
+          <span>Current password</span>
+          <div class="password-input">
+            <input
+              name="currentPassword"
+              [type]="showCurrentPassword() ? 'text' : 'password'"
+              [(ngModel)]="currentPassword"
+              required
+              autocomplete="current-password" />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'"
+              (click)="showCurrentPassword.set(!showCurrentPassword())">
+              {{ showCurrentPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-field">
+          <span>New password</span>
+          <div class="password-input">
+            <input
+              name="newPassword"
+              [type]="showNewPassword() ? 'text' : 'password'"
+              [(ngModel)]="newPassword"
+              required
+              minlength="6"
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+              (click)="showNewPassword.set(!showNewPassword())">
+              {{ showNewPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-field">
+          <span>Confirm new password</span>
+          <div class="password-input">
+            <input
+              name="confirmPassword"
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              [(ngModel)]="confirmPassword"
+              required
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+              (click)="showConfirmPassword.set(!showConfirmPassword())">
+              {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        @if (passwordError()) {
+          <p class="settings-error" role="alert">{{ passwordError() }}</p>
+        }
+        @if (passwordSaved()) {
+          <p class="settings-success" role="status">Your password was changed.</p>
+        }
+        <button class="btn btn-primary" type="submit" [disabled]="passwordSaving()">
+          {{ passwordSaving() ? 'Saving…' : 'Change password' }}
+        </button>
+      </form>
+    </div>
+  }
+</section>

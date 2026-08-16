@@ -28,4 +28,19 @@ describe('App', () => {
     expect(compiled.querySelector('a[routerLink="/"]')).toBeTruthy();
     expect(compiled.querySelector('a[routerLink="/timeline"]')).toBeTruthy();
   });
+
+  it('links the user name to account settings when logged in', async () => {
+    localStorage.setItem('starwars-timelines.token', 'token-value');
+    localStorage.setItem(
+      'starwars-timelines.user',
+      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' }),
+    );
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a.user-name[routerLink="/settings"]')).toBeTruthy();
+    expect(compiled.querySelector('button.logout-button')).toBeTruthy();
+  });
 });

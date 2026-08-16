@@ -8,7 +8,9 @@
     </nav>
     <div class="site-user">
       @if (user(); as currentUser) {
-        <span class="user-name">{{ currentUser.displayName }}</span>
+        <a class="user-name" routerLink="/settings" title="Account settings">{{
+          currentUser.displayName
+        }}</a>
         <button type="button" class="logout-button" (click)="logout()">Log out</button>
       } @else {
         <a class="login-link" routerLink="/login">Log in</a>
