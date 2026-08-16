@@ -1,6 +1,5 @@
 @let item = event();
 @let detailsId = 'event-details-' + item.id;
-@let sourceKey = sourceFacetKey(item);
 
 <article class="timeline-event">
   <div class="event-marker" aria-hidden="true"></div>
@@ -34,25 +33,24 @@
 
     <h3 class="event-title">{{ item.title }}</h3>
     <p class="event-source">
-      <button
-        type="button"
-        class="chip source-chip source-chip--medium"
-        [class.chip--selected]="selectedMediums().includes(item.source.medium)"
-        [attr.aria-pressed]="selectedMediums().includes(item.source.medium)"
-        (click)="emitToggle('mediums', item.source.medium)">
-        <span class="event-medium">{{ item.source.medium }}</span>
-      </button>
-      <button
-        type="button"
-        class="chip source-chip source-chip--title"
-        [class.chip--selected]="selectedSources().includes(sourceKey)"
-        [attr.aria-pressed]="selectedSources().includes(sourceKey)"
-        (click)="emitToggle('sources', sourceKey)">
-        <span class="event-source-title">{{ item.source.title }}</span>
-        @if (item.source.unit) {
-          <span class="event-source-unit">{{ sourceUnitLabel(item.source.unit) }}</span>
-        }
-      </button>
+      @for (chip of sourceChips(); track chip.label) {
+        <button
+          type="button"
+          class="chip source-chip source-chip--source"
+          [class.source-chip--medium]="chip.medium === true"
+          [class.chip--selected]="sourceChipSelected(chip)"
+          [attr.aria-pressed]="sourceChipSelected(chip)"
+          (click)="emitToggle('sources', chip.values)">
+          @if (chip.medium === true) {
+            <span class="event-medium">{{ chip.label }}</span>
+          } @else {
+            <span>{{ chip.label }}</span>
+          }
+        </button>
+      }
+      @if (sourceUnitDetail(item.source.unit); as detail) {
+        <span class="event-source-unit">{{ detail }}</span>
+      }
       @if (canTrack()) {
         @if (status(); as trackingStatus) {
           <select
@@ -98,7 +96,7 @@
                   class="chip"
                   [class.chip--selected]="selectedLocations().includes(location)"
                   [attr.aria-pressed]="selectedLocations().includes(location)"
-                  (click)="emitToggle('locations', location)">
+                  (click)="emitToggle('locations', [location])">
                   {{ location }}
                 </button>
               }
@@ -116,7 +114,7 @@
                   class="chip"
                   [class.chip--selected]="selectedCharacters().includes(character)"
                   [attr.aria-pressed]="selectedCharacters().includes(character)"
-                  (click)="emitToggle('characters', character)">
+                  (click)="emitToggle('characters', [character])">
                   {{ character }}
                 </button>
               }
@@ -134,7 +132,7 @@
                   class="chip"
                   [class.chip--selected]="selectedVehicles().includes(vehicle)"
                   [attr.aria-pressed]="selectedVehicles().includes(vehicle)"
-                  (click)="emitToggle('vehicles', vehicle)">
+                  (click)="emitToggle('vehicles', [vehicle])">
                   {{ vehicle }}
                 </button>
               }

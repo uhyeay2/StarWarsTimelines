@@ -124,6 +124,10 @@
   margin-top: 0.75rem;
 }
 
+.advanced-filters[hidden] {
+  display: none;
+}
+
 .view-toggle {
   display: flex;
   gap: 0.3rem;

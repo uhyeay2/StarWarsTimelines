@@ -26,6 +26,10 @@ describe('TimelineEventItem', () => {
       year: 0,
       displayDate: '0 BBY',
     });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'Book', values: ['book-leaf'], medium: true },
+      { label: 'Test Source', values: ['test-source'] },
+    ]);
     await fixture.whenStable();
   });
 
@@ -139,79 +143,99 @@ describe('TimelineEventItem', () => {
       (chip) => chip.textContent?.trim() === 'Millennium Falcon',
     ) as HTMLElement;
     falcon.click();
-    expect(emissions).toEqual([{ key: 'vehicles', value: 'Millennium Falcon' }]);
+    expect(emissions).toEqual([{ key: 'vehicles', values: ['Millennium Falcon'] }]);
   });
 
-  it('renders the medium and source title as toggleable source chips', () => {
+  it('renders the medium and source chips as toggleable buttons', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const medium = compiled.querySelector('.source-chip--medium') as HTMLElement;
-    const title = compiled.querySelector('.source-chip--title') as HTMLElement;
+    const source = [...compiled.querySelectorAll('.source-chip--source')].find(
+      (chip) => chip.textContent?.trim() === 'Test Source',
+    ) as HTMLElement;
     expect(medium).toBeTruthy();
     expect(medium.textContent?.trim()).toBe('Book');
     expect(medium.getAttribute('aria-pressed')).toBe('false');
-    expect(title).toBeTruthy();
-    expect(title.textContent).toContain('Test Source');
-    expect(title.getAttribute('aria-pressed')).toBe('false');
+    expect(source).toBeTruthy();
+    expect(source.textContent?.trim()).toBe('Test Source');
+    expect(source.getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('emits a medium toggle event when the medium chip is clicked', () => {
+  it('emits a source toggle with every medium leaf when the medium chip is clicked', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
     fixture.detectChanges();
     const medium = fixture.nativeElement.querySelector('.source-chip--medium') as HTMLElement;
     medium.click();
-    expect(emissions).toEqual([{ key: 'mediums', value: 'Book' }]);
+    expect(emissions).toEqual([{ key: 'sources', values: ['book-leaf'] }]);
   });
 
-  it('emits a source toggle event when the title chip is clicked', () => {
+  it('emits a source toggle event when a source chip is clicked', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
     fixture.detectChanges();
-    const title = fixture.nativeElement.querySelector('.source-chip--title') as HTMLElement;
-    title.click();
-    expect(emissions).toEqual([{ key: 'sources', value: 'Test Source' }]);
+    const source = [...fixture.nativeElement.querySelectorAll('.source-chip--source')].find(
+      (chip) => chip.textContent?.trim() === 'Test Source',
+    ) as HTMLElement;
+    source.click();
+    expect(emissions).toEqual([{ key: 'sources', values: ['test-source'] }]);
   });
 
   it('highlights the medium and source chips when their values are selected', () => {
-    fixture.componentRef.setInput('selectedMediums', ['Book']);
-    fixture.componentRef.setInput('selectedSources', ['Test Source']);
+    fixture.componentRef.setInput('selectedSources', ['book-leaf', 'test-source']);
     fixture.detectChanges();
     const medium = fixture.nativeElement.querySelector('.source-chip--medium') as HTMLElement;
-    const title = fixture.nativeElement.querySelector('.source-chip--title') as HTMLElement;
+    const source = [...fixture.nativeElement.querySelectorAll('.source-chip--source')].find(
+      (chip) => chip.textContent?.trim() === 'Test Source',
+    ) as HTMLElement;
     expect(medium.classList.contains('chip--selected')).toBe(true);
     expect(medium.getAttribute('aria-pressed')).toBe('true');
-    expect(title.classList.contains('chip--selected')).toBe(true);
-    expect(title.getAttribute('aria-pressed')).toBe('true');
+    expect(source.classList.contains('chip--selected')).toBe(true);
+    expect(source.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('emits the grouped season key for a show title chip', () => {
+  it('only highlights a source chip when all of its values are selected', () => {
+    fixture.componentRef.setInput('selectedSources', ['material-tcw:2']);
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'The Clone Wars', values: ['material-tcw:2', 'material-tcw:7'] },
+    ]);
+    fixture.detectChanges();
+    const source = fixture.nativeElement.querySelector('.source-chip--source') as HTMLElement;
+    expect(source.classList.contains('chip--selected')).toBe(false);
+    expect(source.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('emits all season leaves when the whole show chip is clicked', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
-    fixture.componentRef.setInput('event', {
-      id: 'test-event',
-      canon: ['Canon'],
-      title: 'Test Event',
-      description: 'A test event description.',
-      source: {
-        title: 'The Clone Wars',
-        medium: 'Animated Show',
-        sourceId: 'material-tcw',
-        unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
-      },
-      locations: [],
-      characters: [],
-      vehicles: [],
-      year: -19,
-      displayDate: '19 BBY',
-    });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'The Clone Wars', values: ['material-tcw:2', 'material-tcw:7'] },
+      { label: 'Season 2', values: ['material-tcw:2'] },
+    ]);
     fixture.detectChanges();
-    const title = fixture.nativeElement.querySelector('.source-chip--title') as HTMLElement;
-    title.click();
-    expect(emissions).toEqual([{ key: 'sources', value: 'material-tcw:7' }]);
+    const sources = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.source-chip--source'),
+    ] as HTMLElement[];
+    sources[0].click();
+    expect(emissions).toEqual([{ key: 'sources', values: ['material-tcw:2', 'material-tcw:7'] }]);
   });
 
-  it('emits the chapter key for a book title chip', () => {
+  it('emits a single season key when a season chip is clicked', () => {
+    const emissions: ToggleFacetEvent[] = [];
+    component.toggleFacet.subscribe((event) => emissions.push(event));
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'The Clone Wars', values: ['material-tcw:2', 'material-tcw:7'] },
+      { label: 'Season 2', values: ['material-tcw:2'] },
+    ]);
+    fixture.detectChanges();
+    const sources = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.source-chip--source'),
+    ] as HTMLElement[];
+    sources[1].click();
+    expect(emissions).toEqual([{ key: 'sources', values: ['material-tcw:2'] }]);
+  });
+
+  it('emits the chapter key when a book chapter chip is clicked', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
     fixture.componentRef.setInput('event', {
@@ -231,10 +255,16 @@ describe('TimelineEventItem', () => {
       year: -19,
       displayDate: '19 BBY',
     });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-2'] },
+      { label: 'Chapter 2', values: ['material-shatterpoint:chapter-2'] },
+    ]);
     fixture.detectChanges();
-    const title = fixture.nativeElement.querySelector('.source-chip--title') as HTMLElement;
-    title.click();
-    expect(emissions).toEqual([{ key: 'sources', value: 'material-shatterpoint:chapter-2' }]);
+    const sources = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.source-chip--source'),
+    ] as HTMLElement[];
+    sources[1].click();
+    expect(emissions).toEqual([{ key: 'sources', values: ['material-shatterpoint:chapter-2'] }]);
   });
 
   it('shows no status badge when no status is provided', () => {
@@ -303,7 +333,7 @@ describe('TimelineEventItem', () => {
     expect(emitted).toBe('Completed');
   });
 
-  it('renders the source unit label when the event has a unit', () => {
+  it('renders the source unit detail next to the chips when the event has a unit', () => {
     fixture.componentRef.setInput('event', {
       id: 'test-event',
       canon: ['Canon', 'Legends'],
@@ -312,6 +342,7 @@ describe('TimelineEventItem', () => {
       source: {
         title: 'The Clone Wars',
         medium: 'Animated Show',
+        sourceId: 'material-tcw',
         unit: {
           unitType: 'Episode',
           groupNumber: 7,
@@ -325,12 +356,18 @@ describe('TimelineEventItem', () => {
       year: -19,
       displayDate: '19 BBY',
     });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'The Clone Wars', values: ['material-tcw:7'] },
+      { label: 'Season 7', values: ['material-tcw:7'] },
+    ]);
     fixture.detectChanges();
     const source = fixture.nativeElement.querySelector('.event-source') as HTMLElement;
-    expect(source.textContent).toContain('Season 7 · Episode 9: The Siege of Mandalore');
+    const unit = fixture.nativeElement.querySelector('.event-source-unit') as HTMLElement;
+    expect(unit.textContent?.trim()).toBe('Episode 9: The Siege of Mandalore');
+    expect(source.textContent).toContain('Season 7');
   });
 
-  it('renders a plain episode label when the event unit has no group', () => {
+  it('omits the unit detail for a chapter unit without a title', () => {
     fixture.componentRef.setInput('event', {
       id: 'test-event',
       canon: ['Canon'],
@@ -339,6 +376,7 @@ describe('TimelineEventItem', () => {
       source: {
         title: 'Shatterpoint',
         medium: 'Book',
+        sourceId: 'material-shatterpoint',
         unit: { unitType: 'Chapter', number: 1 },
       },
       locations: [],
@@ -347,8 +385,11 @@ describe('TimelineEventItem', () => {
       year: -19,
       displayDate: '19 BBY',
     });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1'] },
+      { label: 'Chapter 1', values: ['material-shatterpoint:chapter-1'] },
+    ]);
     fixture.detectChanges();
-    const source = fixture.nativeElement.querySelector('.event-source') as HTMLElement;
-    expect(source.textContent).toContain('Chapter 1');
+    expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
   });
 });

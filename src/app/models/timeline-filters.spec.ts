@@ -1,9 +1,11 @@
-import { TimelineEvent } from './timeline-event';
+﻿import { TimelineEvent } from './timeline-event';
 import {
   collectFacetOptions,
+  collectTreeLeaves,
   createEmptyFilters,
   matchesFacetFilters,
   matchesFilters,
+  sourceChipsForEvent,
   sourceFacetKey,
   TimelineFilters,
 } from './timeline-filters';
@@ -26,7 +28,7 @@ const OTHER_EVENT: TimelineEvent = {
   canon: ['Canon', 'Legends'],
   title: 'Other Event',
   description: 'Description',
-  source: { title: 'The Clone Wars', medium: 'Animated Show' },
+  source: { title: 'The Clone Wars', medium: 'Animated Show' as const },
   locations: ['Mandalore'],
   characters: ['Ahsoka Tano'],
   vehicles: [],
@@ -55,16 +57,6 @@ describe('matchesFacetFilters', () => {
     expect(matchesFacetFilters(EVENT, filters)).toBe(false);
   });
 
-  it('matches when the event medium is among the selected mediums', () => {
-    const filters = { ...createEmptyFilters(), mediums: ['Book', 'Movie'] };
-    expect(matchesFacetFilters(EVENT, filters)).toBe(true);
-  });
-
-  it('rejects when the event medium is not selected', () => {
-    const filters = { ...createEmptyFilters(), mediums: ['Book'] };
-    expect(matchesFacetFilters(EVENT, filters)).toBe(false);
-  });
-
   it('matches when the event source is among the selected sources', () => {
     const filters = { ...createEmptyFilters(), sources: ['A New Hope', 'The Clone Wars'] };
     expect(matchesFacetFilters(EVENT, filters)).toBe(true);
@@ -84,7 +76,7 @@ describe('matchesFacetFilters', () => {
       ...EVENT,
       source: {
         title: 'The Clone Wars',
-        medium: 'Animated Show',
+        medium: 'Animated Show' as const,
         sourceId: 'material-tcw',
         unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
       },
@@ -97,7 +89,7 @@ describe('matchesFacetFilters', () => {
       ...EVENT,
       source: {
         title: 'The Clone Wars',
-        medium: 'Animated Show',
+        medium: 'Animated Show' as const,
         sourceId: 'material-tcw',
         unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
       },
@@ -114,12 +106,30 @@ describe('matchesFacetFilters', () => {
     expect(matchesFacetFilters(event, { ...createEmptyFilters(), sources: ['material-anh'] })).toBe(true);
   });
 
+  it('matches an issue source key against a comic event', () => {
+    const issueEvent: TimelineEvent = {
+      ...EVENT,
+      source: {
+        title: 'Dawn of the Jedi',
+        medium: 'Comic',
+        sourceId: 'material-dotj',
+        unit: { unitType: 'Issue', groupNumber: 2, number: 1 },
+      },
+    };
+    expect(
+      matchesFacetFilters(issueEvent, { ...createEmptyFilters(), sources: ['material-dotj:2:1'] }),
+    ).toBe(true);
+    expect(
+      matchesFacetFilters(issueEvent, { ...createEmptyFilters(), sources: ['material-dotj:2:2'] }),
+    ).toBe(false);
+  });
+
   it('matches a chapter source key against a book event', () => {
     const chapterEvent: TimelineEvent = {
       ...EVENT,
       source: {
         title: 'Shatterpoint',
-        medium: 'Book',
+        medium: 'Book' as const,
         sourceId: 'material-shatterpoint',
         unit: { unitType: 'Chapter', number: 2 },
       },
@@ -172,7 +182,7 @@ describe('sourceFacetKey', () => {
       ...EVENT,
       source: {
         title: 'The Clone Wars',
-        medium: 'Animated Show',
+        medium: 'Animated Show' as const,
         sourceId: 'material-tcw',
         unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
       },
@@ -180,12 +190,25 @@ describe('sourceFacetKey', () => {
     expect(sourceFacetKey(event)).toBe('material-tcw:7');
   });
 
+  it('combines the source id, volume and issue number for comic issues', () => {
+    const event: TimelineEvent = {
+      ...EVENT,
+      source: {
+        title: 'Dawn of the Jedi',
+        medium: 'Comic',
+        sourceId: 'material-dotj',
+        unit: { unitType: 'Issue', groupNumber: 2, number: 1 },
+      },
+    };
+    expect(sourceFacetKey(event)).toBe('material-dotj:2:1');
+  });
+
   it('combines the source id and chapter number for book chapters', () => {
     const event: TimelineEvent = {
       ...EVENT,
       source: {
         title: 'Shatterpoint',
-        medium: 'Book',
+        medium: 'Book' as const,
         sourceId: 'material-shatterpoint',
         unit: { unitType: 'Chapter', number: 2 },
       },
@@ -197,13 +220,17 @@ describe('sourceFacetKey', () => {
 describe('collectFacetOptions', () => {
   it('collects unique values across events, in display order', () => {
     const options = collectFacetOptions([EVENT, OTHER_EVENT]);
-    expect(options.mediums).toEqual([
-      { value: 'Movie', label: 'Movie' },
-      { value: 'Animated Show', label: 'Animated Show' },
-    ]);
     expect(options.sources).toEqual([
-      { value: 'A New Hope', label: 'A New Hope' },
-      { value: 'The Clone Wars', label: 'The Clone Wars' },
+      {
+        value: 'medium:Movie',
+        label: 'Movie',
+        children: [{ value: 'A New Hope', label: 'A New Hope' }],
+      },
+      {
+        value: 'medium:Animated Show',
+        label: 'Animated Show',
+        children: [{ value: 'The Clone Wars', label: 'The Clone Wars' }],
+      },
     ]);
     expect(options.locations).toEqual([
       { value: 'Coruscant', label: 'Coruscant' },
@@ -218,11 +245,40 @@ describe('collectFacetOptions', () => {
     expect(options.vehicles).toEqual([{ value: 'Sith Infiltrator', label: 'Sith Infiltrator' }]);
   });
 
+  it('groups materials under their medium and sorts them by label', () => {
+    const options = collectFacetOptions([
+      {
+        ...EVENT,
+        source: { title: 'The Phantom Menace', medium: 'Movie', sourceId: 'material-tpm' },
+      },
+      {
+        ...EVENT,
+        source: { title: 'A New Hope', medium: 'Movie', sourceId: 'material-anh' },
+      },
+    ]);
+    expect(options.sources).toEqual([
+      {
+        value: 'medium:Movie',
+        label: 'Movie',
+        children: [
+          { value: 'material-anh', label: 'A New Hope' },
+          { value: 'material-tpm', label: 'The Phantom Menace' },
+        ],
+      },
+    ]);
+  });
+
   it('keys source options by source id when no group is present', () => {
     const options = collectFacetOptions([
       { ...EVENT, source: { title: 'A New Hope', medium: 'Movie', sourceId: 'material-anh' } },
     ]);
-    expect(options.sources).toEqual([{ value: 'material-anh', label: 'A New Hope' }]);
+    expect(options.sources).toEqual([
+      {
+        value: 'medium:Movie',
+        label: 'Movie',
+        children: [{ value: 'material-anh', label: 'A New Hope' }],
+      },
+    ]);
   });
 
   it('creates one season option per show season', () => {
@@ -231,7 +287,7 @@ describe('collectFacetOptions', () => {
         ...EVENT,
         source: {
           title: 'The Clone Wars',
-          medium: 'Animated Show',
+          medium: 'Animated Show' as const,
           sourceId: 'material-tcw',
           unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
         },
@@ -240,19 +296,31 @@ describe('collectFacetOptions', () => {
         ...EVENT,
         source: {
           title: 'The Clone Wars',
-          medium: 'Animated Show',
+          medium: 'Animated Show' as const,
           sourceId: 'material-tcw',
           unit: { unitType: 'Episode', groupNumber: 2, number: 3 },
         },
       },
     ]);
     expect(options.sources).toEqual([
-      { value: 'material-tcw:2', label: 'The Clone Wars — Season 2' },
-      { value: 'material-tcw:7', label: 'The Clone Wars — Season 7' },
+      {
+        value: 'medium:Animated Show',
+        label: 'Animated Show',
+        children: [
+          {
+            value: 'material-tcw',
+            label: 'The Clone Wars',
+            children: [
+              { value: 'material-tcw:2', label: 'Season 2' },
+              { value: 'material-tcw:7', label: 'Season 7' },
+            ],
+          },
+        ],
+      },
     ]);
   });
 
-  it('labels comic volume options with Volume', () => {
+  it('labels comic volume options with Volume and nests issues beneath them', () => {
     const options = collectFacetOptions([
       {
         ...EVENT,
@@ -264,7 +332,25 @@ describe('collectFacetOptions', () => {
         },
       },
     ]);
-    expect(options.sources).toEqual([{ value: 'material-dotj:1', label: 'Dawn of the Jedi — Volume 1' }]);
+    expect(options.sources).toEqual([
+      {
+        value: 'medium:Comic',
+        label: 'Comic',
+        children: [
+          {
+            value: 'material-dotj',
+            label: 'Dawn of the Jedi',
+            children: [
+              {
+                value: 'material-dotj:1',
+                label: 'Volume 1',
+                children: [{ value: 'material-dotj:1:1', label: 'Issue 1' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
   });
 
   it('creates one chapter option per book chapter', () => {
@@ -273,7 +359,7 @@ describe('collectFacetOptions', () => {
         ...EVENT,
         source: {
           title: 'Shatterpoint',
-          medium: 'Book',
+          medium: 'Book' as const,
           sourceId: 'material-shatterpoint',
           unit: { unitType: 'Chapter', number: 1 },
         },
@@ -282,15 +368,189 @@ describe('collectFacetOptions', () => {
         ...EVENT,
         source: {
           title: 'Shatterpoint',
-          medium: 'Book',
+          medium: 'Book' as const,
           sourceId: 'material-shatterpoint',
-          unit: { unitType: 'Chapter', number: 3 },
+        unit: { unitType: 'Chapter' as const, number: 3 },
         },
       },
     ]);
     expect(options.sources).toEqual([
-      { value: 'material-shatterpoint:chapter-1', label: 'Shatterpoint — Chapter 1' },
-      { value: 'material-shatterpoint:chapter-3', label: 'Shatterpoint — Chapter 3' },
+      {
+        value: 'medium:Book',
+        label: 'Book',
+        children: [
+          {
+            value: 'material-shatterpoint',
+            label: 'Shatterpoint',
+            children: [
+              { value: 'material-shatterpoint:chapter-1', label: 'Chapter 1' },
+              { value: 'material-shatterpoint:chapter-3', label: 'Chapter 3' },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('nestles a material with both unit-linked and plain events under one parent', () => {
+    const options = collectFacetOptions([
+      {
+        ...EVENT,
+        source: {
+          title: 'The Clone Wars',
+          medium: 'Animated Show' as const,
+          sourceId: 'material-tcw',
+          unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+        },
+      },
+      {
+        ...EVENT,
+        source: { title: 'The Clone Wars', medium: 'Animated Show' as const, sourceId: 'material-tcw' },
+      },
+    ]);
+    expect(options.sources).toEqual([
+      {
+        value: 'medium:Animated Show',
+        label: 'Animated Show',
+        children: [
+          {
+            value: 'material-tcw',
+            label: 'The Clone Wars',
+            children: [
+              { value: 'material-tcw', label: 'The Clone Wars — Whole' },
+              { value: 'material-tcw:7', label: 'Season 7' },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+});
+
+describe('collectTreeLeaves', () => {
+  it('returns the value of a leaf node', () => {
+    expect(collectTreeLeaves({ value: 'material-anh', label: 'A New Hope' })).toEqual(['material-anh']);
+  });
+
+  it('returns every descendant leaf value of a parent node', () => {
+    const parent = {
+      value: 'material-tcw',
+      label: 'The Clone Wars',
+      children: [
+        { value: 'material-tcw:2', label: 'Season 2' },
+        { value: 'material-tcw:7', label: 'Season 7' },
+      ],
+    };
+    expect(collectTreeLeaves(parent)).toEqual(['material-tcw:2', 'material-tcw:7']);
+  });
+
+  it('collects leaves from a medium node spanning multiple materials and units', () => {
+    const medium = {
+      value: 'medium:Animated Show',
+      label: 'Animated Show',
+      children: [
+        {
+          value: 'material-tcw',
+          label: 'The Clone Wars',
+          children: [
+            { value: 'material-tcw:2', label: 'Season 2' },
+            { value: 'material-tcw:7', label: 'Season 7' },
+          ],
+        },
+      ],
+    };
+    expect(collectTreeLeaves(medium)).toEqual(['material-tcw:2', 'material-tcw:7']);
+  });
+});
+
+const SHOW_TREE = [
+  {
+    value: 'medium:Animated Show',
+    label: 'Animated Show',
+    children: [
+      {
+        value: 'material-tcw',
+        label: 'The Clone Wars',
+        children: [
+          { value: 'material-tcw:2', label: 'Season 2' },
+          { value: 'material-tcw:7', label: 'Season 7' },
+        ],
+      },
+      { value: 'material-rebels', label: 'Rebels' },
+    ],
+  },
+];
+
+const SHATTERPOINT_TREE = [
+  {
+    value: 'medium:Book',
+    label: 'Book',
+    children: [
+      {
+        value: 'material-shatterpoint',
+        label: 'Shatterpoint',
+        children: [
+          { value: 'material-shatterpoint:chapter-1', label: 'Chapter 1' },
+          { value: 'material-shatterpoint:chapter-3', label: 'Chapter 3' },
+        ],
+      },
+    ],
+  },
+];
+
+describe('sourceChipsForEvent', () => {
+  it('builds a medium chip with every leaf under the medium, then a material chip', () => {
+    const event = {
+      ...EVENT,
+      source: { title: 'The Clone Wars', medium: 'Animated Show' as const, sourceId: 'material-tcw' },
+    };
+    expect(sourceChipsForEvent(event, SHOW_TREE)).toEqual([
+      { label: 'Animated Show', values: ['material-tcw:2', 'material-tcw:7', 'material-rebels'], medium: true },
+      { label: 'The Clone Wars', values: ['material-tcw:2', 'material-tcw:7'] },
+    ]);
+  });
+
+  it('adds a season chip for an episode with a group', () => {
+    const event = {
+      ...EVENT,
+      source: {
+        title: 'The Clone Wars',
+        medium: 'Animated Show' as const,
+        sourceId: 'material-tcw',
+        unit: { unitType: 'Episode' as const, groupNumber: 7, number: 9 },
+      },
+    };
+    expect(sourceChipsForEvent(event, SHOW_TREE)).toEqual([
+      { label: 'Animated Show', values: ['material-tcw:2', 'material-tcw:7', 'material-rebels'], medium: true },
+      { label: 'The Clone Wars', values: ['material-tcw:2', 'material-tcw:7'] },
+      { label: 'Season 7', values: ['material-tcw:7'] },
+    ]);
+  });
+
+  it('adds a chapter chip for a chapter unit', () => {
+    const event = {
+      ...EVENT,
+      source: {
+        title: 'Shatterpoint',
+        medium: 'Book' as const,
+        sourceId: 'material-shatterpoint',
+        unit: { unitType: 'Chapter' as const, number: 3 },
+      },
+    };
+    expect(sourceChipsForEvent(event, SHATTERPOINT_TREE)).toEqual([
+      { label: 'Book', values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-3'], medium: true },
+      { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-3'] },
+      { label: 'Chapter 3', values: ['material-shatterpoint:chapter-3'] },
+    ]);
+  });
+
+  it('falls back to a title chip when the material is not in the tree', () => {
+    const event = {
+      ...EVENT,
+      source: { title: 'Mystery Material', medium: 'Video Game' as const, sourceId: 'material-mystery' },
+    };
+    expect(sourceChipsForEvent(event, SHOW_TREE)).toEqual([
+      { label: 'Mystery Material', values: ['material-mystery'] },
     ]);
   });
 });

@@ -86,6 +86,10 @@
   flex-direction: column;
 }
 
+.filter-group-panel[hidden] {
+  display: none;
+}
+
 .filter-group-search {
   margin-bottom: 0.4rem;
 }
@@ -108,29 +112,6 @@
 
 .filter-group-options {
   overflow-y: auto;
-}
-
-.filter-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: #c5c8d3;
-}
-
-.filter-option:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.filter-option input {
-  accent-color: #ffd54a;
-}
-
-.filter-option--selected {
-  color: #fff;
 }
 
 .filter-group-empty {

@@ -8,6 +8,8 @@ import {
   createEmptyFilters,
   FacetKey,
   matchesFilters,
+  SourceFilterChip,
+  sourceChipsForEvent,
   TimelineFilters,
 } from '../../models/timeline-filters';
 import { TrackingStatus } from '../../models/tracking-status';
@@ -95,12 +97,20 @@ export class Timeline {
 
   protected readonly facetOptions = computed(() => collectFacetOptions(this.continuityEvents()));
 
+  protected readonly sourceChipsByEvent = computed(() => {
+    const sources = this.facetOptions().sources;
+    const chips = new Map<string, readonly SourceFilterChip[]>();
+    for (const event of this.continuityEvents()) {
+      chips.set(event.id, sourceChipsForEvent(event, sources));
+    }
+    return chips;
+  });
+
   protected readonly advancedOpen = signal(false);
 
   protected readonly activeFacetCount = computed(() => {
     const filters = this.filters();
     return (
-      (filters.mediums.length > 0 ? 1 : 0) +
       (filters.sources.length > 0 ? 1 : 0) +
       (filters.locations.length > 0 ? 1 : 0) +
       (filters.characters.length > 0 ? 1 : 0) +
@@ -134,12 +144,13 @@ export class Timeline {
     this.filters.update((filters) => ({ ...filters, [key]: value }));
   }
 
-  onToggleFacet({ key, value }: ToggleFacetEvent): void {
+  onToggleFacet({ key, values }: ToggleFacetEvent): void {
     this.filters.update((filters) => {
       const current = filters[key];
-      const next = current.includes(value)
-        ? current.filter((selected) => selected !== value)
-        : [...current, value];
+      const allSelected = values.every((value) => current.includes(value));
+      const next = allSelected
+        ? current.filter((value) => !values.includes(value))
+        : [...new Set([...current, ...values])];
       return { ...filters, [key]: next };
     });
   }
@@ -173,7 +184,6 @@ export class Timeline {
   clearFilters(): void {
     this.filters.update((filters) => ({
       ...filters,
-      mediums: [],
       sources: [],
       locations: [],
       characters: [],

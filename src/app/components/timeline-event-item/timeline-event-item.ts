@@ -1,6 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
-import { FacetKey, sourceFacetKey } from '../../models/timeline-filters';
-import { sourceUnitLabel } from '../../models/source-material';
+import { FacetKey, SourceFilterChip } from '../../models/timeline-filters';
+import { sourceUnitDetail, sourceUnitLabel } from '../../models/source-material';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
@@ -8,7 +8,7 @@ export type ToggleableFacetKey = FacetKey;
 
 export interface ToggleFacetEvent {
   key: ToggleableFacetKey;
-  value: string;
+  values: readonly string[];
 }
 
 @Component({
@@ -22,13 +22,13 @@ export class TimelineEventItem {
   readonly selectedLocations = input<readonly string[]>([]);
   readonly selectedCharacters = input<readonly string[]>([]);
   readonly selectedVehicles = input<readonly string[]>([]);
-  readonly selectedMediums = input<readonly string[]>([]);
   readonly selectedSources = input<readonly string[]>([]);
+  readonly sourceChips = input<readonly SourceFilterChip[]>([]);
   readonly status = input<TrackingStatus | undefined>();
   readonly canTrack = input(false);
   readonly statuses = TRACKING_STATUSES;
   readonly sourceUnitLabel = sourceUnitLabel;
-  readonly sourceFacetKey = sourceFacetKey;
+  readonly sourceUnitDetail = sourceUnitDetail;
 
   readonly toggleFacet = output<ToggleFacetEvent>();
   readonly addToLibrary = output<void>();
@@ -40,8 +40,12 @@ export class TimelineEventItem {
     this.detailsOpen.update((isOpen) => !isOpen);
   }
 
-  emitToggle(key: ToggleableFacetKey, value: string): void {
-    this.toggleFacet.emit({ key, value });
+  emitToggle(key: ToggleableFacetKey, values: readonly string[]): void {
+    this.toggleFacet.emit({ key, values });
+  }
+
+  sourceChipSelected(chip: SourceFilterChip): boolean {
+    return chip.values.every((value) => this.selectedSources().includes(value));
   }
 
   emitAddToLibrary(): void {

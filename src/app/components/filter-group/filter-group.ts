@@ -1,47 +1,55 @@
 import {
   Component,
   computed,
-  ElementRef,
   HostListener,
   inject,
   input,
   model,
   signal,
 } from '@angular/core';
-import { FilterOption } from '../../models/timeline-filters';
+import { collectTreeLeaves, FilterTreeNode } from '../../models/timeline-filters';
+import { FilterTree } from './filter-tree';
 
 @Component({
   selector: 'app-filter-group',
-  imports: [],
+  imports: [FilterTree],
   templateUrl: './filter-group.html',
   styleUrl: './filter-group.scss',
 })
 export class FilterGroup {
   readonly label = input.required<string>();
-  readonly options = input.required<readonly FilterOption[]>();
+  readonly options = input.required<readonly FilterTreeNode[]>();
   readonly selected = model<readonly string[]>([]);
-
-  private readonly elementRef = inject(ElementRef);
+  readonly defaultExpandedDepth = input(-1);
 
   readonly open = signal(false);
   protected readonly query = signal('');
 
   protected readonly selectedCount = computed(() => this.selected().length);
+  protected readonly isSearching = computed(() => this.query().trim().length > 0);
 
   protected readonly filteredOptions = computed(() => {
     const term = this.query().trim().toLowerCase();
     if (!term) {
       return this.options();
     }
-    return this.options().filter((option) => option.label.toLowerCase().includes(term));
+    return this.options()
+      .map((option) => filterNode(option, term))
+      .filter((option): option is FilterTreeNode => option !== undefined);
   });
 
-  toggle(option: FilterOption): void {
-    this.selected.update((current) =>
-      current.includes(option.value)
-        ? current.filter((value) => value !== option.value)
-        : [...current, option.value],
-    );
+  toggle(option: FilterTreeNode): void {
+    const leaves = collectTreeLeaves(option);
+    this.selected.update((current) => {
+      const set = new Set(current);
+      const allSelected = leaves.every((value) => set.has(value));
+      if (allSelected) {
+        for (const value of leaves) set.delete(value);
+      } else {
+        for (const value of leaves) set.add(value);
+      }
+      return [...set];
+    });
   }
 
   togglePanel(): void {
@@ -58,17 +66,21 @@ export class FilterGroup {
     this.selected.set([]);
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.open() && !this.elementRef.nativeElement.contains(event.target)) {
-      this.open.set(false);
-    }
-  }
-
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.open.set(false);
     }
   }
+}
+
+function filterNode(node: FilterTreeNode, term: string): FilterTreeNode | undefined {
+  const labelMatches = node.label.toLowerCase().includes(term);
+  const children = node.children
+    ?.map((child) => filterNode(child, term))
+    .filter((child): child is FilterTreeNode => child !== undefined);
+  if (!labelMatches && (children === undefined || children.length === 0)) {
+    return undefined;
+  }
+  return { ...node, children };
 }

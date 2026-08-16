@@ -50,3 +50,20 @@ export function sourceGroupName(unitType: UnitType): string | undefined {
       return undefined;
   }
 }
+
+export function sourceUnitDetail(unit: SourceMaterialUnit | undefined): string | undefined {
+  if (unit === undefined) {
+    return undefined;
+  }
+  switch (unit.unitType) {
+    case 'Episode':
+    case 'Issue': {
+      const base = unit.unitType === 'Episode' ? `Episode ${unit.number}` : `Issue ${unit.number}`;
+      return unit.title ? `${base}: ${unit.title}` : base;
+    }
+    case 'Chapter':
+      return unit.title ? `Chapter ${unit.number}: ${unit.title}` : undefined;
+    case 'Level':
+      return `Level ${unit.number}`;
+  }
+}

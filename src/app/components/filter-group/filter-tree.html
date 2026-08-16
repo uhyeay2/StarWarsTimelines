@@ -1,0 +1,48 @@
+@if (isParent()) {
+  <div class="filter-option filter-option--parent">
+    <button
+      type="button"
+      class="filter-option-expand"
+      [attr.aria-expanded]="expanded() || searching()"
+      [attr.aria-label]="(expanded() || searching() ? 'Collapse ' : 'Expand ') + node().label"
+      (click)="toggleExpanded()">
+      <span
+        class="filter-option-chevron"
+        [class.filter-option-chevron--open]="expanded() || searching()"
+        aria-hidden="true">
+        &#9656;
+      </span>
+    </button>
+    <label class="filter-option-check">
+      <input
+        type="checkbox"
+        [checked]="state().checked"
+        [appIndeterminate]="state().indeterminate"
+        (change)="onToggle()" />
+      <span class="filter-option-label">{{ node().label }}</span>
+    </label>
+  </div>
+  @if (expanded() || searching()) {
+    <div class="filter-option-children">
+      @for (child of children(); track child.value) {
+        <app-filter-tree
+          [node]="child"
+          [depth]="depth() + 1"
+          [defaultExpandedDepth]="defaultExpandedDepth()"
+          [selected]="selected()"
+          [searching]="searching()"
+          (toggle)="toggle.emit($event)" />
+      }
+    </div>
+  }
+} @else {
+  <label
+    class="filter-option"
+    [class.filter-option--selected]="selected().includes(node().value)">
+    <input
+      type="checkbox"
+      [checked]="selected().includes(node().value)"
+      (change)="onToggle()" />
+    <span class="filter-option-label">{{ node().label }}</span>
+  </label>
+}

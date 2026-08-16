@@ -195,14 +195,20 @@ describe('Timeline', () => {
     component.toggleAdvanced();
     fixture.detectChanges();
     const groups = [...fixture.nativeElement.querySelectorAll('app-filter-group')] as HTMLElement[];
-    expect(groups.length).toBe(2);
-    const sourceGroup = groups[1];
+    expect(groups.length).toBe(1);
+    const sourceGroup = groups[0];
     (sourceGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
     fixture.detectChanges();
     const labels = [...sourceGroup.querySelectorAll('.filter-option-label')].map(
       (el) => el.textContent,
     );
-    expect(labels).toEqual(['The Clone Wars — Season 2', 'The Clone Wars — Season 7']);
+    expect(labels).toEqual(['Animated Show']);
+    const expanders = [...sourceGroup.querySelectorAll('.filter-option-expand')];
+    (expanders[0] as HTMLElement).click();
+    fixture.detectChanges();
+    expect([...sourceGroup.querySelectorAll('.filter-option-label')].map((el) => el.textContent)).toEqual(
+      ['Animated Show', 'The Clone Wars'],
+    );
   });
 
   it('renders the heading and description inputs', () => {
@@ -283,46 +289,54 @@ describe('Timeline', () => {
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
-  it('adds a medium filter by clicking the medium chip on an event', () => {
+  it('selects every source under a medium by clicking the medium chip', () => {
     fixture.detectChanges();
     const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
     medium.click();
     fixture.detectChanges();
-    expect(component.filters().mediums).toEqual(['Movie']);
+    expect(component.filters().sources).toEqual(['material-a', 'material-c']);
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
-  it('adds a source filter by clicking the title chip on an event', () => {
+  it('adds a source filter by clicking the source chip on an event', () => {
     fixture.detectChanges();
-    const title = cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement;
-    title.click();
+    const source = [...cardFor('Canon Only').querySelectorAll('.source-chip--source')].find(
+      (chip) => chip.textContent?.trim() === 'Source A',
+    ) as HTMLElement;
+    source.click();
     fixture.detectChanges();
     expect(component.filters().sources).toEqual(['material-a']);
     expect(eventTitles()).toEqual(['Canon Only']);
   });
 
-  it('removes a source filter by clicking its selected title chip again', () => {
+  it('removes a source filter by clicking its selected source chip again', () => {
+    const sourceA = () =>
+      [...cardFor('Canon Only').querySelectorAll('.source-chip--source')].find(
+        (chip) => chip.textContent?.trim() === 'Source A',
+      ) as HTMLElement;
     fixture.detectChanges();
-    (cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement).click();
+    sourceA().click();
     fixture.detectChanges();
-    (cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement).click();
+    sourceA().click();
     fixture.detectChanges();
     expect(component.filters().sources).toEqual([]);
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
-  it('highlights the medium chip once its value is part of the filter', () => {
-    component.updateFilter('mediums', ['Movie']);
+  it('highlights the medium chip once all its sources are part of the filter', () => {
+    component.updateFilter('sources', ['material-a', 'material-c']);
     fixture.detectChanges();
     const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
     expect(medium.classList.contains('chip--selected')).toBe(true);
     expect(medium.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('highlights the title chip once its source is part of the filter', () => {
+  it('highlights the source chip once its source is part of the filter', () => {
     component.updateFilter('sources', ['material-c']);
     fixture.detectChanges();
-    const title = cardFor('Both').querySelector('.source-chip--title') as HTMLElement;
+    const title = [...cardFor('Both').querySelectorAll('.source-chip--source')].find(
+      (chip) => chip.textContent?.trim() === 'Source C',
+    ) as HTMLElement;
     expect(title.classList.contains('chip--selected')).toBe(true);
     expect(title.getAttribute('aria-pressed')).toBe('true');
   });
@@ -343,14 +357,14 @@ describe('Timeline', () => {
     expect(eventTitles()).toEqual(['Both']);
   });
 
-  it('filters by medium', () => {
-    component.updateFilter('mediums', ['Movie']);
+  it('filters to events from any source under a medium', () => {
+    component.updateFilter('sources', ['material-a', 'material-c']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
   it('combines filters across categories', () => {
-    component.updateFilter('mediums', ['Movie']);
+    component.updateFilter('sources', ['material-a', 'material-c']);
     component.updateFilter('characters', ['Darth Maul']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both']);
@@ -376,11 +390,47 @@ describe('Timeline', () => {
 
   it('hides advanced filters by default and reveals them on toggle', () => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('app-filter-group').length).toBe(0);
+    const advancedFilters = fixture.nativeElement.querySelector('.advanced-filters') as HTMLElement;
+    expect(advancedFilters.hasAttribute('hidden')).toBe(true);
 
     component.toggleAdvanced();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('app-filter-group').length).toBe(5);
+    expect(advancedFilters.hasAttribute('hidden')).toBe(false);
+    expect(fixture.nativeElement.querySelectorAll('app-filter-group').length).toBe(4);
+  });
+
+  it('retains the source tree expansion when the advanced filters are hidden and reopened', () => {
+    const sourceGroup = (): HTMLElement =>
+      (
+        [
+          ...fixture.nativeElement.querySelectorAll('.filter-group-trigger'),
+        ].find((trigger) => trigger.textContent?.includes('Source')) as HTMLElement
+      ).closest('.filter-group') as HTMLElement;
+    const sourceLabels = (): string[] =>
+      [...sourceGroup().querySelectorAll('.filter-option-label')].map(
+        (el) => (el as HTMLElement).textContent ?? '',
+      );
+    const sourceExpanders = (): HTMLElement[] => [
+      ...sourceGroup().querySelectorAll<HTMLElement>('.filter-option-expand'),
+    ];
+
+    component.selectView('Legends');
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.advanced-toggle') as HTMLElement).click();
+    fixture.detectChanges();
+    (sourceGroup().querySelector('.filter-group-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(sourceLabels()).toEqual(['Movie', 'Book']);
+
+    sourceExpanders()[0].click();
+    fixture.detectChanges();
+    expect(sourceLabels()).toEqual(['Movie', 'Source C', 'Book']);
+
+    (fixture.nativeElement.querySelector('.advanced-toggle') as HTMLElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.advanced-toggle') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(sourceLabels()).toEqual(['Movie', 'Source C', 'Book']);
   });
 
   it('shows the active facet count on the advanced toggle', () => {

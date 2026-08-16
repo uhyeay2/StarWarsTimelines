@@ -40,17 +40,8 @@
           aria-hidden="true">&#9662;</span>
       </button>
 
-      @if (advancedOpen()) {
-        <div class="advanced-filters">
-          @if (facetOptions().mediums.length) {
-            <app-filter-group
-              label="Medium"
-              [options]="facetOptions().mediums"
-              [selected]="filters().mediums"
-              (selectedChange)="updateFilter('mediums', $event)" />
-          }
-
-          @if (facetOptions().sources.length) {
+      <div class="advanced-filters" [hidden]="!advancedOpen()">
+        @if (facetOptions().sources.length) {
             <app-filter-group
               label="Source"
               [options]="facetOptions().sources"
@@ -81,8 +72,7 @@
               [selected]="filters().vehicles"
               (selectedChange)="updateFilter('vehicles', $event)" />
           }
-        </div>
-      }
+      </div>
     </aside>
 
     <div class="timeline-content">
@@ -94,10 +84,10 @@
             <li class="timeline-item">
               <app-timeline-event-item
                 [event]="event"
+                [sourceChips]="sourceChipsByEvent().get(event.id) ?? []"
                 [selectedLocations]="filters().locations"
                 [selectedCharacters]="filters().characters"
                 [selectedVehicles]="filters().vehicles"
-                [selectedMediums]="filters().mediums"
                 [selectedSources]="filters().sources"
                 [status]="sourceStatus()[event.source.sourceId ?? '']"
                 [canTrack]="isLoggedIn() && !!event.source.sourceId"
