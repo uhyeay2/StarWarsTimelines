@@ -16,6 +16,7 @@ export interface CatalogMaterial {
 interface LibraryUnitDto {
   id: string;
   unitType: number;
+  groupNumber: number | null;
   number: number;
   title: string | null;
   isCompleted: boolean;
@@ -49,6 +50,7 @@ export class LibraryService {
       units: dto.units.map((unit) => ({
         id: unit.id,
         unitType: unitTypeFromApiCode(unit.unitType),
+        groupNumber: unit.groupNumber ?? undefined,
         number: unit.number,
         title: unit.title ?? undefined,
         isCompleted: unit.isCompleted,

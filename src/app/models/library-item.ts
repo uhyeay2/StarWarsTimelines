@@ -5,6 +5,7 @@ import { UnitType } from './unit-type';
 export interface LibraryUnit {
   id: string;
   unitType: UnitType;
+  groupNumber?: number;
   number: number;
   title?: string;
   isCompleted: boolean;

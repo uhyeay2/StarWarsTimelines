@@ -1,8 +1,10 @@
 import { Component, input, output, signal } from '@angular/core';
+import { FacetKey, sourceFacetKey } from '../../models/timeline-filters';
+import { sourceUnitLabel } from '../../models/source-material';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
-export type ToggleableFacetKey = 'locations' | 'characters' | 'vehicles';
+export type ToggleableFacetKey = FacetKey;
 
 export interface ToggleFacetEvent {
   key: ToggleableFacetKey;
@@ -20,9 +22,13 @@ export class TimelineEventItem {
   readonly selectedLocations = input<readonly string[]>([]);
   readonly selectedCharacters = input<readonly string[]>([]);
   readonly selectedVehicles = input<readonly string[]>([]);
+  readonly selectedMediums = input<readonly string[]>([]);
+  readonly selectedSources = input<readonly string[]>([]);
   readonly status = input<TrackingStatus | undefined>();
   readonly canTrack = input(false);
   readonly statuses = TRACKING_STATUSES;
+  readonly sourceUnitLabel = sourceUnitLabel;
+  readonly sourceFacetKey = sourceFacetKey;
 
   readonly toggleFacet = output<ToggleFacetEvent>();
   readonly addToLibrary = output<void>();

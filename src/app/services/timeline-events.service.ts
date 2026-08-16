@@ -5,6 +5,15 @@ import { environment } from '../../environments/environment';
 import { Canon } from '../models/canon';
 import { mediumFromApiCode } from '../models/medium';
 import { TimelineEvent } from '../models/timeline-event';
+import { unitTypeFromApiCode } from '../models/unit-type';
+
+interface SourceMaterialUnitDto {
+  id: string;
+  unitType: number;
+  groupNumber: number | null;
+  number: number;
+  title: string | null;
+}
 
 interface SourceMaterialDto {
   id: string;
@@ -27,6 +36,7 @@ interface TimelineEventDto {
   displayDate: string;
   displayDateEnd: string | null;
   sourceMaterial: SourceMaterialDto;
+  sourceMaterialUnit: SourceMaterialUnitDto | null;
   characters: readonly NamedEntityDto[];
   locations: readonly NamedEntityDto[];
   vehicles: readonly NamedEntityDto[];
@@ -60,6 +70,14 @@ export class TimelineEventsService {
               title: event.sourceMaterial.title,
               medium: mediumFromApiCode(event.sourceMaterial.medium),
               sourceId: event.sourceMaterial.id,
+              unit: event.sourceMaterialUnit
+                ? {
+                    unitType: unitTypeFromApiCode(event.sourceMaterialUnit.unitType),
+                    groupNumber: event.sourceMaterialUnit.groupNumber ?? undefined,
+                    number: event.sourceMaterialUnit.number,
+                    title: event.sourceMaterialUnit.title ?? undefined,
+                  }
+                : undefined,
             },
             locations: event.locations.map((entity) => entity.name),
             characters: event.characters.map((entity) => entity.name),

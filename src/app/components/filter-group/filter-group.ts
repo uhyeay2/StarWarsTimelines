@@ -8,6 +8,7 @@ import {
   model,
   signal,
 } from '@angular/core';
+import { FilterOption } from '../../models/timeline-filters';
 
 @Component({
   selector: 'app-filter-group',
@@ -17,7 +18,7 @@ import {
 })
 export class FilterGroup {
   readonly label = input.required<string>();
-  readonly options = input.required<readonly string[]>();
+  readonly options = input.required<readonly FilterOption[]>();
   readonly selected = model<readonly string[]>([]);
 
   private readonly elementRef = inject(ElementRef);
@@ -32,12 +33,14 @@ export class FilterGroup {
     if (!term) {
       return this.options();
     }
-    return this.options().filter((option) => option.toLowerCase().includes(term));
+    return this.options().filter((option) => option.label.toLowerCase().includes(term));
   });
 
-  toggle(option: string): void {
+  toggle(option: FilterOption): void {
     this.selected.update((current) =>
-      current.includes(option) ? current.filter((value) => value !== option) : [...current, option],
+      current.includes(option.value)
+        ? current.filter((value) => value !== option.value)
+        : [...current, option.value],
     );
   }
 

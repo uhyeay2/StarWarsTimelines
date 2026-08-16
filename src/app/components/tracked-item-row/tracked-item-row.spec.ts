@@ -18,8 +18,8 @@ const UNIT_ITEM: LibraryItem = {
   status: 'In progress',
   favorite: false,
   units: [
-    { id: 'unit-1', unitType: 'Episode', number: 1, title: 'Attack of the Clones', isCompleted: true },
-    { id: 'unit-2', unitType: 'Episode', number: 2, title: 'Sneak Preview', isCompleted: false },
+    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: true },
+    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: false },
   ],
 };
 
@@ -173,8 +173,17 @@ describe('TrackedItemRow', () => {
     expect(checkboxes.length).toBe(2);
     expect(checkboxes[0].checked).toBe(true);
     expect(checkboxes[1].checked).toBe(false);
-    expect(compiled.textContent).toContain('Episode 1: Attack of the Clones');
-    expect(compiled.textContent).toContain('Episode 2: Sneak Preview');
+    expect(compiled.textContent).toContain('Season 1 · Episode 1: Attack of the Clones');
+    expect(compiled.textContent).toContain('Season 1 · Episode 2: Sneak Preview');
+  });
+
+  it('labels units without a group number using just the unit type and number', () => {
+    fixture.componentRef.setInput('item', {
+      ...UNIT_ITEM,
+      units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', isCompleted: false }],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Chapter 1: The Menace');
   });
 
   it('emits unitProgressChange when a unit checkbox changes', () => {

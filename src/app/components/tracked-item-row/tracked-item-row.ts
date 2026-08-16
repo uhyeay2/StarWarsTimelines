@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { LibraryItem, LibraryUnit } from '../../models/library-item';
+import { sourceUnitLabel } from '../../models/source-material';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
 @Component({
@@ -39,9 +40,7 @@ export class TrackedItemRow {
   }
 
   unitLabel(unit: LibraryUnit): string {
-    return unit.title
-      ? `${unit.unitType} ${unit.number}: ${unit.title}`
-      : `${unit.unitType} ${unit.number}`;
+    return sourceUnitLabel(unit);
   }
 
   toggleFavorite(): void {

@@ -90,6 +90,11 @@ describe('Timeline', () => {
       (el) => (el as HTMLElement).textContent,
     );
 
+  const cardFor = (title: string): HTMLElement => {
+    const cards = [...fixture.nativeElement.querySelectorAll('app-timeline-event-item')];
+    return cards.find((el) => (el as HTMLElement).textContent?.includes(title)) as HTMLElement;
+  };
+
   const openDetails = (title: string): void => {
     const cards = [...fixture.nativeElement.querySelectorAll('app-timeline-event-item')];
     const card = cards.find(
@@ -119,6 +124,85 @@ describe('Timeline', () => {
     fixture.componentRef.setInput('sourceIds', []);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('filters sources by season for unit-linked events', async () => {
+    const seasonEvents: readonly TimelineEvent[] = [
+      {
+        id: 's2e3',
+        canon: ['Canon'],
+        title: 'Heroes on Both Sides',
+        description: '',
+        source: {
+          title: 'The Clone Wars',
+          medium: 'Animated Show',
+          sourceId: 'material-tcw',
+          unit: { unitType: 'Episode', groupNumber: 2, number: 3 },
+        },
+        locations: [],
+        characters: [],
+        vehicles: [],
+        year: -21,
+        displayDate: '21 BBY',
+      },
+      {
+        id: 's7e9',
+        canon: ['Canon'],
+        title: 'The Siege of Mandalore',
+        description: '',
+        source: {
+          title: 'The Clone Wars',
+          medium: 'Animated Show',
+          sourceId: 'material-tcw',
+          unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+        },
+        locations: [],
+        characters: [],
+        vehicles: [],
+        year: -19,
+        displayDate: '19 BBY',
+      },
+    ];
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(seasonEvents) } },
+      { provide: AuthService, useValue: { currentUser$: of(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.updateFilter('sources', ['material-tcw:7']);
+    fixture.detectChanges();
+    expect(eventTitles()).toEqual(['The Siege of Mandalore']);
+
+    component.updateFilter('sources', ['material-tcw']);
+    fixture.detectChanges();
+    expect(eventTitles()).toEqual([]);
+
+    component.clearFilters();
+    component.toggleAdvanced();
+    fixture.detectChanges();
+    const groups = [...fixture.nativeElement.querySelectorAll('app-filter-group')] as HTMLElement[];
+    expect(groups.length).toBe(2);
+    const sourceGroup = groups[1];
+    (sourceGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    const labels = [...sourceGroup.querySelectorAll('.filter-option-label')].map(
+      (el) => el.textContent,
+    );
+    expect(labels).toEqual(['The Clone Wars — Season 2', 'The Clone Wars — Season 7']);
   });
 
   it('renders the heading and description inputs', () => {
@@ -197,6 +281,50 @@ describe('Timeline', () => {
 
     expect(component.filters().characters).toEqual([]);
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('adds a medium filter by clicking the medium chip on an event', () => {
+    fixture.detectChanges();
+    const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
+    medium.click();
+    fixture.detectChanges();
+    expect(component.filters().mediums).toEqual(['Movie']);
+    expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('adds a source filter by clicking the title chip on an event', () => {
+    fixture.detectChanges();
+    const title = cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement;
+    title.click();
+    fixture.detectChanges();
+    expect(component.filters().sources).toEqual(['material-a']);
+    expect(eventTitles()).toEqual(['Canon Only']);
+  });
+
+  it('removes a source filter by clicking its selected title chip again', () => {
+    fixture.detectChanges();
+    (cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement).click();
+    fixture.detectChanges();
+    (cardFor('Canon Only').querySelector('.source-chip--title') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(component.filters().sources).toEqual([]);
+    expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+  });
+
+  it('highlights the medium chip once its value is part of the filter', () => {
+    component.updateFilter('mediums', ['Movie']);
+    fixture.detectChanges();
+    const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
+    expect(medium.classList.contains('chip--selected')).toBe(true);
+    expect(medium.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('highlights the title chip once its source is part of the filter', () => {
+    component.updateFilter('sources', ['material-c']);
+    fixture.detectChanges();
+    const title = cardFor('Both').querySelector('.source-chip--title') as HTMLElement;
+    expect(title.classList.contains('chip--selected')).toBe(true);
+    expect(title.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('highlights a chip on an event once its value is part of the filter', () => {

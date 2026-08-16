@@ -14,7 +14,11 @@ describe('FilterGroup', () => {
     fixture = TestBed.createComponent(FilterGroup);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('label', 'Characters');
-    fixture.componentRef.setInput('options', ['Padme Amidala', 'Darth Maul', 'Anakin Skywalker']);
+    fixture.componentRef.setInput('options', [
+      { value: 'Padme Amidala', label: 'Padme Amidala' },
+      { value: 'Darth Maul', label: 'Darth Maul' },
+      { value: 'Anakin Skywalker', label: 'Anakin Skywalker' },
+    ]);
     fixture.componentRef.setInput('selected', []);
     await fixture.whenStable();
   });
@@ -109,5 +113,15 @@ describe('FilterGroup', () => {
     expect(component.open()).toBe(true);
     document.body.click();
     expect(component.open()).toBe(false);
+  });
+
+  it('displays option labels while selecting option values', () => {
+    fixture.componentRef.setInput('options', [
+      { value: 'material-tcw:7', label: 'The Clone Wars — Season 7' },
+    ]);
+    openDropdown();
+    expect(optionLabels()).toEqual(['The Clone Wars — Season 7']);
+    optionInputs()[0].click();
+    expect(component.selected()).toEqual(['material-tcw:7']);
   });
 });

@@ -73,6 +73,23 @@ describe('LibraryService', () => {
     ]);
   });
 
+  it('maps unit group numbers from the API', async () => {
+    const promise = firstValueFrom(service.getTracked('user-padme'));
+    httpMock.expectOne(BASE).flush([
+      {
+        ...LIBRARY_DTO[0],
+        units: [
+          { id: 'unit-1', unitType: 0, groupNumber: 7, number: 9, title: 'The Siege of Mandalore', isCompleted: true },
+        ],
+      },
+    ]);
+
+    const items = await promise;
+    expect(items[0].units).toEqual([
+      { id: 'unit-1', unitType: 'Episode', groupNumber: 7, number: 9, title: 'The Siege of Mandalore', isCompleted: true },
+    ]);
+  });
+
   it('adds a tracked item with the source material id', async () => {
     const promise = firstValueFrom(
       service.addTracked('user-padme', {

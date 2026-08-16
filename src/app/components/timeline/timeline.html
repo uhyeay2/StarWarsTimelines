@@ -97,6 +97,8 @@
                 [selectedLocations]="filters().locations"
                 [selectedCharacters]="filters().characters"
                 [selectedVehicles]="filters().vehicles"
+                [selectedMediums]="filters().mediums"
+                [selectedSources]="filters().sources"
                 [status]="sourceStatus()[event.source.sourceId ?? '']"
                 [canTrack]="isLoggedIn() && !!event.source.sourceId"
                 (toggleFacet)="onToggleFacet($event)"

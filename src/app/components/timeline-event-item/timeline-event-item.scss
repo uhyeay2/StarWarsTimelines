@@ -135,6 +135,11 @@
   color: #8a8f9e;
 }
 
+.event-source-unit {
+  color: #ffd54a;
+  font-weight: 600;
+}
+
 .status-badge {
   font-size: 0.7rem;
   font-weight: 600;
@@ -263,4 +268,9 @@
   background: rgba(255, 213, 74, 0.15);
   border-color: #ffd54a;
   color: #ffd54a;
+}
+
+.source-chip {
+  display: inline-flex;
+  gap: 0.5rem;
 }

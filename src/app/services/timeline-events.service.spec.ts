@@ -22,6 +22,13 @@ const EVENT_DTO = [
       medium: 0,
       canonType: 2,
     },
+    sourceMaterialUnit: {
+      id: 'unit-1',
+      unitType: 0,
+      groupNumber: 1,
+      number: 1,
+      title: 'The Phantom Menace',
+    },
     characters: [{ id: 'c-1', name: 'Darth Maul' }, { id: 'c-2', name: 'Qui-Gon Jinn' }],
     locations: [{ id: 'l-1', name: 'Naboo' }],
     vehicles: [{ id: 'v-1', name: 'Sith Infiltrator' }],
@@ -61,6 +68,12 @@ describe('TimelineEventsService', () => {
           title: 'Star Wars: Episode I - The Phantom Menace',
           medium: 'Movie',
           sourceId: EPISODE_ONE,
+          unit: {
+            unitType: 'Episode',
+            groupNumber: 1,
+            number: 1,
+            title: 'The Phantom Menace',
+          },
         },
         locations: ['Naboo'],
         characters: ['Darth Maul', 'Qui-Gon Jinn'],
@@ -78,11 +91,13 @@ describe('TimelineEventsService', () => {
         ...EVENT_DTO[0],
         canonType: 0,
         displayDateEnd: '32 BBY',
+        sourceMaterialUnit: null,
       },
     ]);
 
     const events = await promise;
     expect(events[0].canon).toEqual(['Canon']);
     expect(events[0].displayDateEnd).toBe('32 BBY');
+    expect(events[0].source.unit).toBeUndefined();
   });
 });

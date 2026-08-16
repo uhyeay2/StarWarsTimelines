@@ -37,15 +37,15 @@
       </div>
 
       <div class="filter-group-options" role="listbox" aria-multiselectable="true">
-        @for (option of filteredOptions(); track option) {
+        @for (option of filteredOptions(); track option.value) {
           <label
             class="filter-option"
-            [class.filter-option--selected]="selected().includes(option)">
+            [class.filter-option--selected]="selected().includes(option.value)">
             <input
               type="checkbox"
-              [checked]="selected().includes(option)"
+              [checked]="selected().includes(option.value)"
               (change)="toggle(option)" />
-            <span class="filter-option-label">{{ option }}</span>
+            <span class="filter-option-label">{{ option.label }}</span>
           </label>
         }
         @if (filteredOptions().length === 0) {
