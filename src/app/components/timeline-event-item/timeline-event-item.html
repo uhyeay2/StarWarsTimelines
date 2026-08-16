@@ -1,4 +1,5 @@
 @let item = event();
+@let detailsId = 'event-details-' + item.id;
 
 <article class="timeline-event">
   <div class="event-marker" aria-hidden="true"></div>
@@ -7,12 +8,26 @@
       <time class="event-date">
         {{ item.displayDate }}@if (item.displayDateEnd) { – {{ item.displayDateEnd }} }
       </time>
-      <div class="event-canons">
-        @for (canon of item.canon; track canon) {
-          <span class="canon-badge" [class.canon-badge--canon]="canon === 'Canon'" [class.canon-badge--legends]="canon === 'Legends'">
-            {{ canon }}
-          </span>
-        }
+      <div class="event-meta-actions">
+        <div class="event-canons">
+          @for (canon of item.canon; track canon) {
+            <span class="canon-badge" [class.canon-badge--canon]="canon === 'Canon'" [class.canon-badge--legends]="canon === 'Legends'">
+              {{ canon }}
+            </span>
+          }
+        </div>
+        <button
+          type="button"
+          class="details-toggle"
+          [attr.aria-expanded]="detailsOpen()"
+          [attr.aria-controls]="detailsId"
+          (click)="toggleDetails()">
+          <span class="details-toggle-label">{{ detailsOpen() ? 'Hide details' : 'Show details' }}</span>
+          <span
+            class="details-toggle-chevron"
+            [class.details-toggle-chevron--open]="detailsOpen()"
+            aria-hidden="true">&#9662;</span>
+        </button>
       </div>
     </header>
 
@@ -50,59 +65,64 @@
           [class.status-badge--wish-listed]="trackingStatus === 'Wish Listed'">{{ trackingStatus }}</span>
       }
     </p>
-    <p class="event-description">{{ item.description }}</p>
 
-    @if (item.locations.length) {
-      <div class="event-detail">
-        <span class="detail-label">Locations</span>
-        <div class="detail-chips">
-          @for (location of item.locations; track location) {
-            <button
-              type="button"
-              class="chip"
-              [class.chip--selected]="selectedLocations().includes(location)"
-              [attr.aria-pressed]="selectedLocations().includes(location)"
-              (click)="emitToggle('locations', location)">
-              {{ location }}
-            </button>
-          }
-        </div>
-      </div>
-    }
+    @if (detailsOpen()) {
+      <div class="event-details" [id]="detailsId">
+        <p class="event-description">{{ item.description }}</p>
 
-    @if (item.characters.length) {
-      <div class="event-detail">
-        <span class="detail-label">Characters</span>
-        <div class="detail-chips">
-          @for (character of item.characters; track character) {
-            <button
-              type="button"
-              class="chip"
-              [class.chip--selected]="selectedCharacters().includes(character)"
-              [attr.aria-pressed]="selectedCharacters().includes(character)"
-              (click)="emitToggle('characters', character)">
-              {{ character }}
-            </button>
-          }
-        </div>
-      </div>
-    }
+        @if (item.locations.length) {
+          <div class="event-detail">
+            <span class="detail-label">Locations</span>
+            <div class="detail-chips">
+              @for (location of item.locations; track location) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedLocations().includes(location)"
+                  [attr.aria-pressed]="selectedLocations().includes(location)"
+                  (click)="emitToggle('locations', location)">
+                  {{ location }}
+                </button>
+              }
+            </div>
+          </div>
+        }
 
-    @if (item.vehicles.length) {
-      <div class="event-detail">
-        <span class="detail-label">Vehicles</span>
-        <div class="detail-chips">
-          @for (vehicle of item.vehicles; track vehicle) {
-            <button
-              type="button"
-              class="chip"
-              [class.chip--selected]="selectedVehicles().includes(vehicle)"
-              [attr.aria-pressed]="selectedVehicles().includes(vehicle)"
-              (click)="emitToggle('vehicles', vehicle)">
-              {{ vehicle }}
-            </button>
-          }
-        </div>
+        @if (item.characters.length) {
+          <div class="event-detail">
+            <span class="detail-label">Characters</span>
+            <div class="detail-chips">
+              @for (character of item.characters; track character) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedCharacters().includes(character)"
+                  [attr.aria-pressed]="selectedCharacters().includes(character)"
+                  (click)="emitToggle('characters', character)">
+                  {{ character }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (item.vehicles.length) {
+          <div class="event-detail">
+            <span class="detail-label">Vehicles</span>
+            <div class="detail-chips">
+              @for (vehicle of item.vehicles; track vehicle) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedVehicles().includes(vehicle)"
+                  [attr.aria-pressed]="selectedVehicles().includes(vehicle)"
+                  (click)="emitToggle('vehicles', vehicle)">
+                  {{ vehicle }}
+                </button>
+              }
+            </div>
+          </div>
+        }
       </div>
     }
   </div>

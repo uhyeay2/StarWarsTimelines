@@ -4,6 +4,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { vi } from 'vitest';
 import { TimelineEvent } from '../../models/timeline-event';
 import { LibraryItem } from '../../models/library-item';
+import { Medium } from '../../models/medium';
 import { TrackingStatus } from '../../models/tracking-status';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
@@ -89,6 +90,15 @@ describe('Timeline', () => {
       (el) => (el as HTMLElement).textContent,
     );
 
+  const openDetails = (title: string): void => {
+    const cards = [...fixture.nativeElement.querySelectorAll('app-timeline-event-item')];
+    const card = cards.find(
+      (el) => (el as HTMLElement).textContent?.includes(title),
+    ) as HTMLElement;
+    (card.querySelector('.details-toggle') as HTMLElement).click();
+    fixture.detectChanges();
+  };
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -160,6 +170,7 @@ describe('Timeline', () => {
 
   it('adds a value to a facet filter by clicking a chip on an event', () => {
     fixture.detectChanges();
+    openDetails('Both');
     const darthMaul = [...fixture.nativeElement.querySelectorAll('button.chip')].find(
       (chip) => chip.textContent?.trim() === 'Darth Maul',
     ) as HTMLElement;
@@ -171,6 +182,7 @@ describe('Timeline', () => {
 
   it('removes a value from a facet filter by clicking its selected chip again', () => {
     fixture.detectChanges();
+    openDetails('Both');
     const firstClick = [...fixture.nativeElement.querySelectorAll('button.chip')].find(
       (chip) => chip.textContent?.trim() === 'Darth Maul',
     ) as HTMLElement;
@@ -190,6 +202,7 @@ describe('Timeline', () => {
   it('highlights a chip on an event once its value is part of the filter', () => {
     component.updateFilter('locations', ['Naboo']);
     fixture.detectChanges();
+    openDetails('Both');
     const naboo = [...fixture.nativeElement.querySelectorAll('button.chip')].find(
       (chip) => chip.textContent?.trim() === 'Naboo',
     ) as HTMLElement;
@@ -316,8 +329,14 @@ describe('Timeline', () => {
     const trackedItems: LibraryItem[] = [];
     const libraryMock = {
       getTracked: vi.fn(() => of([...trackedItems])),
-      addTracked: vi.fn((_userId: string, id: string) => {
-        trackedItems.push({ id, title: 'Source', medium: 'Movie', status: 'Wish Listed', favorite: false });
+      addTracked: vi.fn((_userId: string, material: { id: string; title: string; medium: Medium }) => {
+        trackedItems.push({
+          id: material.id,
+          title: material.title,
+          medium: material.medium,
+          status: 'Wish Listed',
+          favorite: false,
+        });
         return of([...trackedItems]);
       }),
       setStatus: vi.fn((_userId: string, id: string, status: TrackingStatus) => {
@@ -353,7 +372,11 @@ describe('Timeline', () => {
     addButtons[0].click();
     fixture.detectChanges();
 
-    expect(libraryMock.addTracked).toHaveBeenCalledWith('user-padme', 'material-c');
+    expect(libraryMock.addTracked).toHaveBeenCalledWith('user-padme', {
+      id: 'material-c',
+      title: 'Source C',
+      medium: 'Movie',
+    });
     const selects = [...fixture.nativeElement.querySelectorAll('.status-select')] as HTMLSelectElement[];
     expect(selects.length).toBe(1);
     expect(selects[0].value).toBe('Wish Listed');

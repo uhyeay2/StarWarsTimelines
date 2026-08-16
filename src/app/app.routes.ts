@@ -15,6 +15,16 @@ export const routes: Routes = [
     loadComponent: () => import('./components/login-page/login-page').then((m) => m.LoginPage),
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./components/register-page/register-page').then((m) => m.RegisterPage),
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./components/verify-email-page/verify-email-page').then((m) => m.VerifyEmailPage),
+  },
+  {
     path: 'library',
     canActivate: [authGuard],
     children: [

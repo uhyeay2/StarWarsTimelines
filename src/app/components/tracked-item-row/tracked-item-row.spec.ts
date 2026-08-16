@@ -11,6 +11,18 @@ const ITEM: LibraryItem = {
   favorite: false,
 };
 
+const UNIT_ITEM: LibraryItem = {
+  id: 'material-episode-ii',
+  title: 'Star Wars: Episode II - Attack of the Clones',
+  medium: 'Movie',
+  status: 'In progress',
+  favorite: false,
+  units: [
+    { id: 'unit-1', unitType: 'Episode', number: 1, title: 'Attack of the Clones', isCompleted: true },
+    { id: 'unit-2', unitType: 'Episode', number: 2, title: 'Sneak Preview', isCompleted: false },
+  ],
+};
+
 describe('TrackedItemRow', () => {
   let component: TrackedItemRow;
   let fixture: ComponentFixture<TrackedItemRow>;
@@ -148,5 +160,39 @@ describe('TrackedItemRow', () => {
     fixture.detectChanges();
     const row = fixture.nativeElement.querySelector('.tracked-item-row') as HTMLElement;
     expect(row.classList.contains('tracked-item-row--dragging')).toBe(true);
+  });
+
+  it('shows unit checkboxes instead of a status select for unit-based items', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('select')).toBeNull();
+    expect(compiled.querySelector('.status-badge')?.textContent).toContain('In progress');
+
+    const checkboxes = compiled.querySelectorAll('.unit-checkbox') as NodeListOf<HTMLInputElement>;
+    expect(checkboxes.length).toBe(2);
+    expect(checkboxes[0].checked).toBe(true);
+    expect(checkboxes[1].checked).toBe(false);
+    expect(compiled.textContent).toContain('Episode 1: Attack of the Clones');
+    expect(compiled.textContent).toContain('Episode 2: Sneak Preview');
+  });
+
+  it('emits unitProgressChange when a unit checkbox changes', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM);
+    fixture.detectChanges();
+    const emissions: { unitId: string; isCompleted: boolean }[] = [];
+    component.unitProgressChange.subscribe((value) => emissions.push(value));
+
+    const checkbox = fixture.nativeElement.querySelectorAll('.unit-checkbox')[1] as HTMLInputElement;
+    checkbox.click();
+
+    expect(emissions).toEqual([{ unitId: 'unit-2', isCompleted: true }]);
+  });
+
+  it('still shows the status select for items without units', () => {
+    fixture.componentRef.setInput('item', ITEM);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('select')).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('.unit-checkbox').length).toBe(0);
   });
 });

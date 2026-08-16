@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { LibraryItem } from '../../models/library-item';
+import { LibraryItem, LibraryUnit } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
 @Component({
@@ -25,9 +25,23 @@ export class TrackedItemRow {
   readonly dragOver = output<DragEvent>();
   readonly dragEnd = output<void>();
   readonly drop = output<void>();
+  readonly unitProgressChange = output<{ unitId: string; isCompleted: boolean }>();
 
   onStatusChange(event: Event): void {
     this.statusChange.emit((event.target as HTMLSelectElement).value as TrackingStatus);
+  }
+
+  onUnitChange(unitId: string, event: Event): void {
+    this.unitProgressChange.emit({
+      unitId,
+      isCompleted: (event.target as HTMLInputElement).checked,
+    });
+  }
+
+  unitLabel(unit: LibraryUnit): string {
+    return unit.title
+      ? `${unit.unitType} ${unit.number}: ${unit.title}`
+      : `${unit.unitType} ${unit.number}`;
   }
 
   toggleFavorite(): void {

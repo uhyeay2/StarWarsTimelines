@@ -44,6 +44,51 @@
   gap: 0.5rem;
 }
 
+.event-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #c5c8d3;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.details-toggle:hover {
+  border-color: rgba(255, 213, 74, 0.6);
+  color: #fff;
+}
+
+.details-toggle-chevron {
+  color: #8a8f9e;
+  font-size: 0.65rem;
+  transition: transform 0.15s ease;
+}
+
+.details-toggle-chevron--open {
+  transform: rotate(180deg);
+}
+
+.event-details {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+}
+
 .canon-badge {
   font-size: 0.7rem;
   font-weight: 600;

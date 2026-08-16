@@ -151,7 +151,11 @@ export class Timeline {
       return;
     }
     this.libraryService
-      .addTracked(userId, sourceId)
+      .addTracked(userId, {
+        id: sourceId,
+        title: event.source.title,
+        medium: event.source.medium,
+      })
       .subscribe((items) => this.tracked.set(items));
   }
 

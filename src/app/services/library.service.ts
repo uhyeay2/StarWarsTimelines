@@ -1,55 +1,75 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, map, mergeMap } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { LibraryItem } from '../models/library-item';
-import { TrackingStatus } from '../models/tracking-status';
-import { LIBRARY_SEEDS, SOURCE_MATERIAL_CATALOG } from './library.data';
+import { Medium, mediumFromApiCode } from '../models/medium';
+import { statusFromApiCode, statusToApiCode, TrackingStatus } from '../models/tracking-status';
+import { unitTypeFromApiCode } from '../models/unit-type';
 
-interface UserLibraryData {
-  items: LibraryItem[];
+export interface CatalogMaterial {
+  id: string;
+  title: string;
+  medium: Medium;
+}
+
+interface LibraryUnitDto {
+  id: string;
+  unitType: number;
+  number: number;
+  title: string | null;
+  isCompleted: boolean;
+}
+
+interface LibraryItemDto {
+  sourceMaterialId: string;
+  title: string;
+  medium: number;
+  canonType: number;
+  status: number;
+  isFavorite: boolean;
+  units: readonly LibraryUnitDto[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class LibraryService {
-  private readonly stores = new Map<string, UserLibraryData>();
+  constructor(private readonly http: HttpClient) {}
 
-  private storeFor(userId: string): UserLibraryData {
-    let store = this.stores.get(userId);
-    if (!store) {
-      const seed = LIBRARY_SEEDS[userId] ?? { items: [] };
-      store = { items: seed.items.map((item) => ({ ...item })) };
-      this.stores.set(userId, store);
-    }
-    return store;
+  private urlFor(userId: string): string {
+    return `${environment.apiBaseUrl}/api/users/${userId}/source-materials`;
+  }
+
+  private mapItem(dto: LibraryItemDto): LibraryItem {
+    return {
+      id: dto.sourceMaterialId,
+      title: dto.title,
+      medium: mediumFromApiCode(dto.medium),
+      status: statusFromApiCode(dto.status),
+      favorite: dto.isFavorite,
+      units: dto.units.map((unit) => ({
+        id: unit.id,
+        unitType: unitTypeFromApiCode(unit.unitType),
+        number: unit.number,
+        title: unit.title ?? undefined,
+        isCompleted: unit.isCompleted,
+      })),
+    };
+  }
+
+  private getLibrary(userId: string): Observable<readonly LibraryItem[]> {
+    return this.http
+      .get<readonly LibraryItemDto[]>(this.urlFor(userId))
+      .pipe(map((items) => items.map((item) => this.mapItem(item))));
   }
 
   getTracked(userId: string): Observable<readonly LibraryItem[]> {
-    return of(this.storeFor(userId).items);
+    return this.getLibrary(userId);
   }
 
-  addTracked(
-    userId: string,
-    materialId: string,
-    status: TrackingStatus = 'Wish Listed',
-  ): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    if (store.items.some((item) => item.id === materialId)) {
-      return of(store.items);
-    }
-    const material = SOURCE_MATERIAL_CATALOG.find((entry) => entry.id === materialId);
-    if (!material) {
-      return of(store.items);
-    }
-    store.items = [
-      ...store.items,
-      {
-        id: material.id,
-        title: material.title,
-        medium: material.medium,
-        status,
-        favorite: false,
-      },
-    ];
-    return of(store.items);
+  addTracked(userId: string, material: CatalogMaterial): Observable<readonly LibraryItem[]> {
+    return this.http
+      .post(this.urlFor(userId), { sourceMaterialId: material.id })
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 
   setStatus(
@@ -57,69 +77,46 @@ export class LibraryService {
     materialId: string,
     status: TrackingStatus,
   ): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    store.items = store.items.map((item) =>
-      item.id === materialId ? { ...item, status } : item,
-    );
-    return of(store.items);
+    return this.http
+      .put<void>(`${this.urlFor(userId)}/${materialId}`, { status: statusToApiCode(status) })
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 
-  toggleFavorite(userId: string, materialId: string): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    store.items = store.items.map((item) =>
-      item.id === materialId ? { ...item, favorite: !item.favorite } : item,
-    );
-    return of(store.items);
+  setFavorite(
+    userId: string,
+    materialId: string,
+    favorite: boolean,
+  ): Observable<readonly LibraryItem[]> {
+    return this.http
+      .put<void>(`${this.urlFor(userId)}/${materialId}`, { isFavorite: favorite })
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 
   removeTracked(userId: string, materialId: string): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    store.items = store.items.filter((item) => item.id !== materialId);
-    return of(store.items);
+    return this.http
+      .delete<void>(`${this.urlFor(userId)}/${materialId}`)
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 
-  moveTrackedItem(
+  setUnitProgress(
     userId: string,
     materialId: string,
-    direction: -1 | 1,
+    unitId: string,
+    isCompleted: boolean,
   ): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    const index = store.items.findIndex((item) => item.id === materialId);
-    if (index < 0) {
-      return of(store.items);
-    }
-    const status = store.items[index].status;
-    const group = store.items
-      .map((item, position) => ({ item, position }))
-      .filter(({ item }) => item.status === status);
-    const groupIndex = group.findIndex(({ item }) => item.id === materialId);
-    const targetGroupIndex = groupIndex + direction;
-    if (targetGroupIndex < 0 || targetGroupIndex >= group.length) {
-      return of(store.items);
-    }
-    const from = group[groupIndex].position;
-    const to = group[targetGroupIndex].position;
-    const next = [...store.items];
-    [next[from], next[to]] = [next[to], next[from]];
-    store.items = next;
-    return of(store.items);
+    return this.http
+      .put<void>(`${this.urlFor(userId)}/${materialId}/units/${unitId}`, { isCompleted })
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 
   reorderTrackedItem(
     userId: string,
-    draggedId: string,
-    targetId: string,
+    orderedSourceMaterialIds: readonly string[],
   ): Observable<readonly LibraryItem[]> {
-    const store = this.storeFor(userId);
-    const from = store.items.findIndex((item) => item.id === draggedId);
-    const to = store.items.findIndex((item) => item.id === targetId);
-    if (from < 0 || to < 0 || from === to) {
-      return of(store.items);
-    }
-    const next = [...store.items];
-    const [dragged] = next.splice(from, 1);
-    next.splice(to, 0, dragged);
-    store.items = next;
-    return of(store.items);
+    return this.http
+      .put<void>(`${this.urlFor(userId)}/reorder`, {
+        orderedSourceMaterialIds: [...orderedSourceMaterialIds],
+      })
+      .pipe(mergeMap(() => this.getLibrary(userId)));
   }
 }

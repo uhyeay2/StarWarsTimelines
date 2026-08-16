@@ -28,14 +28,33 @@
         [attr.aria-label]="'Move ' + item().title + ' down'"
         (click)="emitMoveDown()">▼</button>
     }
-    <select
-      class="status-select"
-      [attr.aria-label]="'Status for ' + item().title"
-      (change)="onStatusChange($event)">
-      @for (status of statuses; track status) {
-        <option [value]="status" [selected]="item().status === status">{{ status }}</option>
-      }
-    </select>
+    @if ((item().units?.length ?? 0) > 0) {
+      <span class="status-badge">{{ item().status }}</span>
+      <ul class="unit-list" [attr.aria-label]="'Progress for ' + item().title">
+        @for (unit of item().units; track unit.id) {
+          <li class="unit-item">
+            <label>
+              <input
+                type="checkbox"
+                class="unit-checkbox"
+                [checked]="unit.isCompleted"
+                [attr.aria-label]="'Mark ' + unitLabel(unit) + ' complete'"
+                (change)="onUnitChange(unit.id, $event)" />
+              <span class="unit-label">{{ unitLabel(unit) }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+    } @else {
+      <select
+        class="status-select"
+        [attr.aria-label]="'Status for ' + item().title"
+        (change)="onStatusChange($event)">
+        @for (status of statuses; track status) {
+          <option [value]="status" [selected]="item().status === status">{{ status }}</option>
+        }
+      </select>
+    }
     <button
       type="button"
       class="favorite-button"

@@ -1,103 +1,147 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { LibraryService } from './library.service';
+
+const BASE = `${environment.apiBaseUrl}/api/users/user-padme/source-materials`;
+
+const EPISODE_ONE = '00000000-0000-0000-0000-000000000001';
+const DARTH_BANE = '00000000-0000-0000-0000-000000000016';
+
+const LIBRARY_DTO = [
+  {
+    sourceMaterialId: EPISODE_ONE,
+    title: 'Star Wars: Episode I - The Phantom Menace',
+    medium: 0,
+    canonType: 2,
+    status: 1,
+    isFavorite: true,
+    units: [],
+  },
+  {
+    sourceMaterialId: DARTH_BANE,
+    title: 'Darth Bane: Path of Destruction',
+    medium: 1,
+    canonType: 1,
+    status: 2,
+    isFavorite: false,
+    units: [{ id: 'unit-1', unitType: 1, number: 1, title: 'The Menace', isCompleted: true }],
+  },
+];
 
 describe('LibraryService', () => {
   let service: LibraryService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideHttpClientTesting()],
+    });
     service = TestBed.inject(LibraryService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('returns the seeded tracked items for a known user', async () => {
-    const items = await firstValueFrom(service.getTracked('user-padme'));
-    expect(items.length).toBeGreaterThan(0);
-    expect(items[0].title).toBeTruthy();
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  it('returns an empty list for a user with no data', async () => {
-    const items = await firstValueFrom(service.getTracked('user-unknown'));
-    expect(items).toEqual([]);
+  it('maps library items from the API', async () => {
+    const promise = firstValueFrom(service.getTracked('user-padme'));
+    const request = httpMock.expectOne(BASE);
+    expect(request.request.method).toBe('GET');
+    request.flush(LIBRARY_DTO);
+
+    const items = await promise;
+    expect(items).toEqual([
+      {
+        id: EPISODE_ONE,
+        title: 'Star Wars: Episode I - The Phantom Menace',
+        medium: 'Movie',
+        status: 'Completed',
+        favorite: true,
+        units: [],
+      },
+      {
+        id: DARTH_BANE,
+        title: 'Darth Bane: Path of Destruction',
+        medium: 'Book',
+        status: 'Wish Listed',
+        favorite: false,
+        units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', isCompleted: true }],
+      },
+    ]);
   });
 
-  it('adds materials to tracking as Wish Listed and prevents duplicates', async () => {
-    const first = await firstValueFrom(service.addTracked('user-rey', 'material-darth-plagueis'));
-    expect(first.some((item) => item.id === 'material-darth-plagueis')).toBe(true);
-    expect(first.find((item) => item.id === 'material-darth-plagueis')?.status).toBe('Wish Listed');
-
-    const second = await firstValueFrom(service.addTracked('user-rey', 'material-darth-plagueis'));
-    expect(second.filter((item) => item.id === 'material-darth-plagueis').length).toBe(1);
-  });
-
-  it('ignores adding materials that are not in the catalog', async () => {
-    const before = await firstValueFrom(service.getTracked('user-rey'));
-    const after = await firstValueFrom(service.addTracked('user-rey', 'material-does-not-exist'));
-    expect(after).toEqual(before);
-  });
-
-  it('updates the status of a tracked item', async () => {
-    const before = await firstValueFrom(service.getTracked('user-padme'));
-    const target = before.find((item) => item.status !== 'Completed') ?? before[0];
-    const after = await firstValueFrom(service.setStatus('user-padme', target.id, 'Completed'));
-    expect(after.find((item) => item.id === target.id)?.status).toBe('Completed');
-    expect(before.find((item) => item.id === target.id)?.status).not.toBe('Completed');
-  });
-
-  it('toggles the favorite flag of a tracked item', async () => {
-    const before = await firstValueFrom(service.getTracked('user-padme'));
-    const target = before[0];
-    const after = await firstValueFrom(service.toggleFavorite('user-padme', target.id));
-    expect(after.find((item) => item.id === target.id)?.favorite).toBe(!target.favorite);
-  });
-
-  it('removes an item from tracking entirely', async () => {
-    const before = await firstValueFrom(service.getTracked('user-padme'));
-    const target = before[0];
-    const after = await firstValueFrom(service.removeTracked('user-padme', target.id));
-    expect(after.some((item) => item.id === target.id)).toBe(false);
-  });
-
-  it('moves a wish listed item within its status group', async () => {
-    const initial = await firstValueFrom(service.getTracked('user-padme'));
-    const wishListed = initial.filter((item) => item.status === 'Wish Listed');
-    const firstId = wishListed[0].id;
-    const secondId = wishListed[1].id;
-
-    const movedDown = await firstValueFrom(service.moveTrackedItem('user-padme', firstId, 1));
-    const movedWishListedDown = movedDown.filter((item) => item.status === 'Wish Listed');
-    expect(movedWishListedDown.map((item) => item.id)).toEqual([secondId, firstId, wishListed[2].id]);
-
-    const movedUp = await firstValueFrom(service.moveTrackedItem('user-padme', firstId, -1));
-    const movedWishListedUp = movedUp.filter((item) => item.status === 'Wish Listed');
-    expect(movedWishListedUp.map((item) => item.id)).toEqual(wishListed.map((item) => item.id));
-  });
-
-  it('clamps moves at the boundaries of the status group', async () => {
-    const initial = await firstValueFrom(service.getTracked('user-padme'));
-    const wishListed = initial.filter((item) => item.status === 'Wish Listed');
-    const lastId = wishListed[wishListed.length - 1].id;
-
-    const moved = await firstValueFrom(service.moveTrackedItem('user-padme', lastId, 1));
-    expect(moved).toEqual(initial);
-  });
-
-  it('reorders a wish listed item when dropped onto another', async () => {
-    const initial = await firstValueFrom(service.getTracked('user-padme'));
-    const wishListed = initial.filter((item) => item.status === 'Wish Listed');
-    const dragged = wishListed[2].id;
-    const target = wishListed[0].id;
-
-    const reordered = await firstValueFrom(service.reorderTrackedItem('user-padme', dragged, target));
-    const reorderedWishListed = reordered.filter((item) => item.status === 'Wish Listed');
-    expect(reorderedWishListed.map((item) => item.id)).toEqual([dragged, wishListed[0].id, wishListed[1].id]);
-  });
-
-  it('leaves the list unchanged when reordering onto itself', async () => {
-    const initial = await firstValueFrom(service.getTracked('user-padme'));
-    const reordered = await firstValueFrom(
-      service.reorderTrackedItem('user-padme', initial[0].id, initial[0].id),
+  it('adds a tracked item with the source material id', async () => {
+    const promise = firstValueFrom(
+      service.addTracked('user-padme', {
+        id: '00000000-0000-0000-0000-000000000002',
+        title: 'Star Wars: Episode II - Attack of the Clones',
+        medium: 'Movie',
+      }),
     );
-    expect(reordered).toEqual(initial);
+    const post = httpMock.expectOne(BASE);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ sourceMaterialId: '00000000-0000-0000-0000-000000000002' });
+    post.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
+  });
+
+  it('sets the status through the API', async () => {
+    const promise = firstValueFrom(service.setStatus('user-padme', EPISODE_ONE, 'Wish Listed'));
+    const put = httpMock.expectOne(`${BASE}/${EPISODE_ONE}`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ status: 2 });
+    put.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
+  });
+
+  it('sets the favorite flag through the API', async () => {
+    const promise = firstValueFrom(service.setFavorite('user-padme', EPISODE_ONE, false));
+    const put = httpMock.expectOne(`${BASE}/${EPISODE_ONE}`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ isFavorite: false });
+    put.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
+  });
+
+  it('removes a tracked item through the API', async () => {
+    const promise = firstValueFrom(service.removeTracked('user-padme', EPISODE_ONE));
+    const del = httpMock.expectOne(`${BASE}/${EPISODE_ONE}`);
+    expect(del.request.method).toBe('DELETE');
+    del.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
+  });
+
+  it('updates unit progress through the API', async () => {
+    const promise = firstValueFrom(service.setUnitProgress('user-padme', DARTH_BANE, 'unit-1', false));
+    const put = httpMock.expectOne(`${BASE}/${DARTH_BANE}/units/unit-1`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ isCompleted: false });
+    put.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
+  });
+
+  it('reorders the library through the API', async () => {
+    const ordered = [DARTH_BANE, EPISODE_ONE];
+    const promise = firstValueFrom(service.reorderTrackedItem('user-padme', ordered));
+    const put = httpMock.expectOne(`${BASE}/reorder`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ orderedSourceMaterialIds: ordered });
+    put.flush(null);
+    httpMock.expectOne(BASE).flush(LIBRARY_DTO);
+
+    await expect(promise).resolves.toHaveLength(2);
   });
 });

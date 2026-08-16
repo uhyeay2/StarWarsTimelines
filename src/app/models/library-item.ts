@@ -1,5 +1,14 @@
 import { Medium } from './medium';
 import { TrackingStatus } from './tracking-status';
+import { UnitType } from './unit-type';
+
+export interface LibraryUnit {
+  id: string;
+  unitType: UnitType;
+  number: number;
+  title?: string;
+  isCompleted: boolean;
+}
 
 export interface LibraryItem {
   id: string;
@@ -7,4 +16,5 @@ export interface LibraryItem {
   medium: Medium;
   status: TrackingStatus;
   favorite: boolean;
+  units?: readonly LibraryUnit[];
 }

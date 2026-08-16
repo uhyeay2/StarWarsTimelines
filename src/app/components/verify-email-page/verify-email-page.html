@@ -1,0 +1,19 @@
+<section class="verify-page">
+  <div class="verify-card">
+    @if (verifying()) {
+      <h1>Verifying your email</h1>
+      <p class="verify-hint">Please wait a moment…</p>
+    } @else if (success()) {
+      <h1>Email verified</h1>
+      <p class="verify-hint">Your email address is confirmed. You can now log in.</p>
+      <a routerLink="/login" class="btn btn-primary verify-btn">Go to log in</a>
+    } @else {
+      <h1>Verification failed</h1>
+      <p class="verify-error" role="alert">{{ error() }}</p>
+      <p class="verify-copy">
+        You can try again using the link in your email, or
+        <a routerLink="/login">log in</a> if you have already verified your address.
+      </p>
+    }
+  </div>
+</section>

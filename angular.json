@@ -34,7 +34,23 @@
             ]
           },
           "configurations": {
+            "qa": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.qa.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all"
+            },
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -62,6 +78,9 @@
           "configurations": {
             "production": {
               "buildTarget": "StarWarsTimelines:build:production"
+            },
+            "qa": {
+              "buildTarget": "StarWarsTimelines:build:qa"
             },
             "development": {
               "buildTarget": "StarWarsTimelines:build:development"

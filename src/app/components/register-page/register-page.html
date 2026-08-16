@@ -1,0 +1,100 @@
+<section class="register-page">
+  <div class="register-card">
+    @if (registeredEmail()) {
+      <h1>Check your inbox</h1>
+      <p class="register-hint">
+        We emailed a verification link to <strong>{{ registeredEmail() }}</strong>.
+      </p>
+      <p class="register-copy">
+        Click the link in the email to verify your address, then log in to start building your library.
+      </p>
+      <a routerLink="/login" class="btn btn-primary register-btn">Back to log in</a>
+    } @else {
+      <h1>Create your account</h1>
+      <p class="register-hint">Sign up to build your personal Star Wars library.</p>
+
+      <form (ngSubmit)="submit()" #registerForm="ngForm">
+        <label class="register-field">
+          <span>Username</span>
+          <input
+            name="username"
+            [(ngModel)]="username"
+            required
+            autocomplete="username" />
+        </label>
+
+        <label class="register-field">
+          <span>Display name <em class="register-optional">(optional)</em></span>
+          <input
+            name="displayName"
+            [(ngModel)]="displayName"
+            autocomplete="name" />
+        </label>
+
+        <label class="register-field">
+          <span>Email</span>
+          <input
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            required
+            autocomplete="email" />
+        </label>
+
+        <div class="register-field">
+          <span>Password</span>
+          <div class="password-input">
+            <input
+              name="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              [(ngModel)]="password"
+              required
+              minlength="6"
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              (click)="showPassword.set(!showPassword())">
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="register-field">
+          <span>Confirm password</span>
+          <div class="password-input">
+            <input
+              name="confirmPassword"
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              [(ngModel)]="confirmPassword"
+              required
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="password-toggle"
+              [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+              (click)="showConfirmPassword.set(!showConfirmPassword())">
+              {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          @if (!passwordsMatch()) {
+            <p class="register-field-error" role="alert">The passwords do not match.</p>
+          }
+        </div>
+
+        @if (error()) {
+          <p class="register-error" role="alert">{{ error() }}</p>
+        }
+
+        <button class="btn btn-primary" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Creating account…' : 'Sign up' }}
+        </button>
+      </form>
+
+      <p class="register-login">
+        Already have an account? <a routerLink="/login">Log in</a>
+      </p>
+    }
+  </div>
+</section>

@@ -33,7 +33,54 @@ describe('TimelineEventItem', () => {
     expect(component).toBeTruthy();
   });
 
+  it('hides the description and facet details by default', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.event-title')?.textContent).toContain('Test Event');
+    expect(compiled.querySelector('.event-description')).toBeNull();
+    expect(compiled.querySelector('.event-detail')).toBeNull();
+    expect(compiled.querySelectorAll('button.chip').length).toBe(0);
+    const toggle = compiled.querySelector('.details-toggle') as HTMLElement;
+    expect(toggle).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('reveals and hides the details via the toggle button', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggle = compiled.querySelector('.details-toggle') as HTMLElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('.event-description')).toBeTruthy();
+    expect(compiled.querySelectorAll('.event-detail').length).toBe(3);
+    expect(compiled.querySelectorAll('button.chip').length).toBe(3);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.textContent).toContain('Hide details');
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('.event-description')).toBeNull();
+    expect(compiled.querySelectorAll('button.chip').length).toBe(0);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('links the toggle button to the details region', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const toggle = compiled.querySelector('.details-toggle') as HTMLElement;
+    const controls = toggle.getAttribute('aria-controls');
+    expect(controls).toBeTruthy();
+
+    toggle.click();
+    fixture.detectChanges();
+    const details = compiled.querySelector('.event-details') as HTMLElement;
+    expect(details.id).toBe(controls);
+  });
+
   it('renders the event details', () => {
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.details-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.event-title')?.textContent).toContain('Test Event');
@@ -50,6 +97,8 @@ describe('TimelineEventItem', () => {
 
   it('renders location, character and vehicle chips as toggleable buttons', () => {
     fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.details-toggle') as HTMLElement).click();
+    fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const chips = [...compiled.querySelectorAll('button.chip')];
     expect(chips.length).toBe(3);
@@ -59,6 +108,8 @@ describe('TimelineEventItem', () => {
   it('highlights chips that are selected in the filters', () => {
     fixture.componentRef.setInput('selectedLocations', ['Tatooine']);
     fixture.componentRef.setInput('selectedCharacters', ['Luke Skywalker']);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.details-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const chips = [...compiled.querySelectorAll('button.chip')];
@@ -80,6 +131,8 @@ describe('TimelineEventItem', () => {
   it('emits a toggle event when a chip is clicked', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.details-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const falcon = [...compiled.querySelectorAll('button.chip')].find(

@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.verify-page {
+  display: flex;
+  justify-content: center;
+}
+
+.verify-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.verify-card h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem;
+  margin: 0 0 0.4rem;
+  color: #fff;
+}
+
+.verify-hint {
+  color: #c5c8d3;
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem;
+}
+
+.verify-copy {
+  color: #8a8f9e;
+  font-size: 0.85rem;
+  margin: 0 0 1.5rem;
+}
+
+.verify-copy a {
+  color: #ffd54a;
+}
+
+.verify-error {
+  color: #ff8a80;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.verify-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  text-align: center;
+}

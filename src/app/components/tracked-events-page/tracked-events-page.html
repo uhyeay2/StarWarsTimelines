@@ -60,14 +60,15 @@
                 [last]="$last"
                 [dragging]="draggedId() === item.id"
                 (statusChange)="setStatus(item.id, $event)"
-                (favoriteChange)="toggleFavorite(item.id)"
+                (favoriteChange)="toggleFavorite(item)"
                 (remove)="removeTracked(item.id)"
                 (moveUp)="moveTrackedItem(item.id, -1)"
                 (moveDown)="moveTrackedItem(item.id, 1)"
                 (dragStart)="onDragStart(item.id)"
                 (dragOver)="onDragOver($event)"
                 (dragEnd)="onDragEnd()"
-                (drop)="reorderTracked(item.id)" />
+                (drop)="reorderTracked(item.id)"
+                (unitProgressChange)="setUnitProgress(item.id, $event.unitId, $event.isCompleted)" />
             </li>
           }
         </ol>

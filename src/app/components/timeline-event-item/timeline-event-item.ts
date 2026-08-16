@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
@@ -27,6 +27,12 @@ export class TimelineEventItem {
   readonly toggleFacet = output<ToggleFacetEvent>();
   readonly addToLibrary = output<void>();
   readonly statusChange = output<TrackingStatus>();
+
+  readonly detailsOpen = signal(false);
+
+  toggleDetails(): void {
+    this.detailsOpen.update((isOpen) => !isOpen);
+  }
 
   emitToggle(key: ToggleableFacetKey, value: string): void {
     this.toggleFacet.emit({ key, value });
