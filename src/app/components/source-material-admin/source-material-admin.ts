@@ -4,12 +4,10 @@ import { Observable, catchError, finalize, of } from 'rxjs';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { CANON_TYPES, CanonType } from '../../models/canon-type';
+import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { MEDIA, Medium } from '../../models/medium';
 import { UNIT_TYPES, UnitType } from '../../models/unit-type';
-import {
-  CatalogService,
-  CreateSourceMaterialUnitInput,
-} from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog.service';
 
 interface UnitKey {
   materialId: string;

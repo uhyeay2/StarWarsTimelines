@@ -174,7 +174,7 @@ describe('CatalogService', () => {
     const request = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/characters/00000000-0000-0000-0000-100000000001'));
     request.flush(null, { status: 204, statusText: 'No Content' });
 
-    await expect(result).resolves.toBeUndefined();
+    await expect(result).resolves.toBeNull();
   });
 
   it('surfaces the problem detail when deleting a referenced character', async () => {
@@ -268,6 +268,6 @@ describe('CatalogService', () => {
     );
     request.flush(null, { status: 204, statusText: 'No Content' });
 
-    await expect(result).resolves.toBeUndefined();
+    await expect(result).resolves.toBeNull();
   });
 });
