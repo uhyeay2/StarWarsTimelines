@@ -36,21 +36,25 @@ describe('AccountSettingsPage', () => {
       imports: [AccountSettingsPage],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(AccountSettingsPage);
-    component = fixture.componentInstance;
-    httpMock = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    httpMock.verify();
+    httpMock?.verify();
   });
 
+  function createComponent(): void {
+    fixture = TestBed.createComponent(AccountSettingsPage);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+  }
+
   it('should create', () => {
+    createComponent();
     expect(component).toBeTruthy();
   });
 
   it('shows a login prompt when not logged in', () => {
+    createComponent();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
@@ -61,6 +65,7 @@ describe('AccountSettingsPage', () => {
 
   it('loads and renders the account details', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
 
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
@@ -89,6 +94,7 @@ describe('AccountSettingsPage', () => {
 
   it('surfaces an error when the account cannot be loaded', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
 
     httpMock.expectOne(ACCOUNT_URL).flush(
@@ -105,6 +111,7 @@ describe('AccountSettingsPage', () => {
 
   it('rejects a blank display name', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -119,6 +126,7 @@ describe('AccountSettingsPage', () => {
 
   it('updates the display name and stores the updated user', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -142,6 +150,7 @@ describe('AccountSettingsPage', () => {
 
   it('rejects an invalid email address', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -156,6 +165,7 @@ describe('AccountSettingsPage', () => {
 
   it('updates the email address and shows the verification message', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -178,6 +188,7 @@ describe('AccountSettingsPage', () => {
 
   it('surfaces a server error for a duplicate email', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -199,6 +210,7 @@ describe('AccountSettingsPage', () => {
 
   it('rejects a missing current password', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -214,6 +226,7 @@ describe('AccountSettingsPage', () => {
 
   it('rejects a short new password', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -232,6 +245,7 @@ describe('AccountSettingsPage', () => {
 
   it('rejects a mismatched new password', () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -248,6 +262,7 @@ describe('AccountSettingsPage', () => {
 
   it('changes the password and clears the form', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();
@@ -275,6 +290,7 @@ describe('AccountSettingsPage', () => {
 
   it('surfaces an error when the current password is incorrect', async () => {
     loginAsPadme();
+    createComponent();
     fixture.detectChanges();
     httpMock.expectOne(ACCOUNT_URL).flush(ACCOUNT_RESPONSE);
     fixture.detectChanges();

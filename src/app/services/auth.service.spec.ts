@@ -360,7 +360,7 @@ describe('AuthService', () => {
     });
     request.flush(null);
 
-    await expect(updatePromise).resolves.toBeUndefined();
+    await expect(updatePromise).resolves.toBeNull();
   });
 
   it('surfaces a server error when the current password is incorrect', async () => {

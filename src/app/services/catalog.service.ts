@@ -10,6 +10,7 @@ import { ApiVehicle } from '../models/api-vehicle';
 import { CanonType, canonTypeFromApiCode, canonTypeToApiCode } from '../models/canon-type';
 import { Medium, mediumFromApiCode, mediumToApiCode } from '../models/medium';
 import { UnitType, unitTypeFromApiCode, unitTypeToApiCode } from '../models/unit-type';
+import { readProblemDetail } from '../utils/problem-detail';
 
 interface SourceMaterialDto {
   id: string;
@@ -77,7 +78,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to create the character. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to create the character. Please try again.')),
           ),
         ),
       );
@@ -90,7 +91,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to update the character. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to update the character. Please try again.')),
           ),
         ),
       );
@@ -103,7 +104,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to delete the character. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to delete the character. Please try again.')),
           ),
         ),
         map(() => undefined),
@@ -117,7 +118,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to create the location. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to create the location. Please try again.')),
           ),
         ),
       );
@@ -130,7 +131,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to update the location. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to update the location. Please try again.')),
           ),
         ),
       );
@@ -143,7 +144,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to delete the location. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to delete the location. Please try again.')),
           ),
         ),
         map(() => undefined),
@@ -157,7 +158,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to create the vehicle. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to create the vehicle. Please try again.')),
           ),
         ),
       );
@@ -170,7 +171,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to update the vehicle. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to update the vehicle. Please try again.')),
           ),
         ),
       );
@@ -183,7 +184,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to delete the vehicle. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to delete the vehicle. Please try again.')),
           ),
         ),
         map(() => undefined),
@@ -201,7 +202,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to create the source material. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to create the source material. Please try again.')),
           ),
         ),
         map((item) => this.mapSourceMaterial(item)),
@@ -222,7 +223,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to update the source material. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to update the source material. Please try again.')),
           ),
         ),
         map((item) => this.mapSourceMaterial(item)),
@@ -237,7 +238,7 @@ export class CatalogService {
           throwError(
             () =>
               new Error(
-                this.readProblemDetail(error, 'Unable to delete the source material. Please try again.'),
+                readProblemDetail(error, 'Unable to delete the source material. Please try again.'),
               ),
           ),
         ),
@@ -260,7 +261,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to create the unit. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to create the unit. Please try again.')),
           ),
         ),
         map((item) => this.mapUnit(item)),
@@ -286,7 +287,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to update the unit. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to update the unit. Please try again.')),
           ),
         ),
         map((item) => this.mapUnit(item)),
@@ -300,7 +301,7 @@ export class CatalogService {
         catchError((error: HttpErrorResponse) =>
           throwError(
             () =>
-              new Error(this.readProblemDetail(error, 'Unable to delete the unit. Please try again.')),
+              new Error(readProblemDetail(error, 'Unable to delete the unit. Please try again.')),
           ),
         ),
         map(() => undefined),
@@ -325,10 +326,5 @@ export class CatalogService {
       number: item.number,
       title: item.title,
     };
-  }
-
-  private readProblemDetail(error: HttpErrorResponse, fallback: string): string {
-    const body = error.error as { detail?: string } | null;
-    return body?.detail || fallback;
   }
 }
