@@ -1,0 +1,260 @@
+<section class="source-material-admin">
+  <h2>Source materials</h2>
+
+  @if (loading()) {
+    <p class="source-admin-status" role="status">Loading…</p>
+  } @else if (loadError()) {
+    <p class="source-admin-error" role="alert">{{ loadError() }}</p>
+  } @else {
+    <form class="source-admin-add" (ngSubmit)="add()">
+      <label class="source-admin-field">
+        <span>Title</span>
+        <input name="newTitle" [(ngModel)]="newTitle" placeholder="Add a new source material…" />
+      </label>
+      <label class="source-admin-field">
+        <span>Medium</span>
+        <select name="newMedium" [(ngModel)]="newMedium">
+          @for (medium of media; track medium) {
+            <option [value]="medium">{{ medium }}</option>
+          }
+        </select>
+      </label>
+      <label class="source-admin-field">
+        <span>Canon</span>
+        <select name="newCanonType" [(ngModel)]="newCanonType">
+          @for (canonType of canonTypes; track canonType) {
+            <option [value]="canonType">{{ canonType }}</option>
+          }
+        </select>
+      </label>
+      <button class="btn btn-primary source-admin-add-button" type="submit" [disabled]="adding()">
+        {{ adding() ? 'Adding…' : 'Add' }}
+      </button>
+    </form>
+    @if (addError()) {
+      <p class="source-admin-error" role="alert">{{ addError() }}</p>
+    }
+
+    <label class="source-admin-search">
+      <span class="sr-only">Search source materials</span>
+      <input
+        name="search"
+        type="search"
+        placeholder="Search source materials…"
+        [(ngModel)]="searchTerm" />
+    </label>
+
+    <ul class="source-admin-list">
+      @for (material of filteredMaterials(); track material.id) {
+        <li class="source-admin-item">
+          @if (editId() === material.id) {
+            <form class="source-admin-edit" (ngSubmit)="saveEdit()">
+              <input
+                name="editTitle"
+                [(ngModel)]="editTitle"
+                aria-label="Renamed source material" />
+              <select name="editMedium" [(ngModel)]="editMedium" aria-label="Medium">
+                @for (medium of media; track medium) {
+                  <option [value]="medium">{{ medium }}</option>
+                }
+              </select>
+              <select name="editCanonType" [(ngModel)]="editCanonType" aria-label="Canon type">
+                @for (canonType of canonTypes; track canonType) {
+                  <option [value]="canonType">{{ canonType }}</option>
+                }
+              </select>
+              <button class="btn btn-small" type="submit" [disabled]="savingId() === material.id">
+                {{ savingId() === material.id ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+            </form>
+          } @else if (confirmDeleteId() === material.id) {
+            <div class="source-admin-delete-prompt">
+              <p>
+                Delete “{{ material.title }}”? This is blocked while it is referenced by a timeline
+                event or a user library.
+              </p>
+              <div class="source-admin-delete-actions">
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === material.id"
+                  (click)="confirmDelete()">
+                  {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
+                </button>
+                <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <div class="source-admin-top">
+              <div class="source-admin-item-main">
+                <button
+                  type="button"
+                  class="source-admin-expand"
+                  [class.source-admin-expand--open]="expandedMaterialId() === material.id"
+                  (click)="toggleUnits(material.id)"
+                  aria-label="Toggle units">
+                  {{ expandedMaterialId() === material.id ? '▾' : '▸' }}
+                </button>
+                <div class="source-admin-item-text">
+                  <span class="source-admin-title">{{ material.title }}</span>
+                  <span class="source-admin-meta">
+                    {{ material.medium }} · {{ material.canonType }}
+                  </span>
+                </div>
+              </div>
+              <div class="source-admin-actions">
+                <button class="btn btn-small" type="button" (click)="beginEdit(material)">
+                  Edit
+                </button>
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  (click)="requestDelete(material)">
+                  Delete
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (expandedMaterialId() === material.id && editId() !== material.id) {
+            <div class="unit-admin">
+              @if (unitsLoading()) {
+                <p class="source-admin-status" role="status">Loading units…</p>
+              } @else if (unitsError()) {
+                <p class="source-admin-error" role="alert">{{ unitsError() }}</p>
+              } @else {
+                <form class="unit-admin-add" (ngSubmit)="addUnit(material.id)">
+                  <label class="source-admin-field">
+                    <span class="sr-only">Unit type</span>
+                    <select name="newUnitType" [(ngModel)]="newUnitType">
+                      @for (unitType of unitTypes; track unitType) {
+                        <option [value]="unitType">{{ unitType }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label class="source-admin-field">
+                    <span class="sr-only">Group number</span>
+                    <input
+                      name="newUnitGroup"
+                      type="number"
+                      min="1"
+                      placeholder="Group"
+                      [(ngModel)]="newUnitGroup" />
+                  </label>
+                  <label class="source-admin-field">
+                    <span class="sr-only">Unit number</span>
+                    <input
+                      name="newUnitNumber"
+                      type="number"
+                      min="1"
+                      placeholder="Number"
+                      required
+                      [(ngModel)]="newUnitNumber" />
+                  </label>
+                  <label class="source-admin-field">
+                    <span class="sr-only">Unit title</span>
+                    <input
+                      name="newUnitTitle"
+                      [(ngModel)]="newUnitTitle"
+                      placeholder="Title (optional)" />
+                  </label>
+                  <button
+                    class="btn btn-small"
+                    type="submit"
+                    [disabled]="addingUnitFor() === material.id">
+                    {{ addingUnitFor() === material.id ? 'Adding…' : 'Add unit' }}
+                  </button>
+                </form>
+                @if (unitAddError()) {
+                  <p class="source-admin-error" role="alert">{{ unitAddError() }}</p>
+                }
+
+                <ul class="unit-admin-list">
+                  @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                    <li class="unit-admin-item">
+                      @if (unitEditKey()?.unitId === unit.id) {
+                        <form class="unit-admin-edit" (ngSubmit)="saveUnitEdit()">
+                          <select name="unitEditType" [(ngModel)]="unitEditType">
+                            @for (unitType of unitTypes; track unitType) {
+                              <option [value]="unitType">{{ unitType }}</option>
+                            }
+                          </select>
+                          <input
+                            name="unitEditGroup"
+                            type="number"
+                            min="1"
+                            placeholder="Group"
+                            [(ngModel)]="unitEditGroup" />
+                          <input
+                            name="unitEditNumber"
+                            type="number"
+                            min="1"
+                            required
+                            [(ngModel)]="unitEditNumber" />
+                          <input
+                            name="unitEditTitle"
+                            [(ngModel)]="unitEditTitle"
+                            placeholder="Title (optional)" />
+                          <button
+                            class="btn btn-small"
+                            type="submit"
+                            [disabled]="unitSavingKey()?.unitId === unit.id">
+                            {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
+                          </button>
+                          <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
+                            Cancel
+                          </button>
+                        </form>
+                      } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
+                        <span class="unit-admin-delete-prompt">
+                          Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
+                          timeline event or user progress.
+                          <button
+                            class="btn btn-small btn-danger"
+                            type="button"
+                            [disabled]="unitDeletingKey()?.unitId === unit.id"
+                            (click)="confirmUnitDelete()">
+                            {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
+                          </button>
+                          <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
+                            Cancel
+                          </button>
+                        </span>
+                      } @else {
+                        <span class="unit-admin-label">
+                          <span class="unit-admin-type">{{ unit.unitType }}</span>
+                          {{ unitLabel(unit) }}
+                        </span>
+                        <div class="unit-admin-actions">
+                          <button
+                            class="btn btn-small"
+                            type="button"
+                            (click)="beginUnitEdit(material.id, unit)">
+                            Edit
+                          </button>
+                          <button
+                            class="btn btn-small btn-danger"
+                            type="button"
+                            (click)="requestUnitDelete(material.id, unit)">
+                            Delete
+                          </button>
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+    @if (searchTerm() && filteredMaterials().length === 0 && materials().length > 0) {
+      <p class="source-admin-status" role="status">No source materials match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="source-admin-error" role="alert">{{ actionError() }}</p>
+    }
+  }
+</section>

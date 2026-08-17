@@ -9,3 +9,7 @@ export function canonTypeFromApiCode(code: number): CanonType {
   }
   return canonType;
 }
+
+export function canonTypeToApiCode(canonType: CanonType): number {
+  return CANON_TYPES.indexOf(canonType);
+}

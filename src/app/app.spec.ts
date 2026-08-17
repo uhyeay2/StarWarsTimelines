@@ -43,4 +43,37 @@ describe('App', () => {
     expect(compiled.querySelector('a.user-name[routerLink="/settings"]')).toBeTruthy();
     expect(compiled.querySelector('button.logout-button')).toBeTruthy();
   });
+
+  it('shows the Admin link only to admins', async () => {
+    localStorage.setItem('starwars-timelines.token', 'token-value');
+    localStorage.setItem(
+      'starwars-timelines.user',
+      JSON.stringify({ id: 'user-admin', username: 'admin', displayName: 'Admin', role: 'Admin' }),
+    );
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[routerLink="/admin"]')).toBeTruthy();
+  });
+
+  it('hides the Admin link for non-admin users', async () => {
+    localStorage.setItem('starwars-timelines.token', 'token-value');
+    localStorage.setItem(
+      'starwars-timelines.user',
+      JSON.stringify({
+        id: 'user-padme',
+        username: 'padme',
+        displayName: 'Padmé Amidala',
+        role: 'Standard',
+      }),
+    );
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[routerLink="/admin"]')).toBeNull();
+  });
 });

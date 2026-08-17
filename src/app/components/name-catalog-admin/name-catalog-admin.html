@@ -1,0 +1,84 @@
+<section class="name-catalog">
+  <h2>{{ title() }}</h2>
+
+  @if (loading()) {
+    <p class="name-catalog-status" role="status">Loading…</p>
+  } @else if (loadError()) {
+    <p class="name-catalog-error" role="alert">{{ loadError() }}</p>
+  } @else {
+    <form class="name-catalog-add" (ngSubmit)="add()">
+      <label class="name-catalog-field">
+        <span class="sr-only">New {{ noun() }} name</span>
+        <input
+          name="newName"
+          [(ngModel)]="newName"
+          [placeholder]="'Add a new ' + noun() + '…'" />
+      </label>
+      <button class="btn btn-primary" type="submit" [disabled]="adding()">
+        {{ adding() ? 'Adding…' : 'Add' }}
+      </button>
+    </form>
+    @if (addError()) {
+      <p class="name-catalog-error" role="alert">{{ addError() }}</p>
+    }
+
+    <label class="name-catalog-search">
+      <span class="sr-only">Search {{ title() }}</span>
+      <input
+        name="search"
+        type="search"
+        [placeholder]="'Search ' + noun() + 's…'"
+        [(ngModel)]="searchTerm" />
+    </label>
+
+    <ul class="name-catalog-list">
+      @for (item of filteredItems(); track item.id) {
+        <li class="name-catalog-item">
+          @if (editId() === item.id) {
+            <form class="name-catalog-edit" (ngSubmit)="saveEdit()">
+              <input name="editName" [(ngModel)]="editName" aria-label="Renamed {{ noun() }}" />
+              <button class="btn btn-small" type="submit" [disabled]="savingId() === item.id">
+                {{ savingId() === item.id ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+            </form>
+          } @else if (confirmDeleteId() === item.id) {
+            <div class="name-catalog-delete-prompt">
+              <p>
+                Delete “{{ item.name }}”? This is blocked while the {{ noun() }} is linked to a
+                timeline event.
+              </p>
+              <div class="name-catalog-delete-actions">
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === item.id"
+                  (click)="confirmDelete()">
+                  {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
+                </button>
+                <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <span class="name-catalog-name">{{ item.name }}</span>
+            <div class="name-catalog-actions">
+              <button class="btn btn-small" type="button" (click)="beginEdit(item)">Edit</button>
+              <button
+                class="btn btn-small btn-danger"
+                type="button"
+                (click)="requestDelete(item)">
+                Delete
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+    @if (searchTerm() && filteredItems().length === 0 && items().length > 0) {
+      <p class="name-catalog-status" role="status">No {{ noun() }}s match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="name-catalog-error" role="alert">{{ actionError() }}</p>
+    }
+  }
+</section>

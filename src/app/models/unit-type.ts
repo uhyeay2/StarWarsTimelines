@@ -9,3 +9,7 @@ export function unitTypeFromApiCode(code: number): UnitType {
   }
   return unitType;
 }
+
+export function unitTypeToApiCode(unitType: UnitType): number {
+  return UNIT_TYPES.indexOf(unitType);
+}

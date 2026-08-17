@@ -5,6 +5,9 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
       <a routerLink="/timeline" routerLinkActive="active">Timeline</a>
       <a routerLink="/library" routerLinkActive="active">Library</a>
+      @if (user()?.role === 'Admin') {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
     </nav>
     <div class="site-user">
       @if (user(); as currentUser) {

@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: 2.5rem 1.5rem 4rem;
+  box-sizing: border-box;
+}
+
+.page-header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2rem;
+  margin: 0 0 0.4rem;
+  color: #fff;
+}
+
+.page-header p {
+  color: #8a8f9e;
+  margin: 0 0 2rem;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.admin-tab {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c5c8d3;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-tab:hover {
+  color: #fff;
+  border-color: rgba(255, 213, 74, 0.6);
+}
+
+.admin-tab--active {
+  background: rgba(255, 213, 74, 0.14);
+  border-color: #ffd54a;
+  color: #ffd54a;
+}

@@ -17,3 +17,7 @@ export function mediumFromApiCode(code: number): Medium {
   }
   return medium;
 }
+
+export function mediumToApiCode(medium: Medium): number {
+  return MEDIA.indexOf(medium);
+}
