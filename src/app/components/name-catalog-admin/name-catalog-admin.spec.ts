@@ -2,15 +2,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { CatalogService } from '../../services/catalog.service';
 import { NameCatalogAdmin } from './name-catalog-admin';
 
-const CHARACTERS_URL = `${environment.apiBaseUrl}/api/characters`;
+const CHARACTERS_URL = '/api/characters';
 
 describe('NameCatalogAdmin', () => {
   let component: NameCatalogAdmin;
   let fixture: ComponentFixture<NameCatalogAdmin>;
   let httpMock: HttpTestingController;
+  let catalogService: CatalogService;
 
   beforeEach(async () => {
     sessionStorage.clear();
@@ -25,16 +26,24 @@ describe('NameCatalogAdmin', () => {
     fixture.componentRef.setInput('noun', 'character');
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
+    catalogService = TestBed.inject(CatalogService);
     fixture.detectChanges();
 
-    const initial = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-    initial.flush([]);
+    // Flush the initial fetch triggered by ngOnInit.
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush([]);
     fixture.detectChanges();
   });
 
   afterEach(() => {
     httpMock.verify();
   });
+
+  /** Triggers a new fetch and flushes it with the given items. */
+  function loadCharacters(items: { id: string; name: string }[]): void {
+    catalogService.fetchCharacters();
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush(items);
+    fixture.detectChanges();
+  }
 
   it('renders the title and empty state', () => {
     expect(fixture.nativeElement.textContent).toContain('Characters');
@@ -59,8 +68,9 @@ describe('NameCatalogAdmin', () => {
     expect(post.request.body).toEqual({ name: 'Yoda' });
     post.flush({ id: 'char-yoda', name: 'Yoda' });
 
-    const reload = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-    reload.flush([{ id: 'char-yoda', name: 'Yoda' }]);
+    // Mutation auto-invalidates the cache → re-fetch fires automatically.
+    catalogService.fetchCharacters();
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush([{ id: 'char-yoda', name: 'Yoda' }]);
     fixture.detectChanges();
 
     expect(component.newName()).toBe('');
@@ -83,8 +93,8 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('edits an existing character and reloads the list', () => {
-    component.items.set([{ id: 'char-1', name: 'Old' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Old' }]);
+
     component.beginEdit({ id: 'char-1', name: 'Old' });
     component.editName.set('New name');
     fixture.detectChanges();
@@ -94,17 +104,15 @@ describe('NameCatalogAdmin', () => {
     expect(put.request.body).toEqual({ name: 'New name' });
     put.flush({ id: 'char-1', name: 'New name' });
 
-    const reload = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-    reload.flush([{ id: 'char-1', name: 'New name' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'New name' }]);
 
     expect(component.editId()).toBeNull();
     expect(component.items()).toEqual([{ id: 'char-1', name: 'New name' }]);
   });
 
   it('requires a name when saving an edit', () => {
-    component.items.set([{ id: 'char-1', name: 'Old' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Old' }]);
+
     component.beginEdit({ id: 'char-1', name: 'Old' });
     component.editName.set('   ');
     fixture.detectChanges();
@@ -115,29 +123,27 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('deletes a character after inline confirmation', () => {
-    component.items.set([{ id: 'char-1', name: 'Delete me' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Delete me' }]);
+
     component.requestDelete({ id: 'char-1', name: 'Delete me' });
     fixture.detectChanges();
     expect(component.confirmDeleteId()).toBe('char-1');
-    expect(fixture.nativeElement.textContent).toContain('Delete “Delete me”');
+    expect(fixture.nativeElement.textContent).toContain('Delete \u201CDelete me\u201D');
 
     component.confirmDelete();
 
     const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/characters/char-1'));
     del.flush(null, { status: 204, statusText: 'No Content' });
 
-    const reload = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-    reload.flush([]);
-    fixture.detectChanges();
+    loadCharacters([]);
 
     expect(component.confirmDeleteId()).toBeNull();
     expect(component.items()).toEqual([]);
   });
 
   it('surfaces the conflict message when deleting a linked character', () => {
-    component.items.set([{ id: 'char-1', name: 'Linked' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Linked' }]);
+
     component.requestDelete({ id: 'char-1', name: 'Linked' });
     component.confirmDelete();
 
@@ -157,8 +163,8 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('cancels an in-progress delete', () => {
-    component.items.set([{ id: 'char-1', name: 'Keep me' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Keep me' }]);
+
     component.requestDelete({ id: 'char-1', name: 'Keep me' });
     component.cancelDelete();
 
@@ -167,12 +173,11 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('filters items by search term', () => {
-    component.items.set([
+    loadCharacters([
       { id: 'char-1', name: 'Luke Skywalker' },
       { id: 'char-2', name: 'Leia Organa' },
       { id: 'char-3', name: 'Yoda' },
     ]);
-    fixture.detectChanges();
 
     component.searchTerm.set('leia');
     fixture.detectChanges();
@@ -183,8 +188,7 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('shows a no-results message when the search matches nothing', () => {
-    component.items.set([{ id: 'char-1', name: 'Yoda' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Yoda' }]);
 
     component.searchTerm.set('Vader');
     fixture.detectChanges();
@@ -194,11 +198,10 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('clears the search to show all items again', () => {
-    component.items.set([
+    loadCharacters([
       { id: 'char-1', name: 'Luke' },
       { id: 'char-2', name: 'Yoda' },
     ]);
-    fixture.detectChanges();
 
     component.searchTerm.set('Luke');
     fixture.detectChanges();
@@ -210,8 +213,7 @@ describe('NameCatalogAdmin', () => {
   });
 
   it('search is case-insensitive', () => {
-    component.items.set([{ id: 'char-1', name: 'Chewbacca' }]);
-    fixture.detectChanges();
+    loadCharacters([{ id: 'char-1', name: 'Chewbacca' }]);
 
     component.searchTerm.set('CHEWBACCA');
     fixture.detectChanges();

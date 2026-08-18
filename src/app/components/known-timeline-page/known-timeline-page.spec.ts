@@ -3,10 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
+import { CatalogEventService, CatalogEvent } from '../../services/catalog-event.service';
+import { CatalogService } from '../../services/catalog.service';
 import { LibraryService } from '../../services/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from '../timeline/timeline';
@@ -50,6 +52,21 @@ async function setup(currentUser: User | null): Promise<{
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
       { provide: TimelineEventsService, useValue: { getEvents: () => of([]) } },
+      {
+        provide: CatalogService,
+        useValue: {
+          fetchCharacters: () => {},
+          fetchLocations: () => {},
+          fetchVehicles: () => {},
+          characters: signal(null),
+          locations: signal(null),
+          vehicles: signal(null),
+        },
+      },
+      {
+        provide: CatalogEventService,
+        useValue: { events$: new Subject<CatalogEvent>().asObservable(), connected: signal(false) },
+      },
       {
         provide: ActivatedRoute,
         useValue: {

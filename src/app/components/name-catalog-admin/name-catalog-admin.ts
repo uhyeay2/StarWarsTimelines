@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, catchError, finalize, of } from 'rxjs';
 import { CatalogService } from '../../services/catalog.service';
@@ -23,10 +23,40 @@ export class NameCatalogAdmin implements OnInit {
 
   private readonly catalogService = inject(CatalogService);
 
-  readonly items = signal<readonly NameItem[]>([]);
-  readonly loading = signal(true);
-  readonly loadError = signal<string | null>(null);
   readonly searchTerm = signal('');
+
+  readonly items = computed(() => {
+    switch (this.catalog()) {
+      case 'characters':
+        return this.catalogService.characters() ?? [];
+      case 'locations':
+        return this.catalogService.locations() ?? [];
+      case 'vehicles':
+        return this.catalogService.vehicles() ?? [];
+    }
+  });
+
+  readonly loading = computed(() => {
+    switch (this.catalog()) {
+      case 'characters':
+        return this.catalogService.charactersLoading();
+      case 'locations':
+        return this.catalogService.locationsLoading();
+      case 'vehicles':
+        return this.catalogService.vehiclesLoading();
+    }
+  });
+
+  readonly loadError = computed(() => {
+    switch (this.catalog()) {
+      case 'characters':
+        return this.catalogService.charactersError();
+      case 'locations':
+        return this.catalogService.locationsError();
+      case 'vehicles':
+        return this.catalogService.vehiclesError();
+    }
+  });
 
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -52,6 +82,20 @@ export class NameCatalogAdmin implements OnInit {
     this.load();
   }
 
+  load(): void {
+    switch (this.catalog()) {
+      case 'characters':
+        this.catalogService.fetchCharacters();
+        break;
+      case 'locations':
+        this.catalogService.fetchLocations();
+        break;
+      case 'vehicles':
+        this.catalogService.fetchVehicles();
+        break;
+    }
+  }
+
   add(): void {
     if (this.adding()) {
       return;
@@ -75,7 +119,6 @@ export class NameCatalogAdmin implements OnInit {
       .subscribe((item) => {
         if (item) {
           this.newName.set('');
-          this.load();
         }
       });
   }
@@ -116,7 +159,6 @@ export class NameCatalogAdmin implements OnInit {
         if (updated) {
           this.editId.set(null);
           this.editName.set('');
-          this.load();
         }
       });
   }
@@ -149,34 +191,8 @@ export class NameCatalogAdmin implements OnInit {
       .subscribe(() => {
         if (this.actionError() === null) {
           this.confirmDeleteId.set(null);
-          this.load();
         }
       });
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.loadError.set(null);
-    this.fetch()
-      .pipe(
-        catchError((err: Error) => {
-          this.loadError.set(err.message);
-          return of([]);
-        }),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((items) => this.items.set(items));
-  }
-
-  private fetch(): Observable<readonly NameItem[]> {
-    switch (this.catalog()) {
-      case 'characters':
-        return this.catalogService.getCharacters();
-      case 'locations':
-        return this.catalogService.getLocations();
-      case 'vehicles':
-        return this.catalogService.getVehicles();
-    }
   }
 
   private create(name: string): Observable<NameItem | null> {

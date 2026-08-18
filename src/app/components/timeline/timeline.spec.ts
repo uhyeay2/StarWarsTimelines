@@ -1,14 +1,17 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { vi } from 'vitest';
+import { CatalogEvent } from '../../services/catalog-event.service';
 import { TimelineEvent } from '../../models/timeline-event';
 import { LibraryItem } from '../../models/library-item';
 import { Medium } from '../../models/medium';
 import { TrackingStatus } from '../../models/tracking-status';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
+import { CatalogEventService } from '../../services/catalog-event.service';
+import { CatalogService } from '../../services/catalog.service';
 import { LibraryService } from '../../services/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from './timeline';
@@ -57,6 +60,27 @@ describe('Timeline', () => {
   let fixture: ComponentFixture<Timeline>;
   let routeQueryParams: BehaviorSubject<ParamMap>;
   let routerMock: { navigate: ReturnType<typeof vi.fn> };
+  let catalogEvents$: Subject<CatalogEvent>;
+
+  function catalogMock(overrides?: {
+    characters?: { id: string; name: string }[];
+    locations?: { id: string; name: string }[];
+    vehicles?: { id: string; name: string }[];
+  }) {
+    return {
+      fetchCharacters: vi.fn(),
+      fetchLocations: vi.fn(),
+      fetchVehicles: vi.fn(),
+      characters: signal(overrides?.characters ?? null),
+      locations: signal(overrides?.locations ?? null),
+      vehicles: signal(overrides?.vehicles ?? null),
+    };
+  }
+
+  function catalogEventMock() {
+    catalogEvents$ = new Subject<CatalogEvent>();
+    return { events$: catalogEvents$.asObservable(), connected: signal(false) };
+  }
 
   function setupTimeline(providers: unknown[]): Promise<void> {
     TestBed.resetTestingModule();
@@ -71,6 +95,21 @@ describe('Timeline', () => {
       { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      {
+        provide: CatalogService,
+        useValue: catalogMock({
+          characters: [
+            { id: 'c1', name: 'Padme Amidala' },
+            { id: 'c2', name: 'Darth Maul' },
+          ],
+          locations: [
+            { id: 'l1', name: 'Naboo' },
+            { id: 'l2', name: 'Coruscant' },
+          ],
+          vehicles: [{ id: 'v1', name: 'Sith Infiltrator' }],
+        }),
+      },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -168,6 +207,8 @@ describe('Timeline', () => {
       { provide: TimelineEventsService, useValue: { getEvents: () => of(seasonEvents) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: CatalogService, useValue: catalogMock() },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -481,6 +522,8 @@ describe('Timeline', () => {
             ]),
         },
       },
+      { provide: CatalogService, useValue: catalogMock() },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -528,6 +571,8 @@ describe('Timeline', () => {
       { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       { provide: LibraryService, useValue: libraryMock },
+      { provide: CatalogService, useValue: catalogMock() },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
       {
         provide: ActivatedRoute,
         useValue: {
@@ -568,5 +613,170 @@ describe('Timeline', () => {
     expect((fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement).value).toBe(
       'Completed',
     );
+  });
+
+  it('shows catalog characters in the filter even if not in any events', async () => {
+    const catalog = catalogMock({
+      characters: [
+        { id: 'c1', name: 'Padme Amidala' },
+        { id: 'c2', name: 'Darth Maul' },
+        { id: 'c3', name: 'Yoda' },
+      ],
+    });
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: CatalogService, useValue: catalog },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.toggleAdvanced();
+    fixture.detectChanges();
+    const groups = [...fixture.nativeElement.querySelectorAll('app-filter-group')] as HTMLElement[];
+    const characterGroup = groups.find((g) => g.textContent?.includes('Characters'))!;
+    (characterGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    const labels = [...characterGroup.querySelectorAll('.filter-option-label')].map(
+      (el) => el.textContent?.trim(),
+    );
+    expect(labels).toContain('Yoda');
+    expect(catalog.fetchCharacters).toHaveBeenCalled();
+  });
+
+  it('shows catalog locations in the filter even if not in any events', async () => {
+    const catalog = catalogMock({
+      locations: [
+        { id: 'l1', name: 'Naboo' },
+        { id: 'l2', name: 'Tatooine' },
+      ],
+    });
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: CatalogService, useValue: catalog },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.toggleAdvanced();
+    fixture.detectChanges();
+    const groups = [...fixture.nativeElement.querySelectorAll('app-filter-group')] as HTMLElement[];
+    const locationGroup = groups.find((g) => g.textContent?.includes('Location'))!;
+    (locationGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    const labels = [...locationGroup.querySelectorAll('.filter-option-label')].map(
+      (el) => el.textContent?.trim(),
+    );
+    expect(labels).toContain('Tatooine');
+  });
+
+  it('selecting a catalog character not in any events yields zero results', async () => {
+    const catalog = catalogMock({
+      characters: [
+        { id: 'c1', name: 'Padme Amidala' },
+        { id: 'c2', name: 'Darth Maul' },
+        { id: 'c3', name: 'Yoda' },
+      ],
+    });
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: CatalogService, useValue: catalog },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.updateFilter('characters', ['Yoda']);
+    fixture.detectChanges();
+    expect(eventTitles()).toEqual([]);
+  });
+
+  it('refreshes events when a source-material SSE event arrives', async () => {
+    const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
+    await setupTimeline([
+      { provide: TimelineEventsService, useValue: { getEvents: () => eventsSubject } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
+      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: CatalogService, useValue: catalogMock() },
+      { provide: CatalogEventService, useValue: catalogEventMock() },
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: { queryParamMap: convertToParamMap({}) },
+          queryParamMap: routeQueryParams,
+        },
+      },
+      { provide: Router, useValue: routerMock },
+    ]);
+
+    fixture = TestBed.createComponent(Timeline);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+
+    const newEvent: TimelineEvent = {
+      id: 'new-event',
+      canon: ['Canon'],
+      title: 'New Event',
+      description: '',
+      source: { title: 'Source D', medium: 'Book', sourceId: 'material-d' },
+      locations: [],
+      characters: [],
+      vehicles: [],
+      year: 3,
+      displayDate: '3 ABY',
+    };
+    eventsSubject.next([...FIXTURE_EVENTS, newEvent]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(eventTitles()).toContain('New Event');
   });
 });

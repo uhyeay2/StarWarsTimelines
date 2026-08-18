@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Subject, filter, startWith, switchMap } from 'rxjs';
 import { CANON_VIEWS, CanonView, matchesCanonView } from '../../models/canon';
 import { LibraryItem } from '../../models/library-item';
 import {
@@ -14,6 +15,8 @@ import {
 } from '../../models/timeline-filters';
 import { TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth.service';
+import { CatalogEventService } from '../../services/catalog-event.service';
+import { CatalogService } from '../../services/catalog.service';
 import { LibraryService } from '../../services/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
@@ -32,8 +35,17 @@ export class Timeline {
   private readonly libraryService = inject(LibraryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly catalog = inject(CatalogService);
+  private readonly catalogEvent = inject(CatalogEventService);
   protected readonly views = CANON_VIEWS;
-  protected readonly events = toSignal(this.eventsService.getEvents(), { initialValue: [] });
+  private readonly refreshTrigger = new Subject<void>();
+  protected readonly events = toSignal(
+    this.refreshTrigger.pipe(
+      startWith(null as null),
+      switchMap(() => this.eventsService.getEvents()),
+    ),
+    { initialValue: [] },
+  );
   readonly filters = signal<TimelineFilters>(createEmptyFilters());
   private readonly user = this.auth.currentUser;
   private readonly tracked = signal<readonly LibraryItem[]>([]);
@@ -72,6 +84,20 @@ export class Timeline {
         .subscribe((items) => this.tracked.set(items));
       onCleanup(() => subscription.unsubscribe());
     });
+
+    effect(() => {
+      this.user();
+      this.catalog.fetchCharacters();
+      this.catalog.fetchLocations();
+      this.catalog.fetchVehicles();
+    });
+
+    this.catalogEvent.events$
+      .pipe(
+        filter((e) => e.entity === 'source-materials' || e.entity === 'source-material-units'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.refreshTrigger.next());
   }
 
   private applyViewParam(params: ParamMap): void {
@@ -95,7 +121,18 @@ export class Timeline {
     this.sourceFilteredEvents().filter((event) => matchesCanonView(event.canon, this.filters().canonView)),
   );
 
-  protected readonly facetOptions = computed(() => collectFacetOptions(this.continuityEvents()));
+  protected readonly facetOptions = computed(() => {
+    const eventFacets = collectFacetOptions(this.continuityEvents());
+    const characters = this.catalog.characters();
+    const locations = this.catalog.locations();
+    const vehicles = this.catalog.vehicles();
+    return {
+      ...eventFacets,
+      characters: (characters ?? []).map((c) => ({ value: c.name, label: c.name })),
+      locations: (locations ?? []).map((l) => ({ value: l.name, label: l.name })),
+      vehicles: (vehicles ?? []).map((v) => ({ value: v.name, label: v.name })),
+    };
+  });
 
   protected readonly sourceChipsByEvent = computed(() => {
     const sources = this.facetOptions().sources;

@@ -3,15 +3,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ApiSourceMaterial } from '../../models/api-source-material';
-import { environment } from '../../../environments/environment';
+import { CatalogService } from '../../services/catalog.service';
 import { SourceMaterialAdmin } from './source-material-admin';
 
-const MATERIALS_URL = `${environment.apiBaseUrl}/api/source-materials`;
+const MATERIALS_URL = '/api/source-materials';
 
 describe('SourceMaterialAdmin', () => {
   let component: SourceMaterialAdmin;
   let fixture: ComponentFixture<SourceMaterialAdmin>;
   let httpMock: HttpTestingController;
+  let catalogService: CatalogService;
 
   beforeEach(async () => {
     sessionStorage.clear();
@@ -23,10 +24,11 @@ describe('SourceMaterialAdmin', () => {
     fixture = TestBed.createComponent(SourceMaterialAdmin);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
+    catalogService = TestBed.inject(CatalogService);
     fixture.detectChanges();
 
-    const initial = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
-    initial.flush([]);
+    // Flush the initial fetch triggered by the constructor.
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([]);
     fixture.detectChanges();
   });
 
@@ -34,21 +36,22 @@ describe('SourceMaterialAdmin', () => {
     httpMock.verify();
   });
 
+  /** Triggers a new fetch and flushes it with the given items. */
+  function loadMaterials(items: { id: string; title: string; medium: number; canonType: number }[]): void {
+    catalogService.fetchSourceMaterials();
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush(items);
+    fixture.detectChanges();
+  }
+
   it('renders an empty state', () => {
     expect(component.materials()).toEqual([]);
     expect(fixture.nativeElement.textContent).toContain('Source materials');
   });
 
   it('lists source materials with their metadata', () => {
-    component.materials.set([
-      {
-        id: 'material-1',
-        title: 'Star Wars: Episode IV - A New Hope',
-        medium: 'Movie',
-        canonType: 'Canon & Legends',
-      },
+    loadMaterials([
+      { id: 'material-1', title: 'Star Wars: Episode IV - A New Hope', medium: 0, canonType: 2 },
     ]);
-    fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Star Wars: Episode IV - A New Hope');
@@ -75,8 +78,10 @@ describe('SourceMaterialAdmin', () => {
     expect(post.request.body).toEqual({ title: 'Ahsoka', medium: 4, canonType: 1 });
     post.flush({ id: 'material-9', title: 'Ahsoka', medium: 4, canonType: 1 });
 
-    const reload = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
-    reload.flush([{ id: 'material-9', title: 'Ahsoka', medium: 4, canonType: 1 }]);
+    // Mutation auto-invalidates the cache → re-fetch fires automatically.
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([
+      { id: 'material-9', title: 'Ahsoka', medium: 4, canonType: 1 },
+    ]);
     fixture.detectChanges();
 
     expect(component.newTitle()).toBe('');
@@ -98,10 +103,10 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('edits a source material and reloads', () => {
-    const material: ApiSourceMaterial = { id: 'material-1', title: 'Old', medium: 'Movie', canonType: 'Canon' };
-    component.materials.set([material]);
-    fixture.detectChanges();
-    component.beginEdit(material);
+    loadMaterials([{ id: 'material-1', title: 'Old', medium: 0, canonType: 0 }]);
+
+    const mapped: ApiSourceMaterial = { id: 'material-1', title: 'Old', medium: 'Movie', canonType: 'Canon' };
+    component.beginEdit(mapped);
     component.editTitle.set('Renamed');
     component.editCanonType.set('Legends');
     fixture.detectChanges();
@@ -111,8 +116,10 @@ describe('SourceMaterialAdmin', () => {
     expect(put.request.body).toEqual({ title: 'Renamed', medium: 0, canonType: 1 });
     put.flush({ id: 'material-1', title: 'Renamed', medium: 0, canonType: 1 });
 
-    const reload = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
-    reload.flush([{ id: 'material-1', title: 'Renamed', medium: 0, canonType: 1 }]);
+    // Mutation auto-invalidates → re-fetch.
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([
+      { id: 'material-1', title: 'Renamed', medium: 0, canonType: 1 },
+    ]);
     fixture.detectChanges();
 
     expect(component.editId()).toBeNull();
@@ -122,10 +129,10 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('surfaces the conflict message when deleting a referenced material', () => {
-    const material: ApiSourceMaterial = { id: 'material-1', title: 'Linked', medium: 'Movie', canonType: 'Canon' };
-    component.materials.set([material]);
-    fixture.detectChanges();
-    component.requestDelete(material);
+    loadMaterials([{ id: 'material-1', title: 'Linked', medium: 0, canonType: 0 }]);
+
+    const mapped: ApiSourceMaterial = { id: 'material-1', title: 'Linked', medium: 'Movie', canonType: 'Canon' };
+    component.requestDelete(mapped);
     component.confirmDelete();
 
     httpMock
@@ -140,10 +147,9 @@ describe('SourceMaterialAdmin', () => {
     expect(component.confirmDeleteId()).toBe('material-1');
   });
 
-  it('expands a material and loads its units', () => {
-    const material: ApiSourceMaterial = { id: 'material-1', title: 'The Mandalorian', medium: 'Live Action Show', canonType: 'Canon' };
-    component.materials.set([material]);
-    fixture.detectChanges();
+  it('expands a material and loads its units', async () => {
+    vi.useFakeTimers();
+    loadMaterials([{ id: 'material-1', title: 'The Mandalorian', medium: 4, canonType: 0 }]);
 
     component.toggleUnits('material-1');
 
@@ -160,6 +166,8 @@ describe('SourceMaterialAdmin', () => {
         title: 'Chapter 1: The Mandalorian',
       },
     ]);
+
+    await vi.advanceTimersByTimeAsync(100);
     fixture.detectChanges();
 
     expect(component.expandedMaterialId()).toBe('material-1');
@@ -174,26 +182,32 @@ describe('SourceMaterialAdmin', () => {
       },
     ]);
     expect(fixture.nativeElement.textContent).toContain('Chapter 1: The Mandalorian');
+    vi.useRealTimers();
   });
 
-  it('collapses a material on second toggle', () => {
-    component.materials.set([{ id: 'material-1', title: 'Ahsoka', medium: 'Live Action Show', canonType: 'Canon' } as const]);
-    fixture.detectChanges();
+  it('collapses a material on second toggle', async () => {
+    vi.useFakeTimers();
+    loadMaterials([{ id: 'material-1', title: 'Ahsoka', medium: 4, canonType: 0 }]);
 
     component.toggleUnits('material-1');
     const first = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/units'));
     first.flush([]);
+    await vi.advanceTimersByTimeAsync(100);
+    fixture.detectChanges();
 
     component.toggleUnits('material-1');
     expect(component.expandedMaterialId()).toBeNull();
+    vi.useRealTimers();
   });
 
-  it('adds a unit to a material and reloads its units', () => {
-    const material: ApiSourceMaterial = { id: 'material-1', title: 'The Mandalorian', medium: 'Live Action Show', canonType: 'Canon' };
-    component.materials.set([material]);
-    fixture.detectChanges();
+  it('adds a unit to a material and reloads its units', async () => {
+    vi.useFakeTimers();
+    loadMaterials([{ id: 'material-1', title: 'The Mandalorian', medium: 4, canonType: 0 }]);
+
     component.toggleUnits('material-1');
     httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/units')).flush([]);
+    await vi.advanceTimersByTimeAsync(100);
+    fixture.detectChanges();
 
     component.newUnitType.set('Episode');
     component.newUnitGroup.set(1);
@@ -226,10 +240,12 @@ describe('SourceMaterialAdmin', () => {
         title: 'Chapter 9: The Marshal',
       },
     ]);
+    await vi.advanceTimersByTimeAsync(100);
     fixture.detectChanges();
 
     expect(component.newUnitNumber()).toBeNull();
     expect(component.unitsByMaterial()['material-1']).toHaveLength(1);
+    vi.useRealTimers();
   });
 
   it('rejects a unit add without a valid number', () => {
@@ -241,7 +257,8 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('surfaces the conflict message when deleting a referenced unit', () => {
-    const material: ApiSourceMaterial = { id: 'material-1', title: 'The Mandalorian', medium: 'Live Action Show', canonType: 'Canon' };
+    loadMaterials([{ id: 'material-1', title: 'The Mandalorian', medium: 4, canonType: 0 }]);
+
     const unit = {
       id: 'unit-1',
       sourceMaterialId: 'material-1',
@@ -250,9 +267,9 @@ describe('SourceMaterialAdmin', () => {
       number: 1,
       title: 'Chapter 1: The Mandalorian',
     };
-    component.materials.set([material]);
     component.unitsByMaterial.set({ 'material-1': [unit] });
     fixture.detectChanges();
+
     component.requestUnitDelete('material-1', unit);
     component.confirmUnitDelete();
 
@@ -269,12 +286,11 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('filters materials by search term', () => {
-    component.materials.set([
-      { id: 'm-1', title: 'Star Wars: Episode IV', medium: 'Movie', canonType: 'Canon' },
-      { id: 'm-2', title: 'Ahsoka', medium: 'Live Action Show', canonType: 'Canon' },
-      { id: 'm-3', title: 'Darth Bane', medium: 'Book', canonType: 'Legends' },
+    loadMaterials([
+      { id: 'm-1', title: 'Star Wars: Episode IV', medium: 0, canonType: 0 },
+      { id: 'm-2', title: 'Ahsoka', medium: 4, canonType: 0 },
+      { id: 'm-3', title: 'Darth Bane', medium: 1, canonType: 1 },
     ]);
-    fixture.detectChanges();
 
     component.searchTerm.set('ahsoka');
     fixture.detectChanges();
@@ -287,8 +303,7 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('shows a no-results message when the search matches nothing', () => {
-    component.materials.set([{ id: 'm-1', title: 'Ahsoka', medium: 'Live Action Show', canonType: 'Canon' }]);
-    fixture.detectChanges();
+    loadMaterials([{ id: 'm-1', title: 'Ahsoka', medium: 4, canonType: 0 }]);
 
     component.searchTerm.set('Nonexistent');
     fixture.detectChanges();
@@ -298,8 +313,7 @@ describe('SourceMaterialAdmin', () => {
   });
 
   it('search is case-insensitive', () => {
-    component.materials.set([{ id: 'm-1', title: 'The Mandalorian', medium: 'Live Action Show', canonType: 'Canon' }]);
-    fixture.detectChanges();
+    loadMaterials([{ id: 'm-1', title: 'The Mandalorian', medium: 4, canonType: 0 }]);
 
     component.searchTerm.set('MANDALORIAN');
     fixture.detectChanges();

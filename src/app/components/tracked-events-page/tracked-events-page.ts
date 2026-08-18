@@ -27,7 +27,7 @@ export class TrackedEventsPage {
   readonly userId = computed(() => this.user()?.id ?? null);
   readonly tracked = signal<readonly LibraryItem[]>([]);
   readonly statuses = TRACKING_STATUSES;
-  readonly catalog = signal<readonly ApiSourceMaterial[]>([]);
+  readonly catalog = computed(() => this.catalogService.sourceMaterials() ?? []);
   readonly filters = FILTERS;
   readonly filter = signal<TrackedFilter>('All');
   readonly draggedId = signal<string | null>(null);
@@ -60,18 +60,14 @@ export class TrackedEventsPage {
       const userId = this.userId();
       if (!userId) {
         this.tracked.set([]);
-        this.catalog.set([]);
         return;
       }
+      this.catalogService.fetchSourceMaterials();
       const trackedSubscription = this.libraryService
         .getTracked(userId)
         .subscribe((items) => this.tracked.set(items));
-      const catalogSubscription = this.catalogService
-        .getSourceMaterials()
-        .subscribe((materials) => this.catalog.set(materials));
       onCleanup(() => {
         trackedSubscription.unsubscribe();
-        catalogSubscription.unsubscribe();
       });
     });
   }

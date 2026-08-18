@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
@@ -71,8 +71,18 @@ interface Mocks {
     setUnitProgress: ReturnType<typeof vi.fn>;
     reorderTrackedItem: ReturnType<typeof vi.fn>;
   };
-  catalogMock: {
-    getSourceMaterials: ReturnType<typeof vi.fn>;
+  catalogMock: ReturnType<typeof buildCatalogMock>;
+}
+
+function buildCatalogMock() {
+  const sourceMaterials = signal<
+    readonly { id: string; title: string; medium: string; canonType: string }[]
+  >([]);
+  return {
+    sourceMaterials,
+    fetchSourceMaterials: vi.fn().mockImplementation(() => {
+      sourceMaterials.set([...CATALOG]);
+    }),
   };
 }
 
@@ -90,11 +100,8 @@ async function setup(currentUser: User | null): Promise<{
     setUnitProgress: vi.fn(),
     reorderTrackedItem: vi.fn(),
   };
-  const catalogMock = {
-    getSourceMaterials: vi.fn(),
-  };
+  const catalogMock = buildCatalogMock();
   libraryMock.getTracked.mockReturnValue(of(TRACKED));
-  catalogMock.getSourceMaterials.mockReturnValue(of([...CATALOG]));
   libraryMock.setStatus.mockImplementation(
     (_userId: string, materialId: string, status: string) =>
       of(TRACKED.map((item) => (item.id === materialId ? { ...item, status } : item))),

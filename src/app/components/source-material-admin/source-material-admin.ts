@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, catchError, finalize, of } from 'rxjs';
 import { ApiSourceMaterial } from '../../models/api-source-material';
@@ -20,17 +20,18 @@ interface UnitKey {
   templateUrl: './source-material-admin.html',
   styleUrl: './source-material-admin.scss',
 })
-export class SourceMaterialAdmin implements OnInit {
+export class SourceMaterialAdmin {
   private readonly catalogService = inject(CatalogService);
 
   readonly media = MEDIA;
   readonly canonTypes = CANON_TYPES;
   readonly unitTypes = UNIT_TYPES;
 
-  readonly materials = signal<readonly ApiSourceMaterial[]>([]);
-  readonly loading = signal(true);
-  readonly loadError = signal<string | null>(null);
   readonly searchTerm = signal('');
+
+  readonly materials = computed(() => this.catalogService.sourceMaterials() ?? []);
+  readonly loading = computed(() => this.catalogService.sourceMaterialsLoading());
+  readonly loadError = computed(() => this.catalogService.sourceMaterialsError());
 
   readonly filteredMaterials = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -78,8 +79,8 @@ export class SourceMaterialAdmin implements OnInit {
   readonly unitDeletingKey = signal<UnitKey | null>(null);
   readonly actionError = signal<string | null>(null);
 
-  ngOnInit(): void {
-    this.load();
+  constructor() {
+    this.catalogService.fetchSourceMaterials();
   }
 
   add(): void {
@@ -110,7 +111,6 @@ export class SourceMaterialAdmin implements OnInit {
       .subscribe((created) => {
         if (created) {
           this.newTitle.set('');
-          this.load();
         }
       });
   }
@@ -158,7 +158,6 @@ export class SourceMaterialAdmin implements OnInit {
         if (updated) {
           this.editId.set(null);
           this.editTitle.set('');
-          this.load();
         }
       });
   }
@@ -192,7 +191,8 @@ export class SourceMaterialAdmin implements OnInit {
       .subscribe(() => {
         if (this.actionError() === null) {
           this.confirmDeleteId.set(null);
-          this.load();
+          this.expandedMaterialId.set(null);
+          this.unitsByMaterial.set({});
         }
       });
   }
@@ -351,39 +351,22 @@ export class SourceMaterialAdmin implements OnInit {
     };
   }
 
-  private load(): void {
-    this.loading.set(true);
-    this.loadError.set(null);
-    this.catalogService
-      .getSourceMaterials()
-      .pipe(
-        catchError((err: Error) => {
-          this.loadError.set(err.message);
-          return of([]);
-        }),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((materials) => {
-        this.materials.set(materials);
-        this.expandedMaterialId.set(null);
-        this.unitsByMaterial.set({});
-      });
-  }
-
   private loadUnits(materialId: string): void {
     this.unitsLoading.set(true);
     this.unitsError.set(null);
-    this.catalogService
-      .getSourceMaterialUnits(materialId)
-      .pipe(
-        catchError((err: Error) => {
-          this.unitsError.set(err.message);
-          return of([]);
-        }),
-        finalize(() => this.unitsLoading.set(false)),
-      )
-      .subscribe((units) => {
-        this.unitsByMaterial.update((map) => ({ ...map, [materialId]: units }));
-      });
+    const cache = this.catalogService.getUnitCache(materialId);
+    cache.fetch();
+    // Poll until the fetch completes, then sync the result into the local map.
+    const poll = setInterval(() => {
+      if (!cache.loading()) {
+        clearInterval(poll);
+        this.unitsLoading.set(false);
+        if (cache.error()) {
+          this.unitsError.set(cache.error());
+        } else {
+          this.unitsByMaterial.update((map) => ({ ...map, [materialId]: cache.data() ?? [] }));
+        }
+      }
+    }, 50);
   }
 }
