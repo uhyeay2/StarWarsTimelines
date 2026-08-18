@@ -3,8 +3,8 @@ import { RouterLink } from '@angular/router';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { LibraryItem } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
-import { AuthService } from '../../services/auth.service';
-import { CatalogService } from '../../services/catalog.service';
+import { AuthService } from '../../services/auth/auth.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TrackedItemRow } from '../tracked-item-row/tracked-item-row';
 

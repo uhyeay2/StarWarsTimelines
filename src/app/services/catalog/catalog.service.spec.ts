@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { CatalogError, EntityInUseError } from '../models/catalog/catalog-error';
+import { CatalogError, EntityInUseError } from '../../models/catalog/catalog-error';
 import { CatalogService } from './catalog.service';
 
 describe('CatalogService', () => {

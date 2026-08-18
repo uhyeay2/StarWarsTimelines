@@ -16,27 +16,27 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { ApiCharacter } from '../models/api-character';
-import { ApiLocation } from '../models/api-location';
-import { ApiSourceMaterial } from '../models/api-source-material';
-import { ApiSourceMaterialUnit } from '../models/api-source-material-unit';
-import { ApiVehicle } from '../models/api-vehicle';
-import { CanonType, canonTypeFromApiCode, canonTypeToApiCode } from '../models/canon-type';
-import { CatalogError, EntityInUseError } from '../models/catalog/catalog-error';
-import { CreateSourceMaterialInput } from '../models/catalog/create-source-material-input';
-import { CreateSourceMaterialUnitInput } from '../models/catalog/create-source-material-unit-input';
-import { Medium, mediumFromApiCode, mediumToApiCode } from '../models/medium';
-import { UnitType, unitTypeFromApiCode, unitTypeToApiCode } from '../models/unit-type';
-import { readProblemDetail } from '../utils/problem-detail';
-import { SignalCache } from '../utils/signal-cache';
-import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog/catalog.dto';
-import { LoggerService } from './logging/logger.service';
+import { environment } from '../../../environments/environment';
+import { ApiCharacter } from '../../models/api-character';
+import { ApiLocation } from '../../models/api-location';
+import { ApiSourceMaterial } from '../../models/api-source-material';
+import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
+import { ApiVehicle } from '../../models/api-vehicle';
+import { CanonType, canonTypeFromApiCode, canonTypeToApiCode } from '../../models/canon-type';
+import { CatalogError, EntityInUseError } from '../../models/catalog/catalog-error';
+import { CreateSourceMaterialInput } from '../../models/catalog/create-source-material-input';
+import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
+import { Medium, mediumFromApiCode, mediumToApiCode } from '../../models/medium';
+import { UnitType, unitTypeFromApiCode, unitTypeToApiCode } from '../../models/unit-type';
+import { readProblemDetail } from '../../utils/problem-detail';
+import { SignalCache } from '../../utils/signal-cache';
+import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog.dto';
+import { LoggerService } from '../logging/logger.service';
 
 /** Re-export so existing consumers can import from this module. */
-export type { CreateSourceMaterialInput } from '../models/catalog/create-source-material-input';
+export type { CreateSourceMaterialInput } from '../../models/catalog/create-source-material-input';
 /** Re-export so existing consumers can import from this module. */
-export type { CreateSourceMaterialUnitInput } from '../models/catalog/create-source-material-unit-input';
+export type { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 
 /** Base URL for all catalog API endpoints. */
 const BASE = `${environment.apiBaseUrl}/api`;

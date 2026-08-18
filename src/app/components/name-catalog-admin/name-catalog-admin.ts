@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable, catchError, finalize, of } from 'rxjs';
-import { CatalogService } from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 
 interface NameItem {
   id: string;

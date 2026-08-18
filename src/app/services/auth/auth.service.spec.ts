@@ -2,8 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { User } from '../models/user';
+import { environment } from '../../../environments/environment';
+import { User } from '../../models/user';
 import { AuthService } from './auth.service';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;

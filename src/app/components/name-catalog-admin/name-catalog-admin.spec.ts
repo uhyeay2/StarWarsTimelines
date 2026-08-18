@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { CatalogService } from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 import { NameCatalogAdmin } from './name-catalog-admin';
 
 const CHARACTERS_URL = '/api/characters';

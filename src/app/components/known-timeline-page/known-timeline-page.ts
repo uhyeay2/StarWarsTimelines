@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LibraryItem } from '../../models/library-item';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
 import { Timeline } from '../timeline/timeline';
 

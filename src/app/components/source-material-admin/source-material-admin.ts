@@ -7,7 +7,7 @@ import { CANON_TYPES, CanonType } from '../../models/canon-type';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { MEDIA, Medium } from '../../models/medium';
 import { UNIT_TYPES, UnitType } from '../../models/unit-type';
-import { CatalogService } from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 
 interface UnitKey {
   materialId: string;

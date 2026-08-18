@@ -22,8 +22,8 @@
 import { Injectable, effect, inject, OnDestroy, signal } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuthService } from './auth.service';
-import { CatalogService } from './catalog.service';
+import { AuthService } from './auth/auth.service';
+import { CatalogService } from './catalog/catalog.service';
 import { LoggerService } from './logging/logger.service';
 import { STORAGE_KEYS, StorageService } from './storage.service';
 

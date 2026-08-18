@@ -11,7 +11,7 @@ import {
   switchMap,
   take,
 } from 'rxjs';
-import { AuthService } from './services/auth.service';
+import { AuthService } from './services/auth/auth.service';
 
 let refreshInProgress$: BehaviorSubject<boolean> | null = null;
 

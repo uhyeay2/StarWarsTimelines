@@ -12,17 +12,17 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { AuthError, AuthErrorCode } from '../models/auth/auth-error';
-import { RegisterRequest } from '../models/auth/register-request';
-import { User, UserRole, USER_ROLES } from '../models/user';
-import { readProblemDetail } from '../utils/problem-detail';
-import { AccountResponse, LoginResponse, RefreshTokenResponse } from './auth/auth.dto';
-import { LoggerService } from './logging/logger.service';
-import { STORAGE_KEYS, StorageService } from './storage.service';
+import { environment } from '../../../environments/environment';
+import { AuthError, AuthErrorCode } from '../../models/auth/auth-error';
+import { RegisterRequest } from '../../models/auth/register-request';
+import { User, UserRole, USER_ROLES } from '../../models/user';
+import { readProblemDetail } from '../../utils/problem-detail';
+import { AccountResponse, LoginResponse, RefreshTokenResponse } from './auth.dto';
+import { LoggerService } from '../logging/logger.service';
+import { STORAGE_KEYS, StorageService } from '../storage.service';
 
 /** Re-export so existing consumers can import from this module. */
-export type { RegisterRequest } from '../models/auth/register-request';
+export type { RegisterRequest } from '../../models/auth/register-request';
 
 /**
  * Handles authentication, registration, and account-management operations.

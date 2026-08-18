@@ -4,8 +4,8 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
-import { AuthService } from '../../services/auth.service';
-import { CatalogService } from '../../services/catalog.service';
+import { AuthService } from '../../services/auth/auth.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TrackedEventsPage } from './tracked-events-page';
 

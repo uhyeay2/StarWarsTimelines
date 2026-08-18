@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ApiSourceMaterial } from '../../models/api-source-material';
-import { CatalogService } from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 import { SourceMaterialAdmin } from './source-material-admin';
 
 const MATERIALS_URL = '/api/source-materials';

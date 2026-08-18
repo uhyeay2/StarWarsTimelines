@@ -14,9 +14,9 @@ import {
   TimelineFilters,
 } from '../../models/timeline-filters';
 import { TrackingStatus } from '../../models/tracking-status';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
-import { CatalogService } from '../../services/catalog.service';
+import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
