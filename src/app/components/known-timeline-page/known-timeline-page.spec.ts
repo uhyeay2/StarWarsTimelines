@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService, CatalogEvent } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
-import { TimelineEventsService } from '../../services/timeline-events.service';
+import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { Timeline } from '../timeline/timeline';
 import { KnownTimelinePage } from './known-timeline-page';
 
@@ -51,7 +51,7 @@ async function setup(currentUser: User | null): Promise<{
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
-      { provide: TimelineEventsService, useValue: { getEvents: () => of([]) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]) } },
       {
         provide: CatalogService,
         useValue: {

@@ -13,7 +13,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
-import { TimelineEventsService } from '../../services/timeline-events.service';
+import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { Timeline } from './timeline';
 
 const FIXTURE_EVENTS: readonly TimelineEvent[] = [
@@ -92,7 +92,7 @@ describe('Timeline', () => {
     routeQueryParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
     routerMock = { navigate: vi.fn() };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       {
@@ -204,7 +204,7 @@ describe('Timeline', () => {
       },
     ];
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(seasonEvents) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(seasonEvents) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalogMock() },
@@ -505,7 +505,7 @@ describe('Timeline', () => {
   it('shows the tracking status select on events when the user is logged in', async () => {
     const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       {
         provide: LibraryService,
@@ -568,7 +568,7 @@ describe('Timeline', () => {
       }),
     };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       { provide: LibraryService, useValue: libraryMock },
       { provide: CatalogService, useValue: catalogMock() },
@@ -624,7 +624,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -666,7 +666,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -708,7 +708,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -737,7 +737,7 @@ describe('Timeline', () => {
   it('refreshes events when a source-material SSE event arrives', async () => {
     const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents: () => eventsSubject } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalogMock() },

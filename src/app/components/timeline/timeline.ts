@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { Subject, filter, startWith, switchMap } from 'rxjs';
+import { Subject, catchError, filter, of, startWith, switchMap } from 'rxjs';
 import { CANON_VIEWS, CanonView, matchesCanonView } from '../../models/canon';
 import { LibraryItem } from '../../models/library-item';
 import {
@@ -18,7 +18,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
-import { TimelineEventsService } from '../../services/timeline-events.service';
+import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../filter-group/filter-group';
@@ -42,7 +42,9 @@ export class Timeline {
   protected readonly events = toSignal(
     this.refreshTrigger.pipe(
       startWith(null as null),
-      switchMap(() => this.eventsService.getEvents()),
+      switchMap(() =>
+        this.eventsService.getEvents$().pipe(catchError(() => of([] as readonly TimelineEvent[]))),
+      ),
     ),
     { initialValue: [] },
   );
