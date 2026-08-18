@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -8,7 +9,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { LibraryService } from '../../services/library.service';
 import { TrackedEventsPage } from './tracked-events-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
 
 const CATALOG = [
   {
@@ -144,7 +145,7 @@ async function setup(currentUser: User | null): Promise<{
     imports: [TrackedEventsPage],
     providers: [
       provideRouter([]),
-      { provide: AuthService, useValue: { currentUser$: of(currentUser) as Observable<User | null> } },
+      { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: libraryMock },
       { provide: CatalogService, useValue: catalogMock },
     ],

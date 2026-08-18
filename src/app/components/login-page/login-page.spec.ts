@@ -14,7 +14,7 @@ describe('LoginPage', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [LoginPage],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -158,8 +158,17 @@ describe('LoginPage', () => {
     fixture.detectChanges();
     component.login();
     httpMock.expectOne(LOGIN_URL).flush({
-      token: 'token-value',
+      accessToken: 'token-value',
+      refreshToken: 'refresh-token-value',
       user: { id: 'luke', username: 'luke', displayName: 'Luke Skywalker', role: 0 },
+    });
+    httpMock.expectOne(`${environment.apiBaseUrl}/api/users/luke`).flush({
+      id: 'luke',
+      username: 'luke',
+      displayName: 'Luke Skywalker',
+      email: 'luke@example.com',
+      emailVerified: true,
+      role: 0,
     });
     await new Promise((resolve) => setTimeout(resolve, 100));
     fixture.detectChanges();

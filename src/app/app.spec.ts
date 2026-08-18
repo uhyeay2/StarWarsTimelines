@@ -6,7 +6,7 @@ import { routes } from './app.routes';
 
 describe('App', () => {
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter(routes), provideHttpClient()],
@@ -30,10 +30,10 @@ describe('App', () => {
   });
 
   it('links the user name to account settings when logged in', async () => {
-    localStorage.setItem('starwars-timelines.token', 'token-value');
-    localStorage.setItem(
+    sessionStorage.setItem('starwars-timelines.token', 'token-value');
+    sessionStorage.setItem(
       'starwars-timelines.user',
-      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' }),
+      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
     );
 
     const fixture = TestBed.createComponent(App);
@@ -45,8 +45,8 @@ describe('App', () => {
   });
 
   it('shows the Admin link only to admins', async () => {
-    localStorage.setItem('starwars-timelines.token', 'token-value');
-    localStorage.setItem(
+    sessionStorage.setItem('starwars-timelines.token', 'token-value');
+    sessionStorage.setItem(
       'starwars-timelines.user',
       JSON.stringify({ id: 'user-admin', username: 'admin', displayName: 'Admin', role: 'Admin' }),
     );
@@ -59,8 +59,8 @@ describe('App', () => {
   });
 
   it('hides the Admin link for non-admin users', async () => {
-    localStorage.setItem('starwars-timelines.token', 'token-value');
-    localStorage.setItem(
+    sessionStorage.setItem('starwars-timelines.token', 'token-value');
+    sessionStorage.setItem(
       'starwars-timelines.user',
       JSON.stringify({
         id: 'user-padme',

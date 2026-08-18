@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -5,14 +6,14 @@ import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
 import { LibraryPage } from './library-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
 
 async function setup(currentUser: User | null): Promise<ComponentFixture<LibraryPage>> {
   await TestBed.configureTestingModule({
     imports: [LibraryPage],
     providers: [
       provideRouter([]),
-      { provide: AuthService, useValue: { currentUser$: of(currentUser) } },
+      { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
     ],
   }).compileComponents();
 

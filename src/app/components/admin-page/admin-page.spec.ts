@@ -10,7 +10,7 @@ describe('AdminPage', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [AdminPage],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],

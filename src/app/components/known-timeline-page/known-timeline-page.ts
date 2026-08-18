@@ -1,5 +1,4 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { LibraryItem } from '../../models/library-item';
 import { AuthService } from '../../services/auth.service';
@@ -16,7 +15,7 @@ export class KnownTimelinePage {
   private readonly auth = inject(AuthService);
   private readonly libraryService = inject(LibraryService);
 
-  readonly user = toSignal(this.auth.currentUser$);
+  readonly user = this.auth.currentUser;
   readonly userId = computed(() => this.user()?.id ?? null);
   readonly tracked = signal<readonly LibraryItem[]>([]);
 

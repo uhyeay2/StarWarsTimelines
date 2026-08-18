@@ -18,10 +18,10 @@ const ACCOUNT_RESPONSE = {
 };
 
 function loginAsPadme(): void {
-  localStorage.setItem('starwars-timelines.token', 'token-value');
-  localStorage.setItem(
+  sessionStorage.setItem('starwars-timelines.token', 'token-value');
+  sessionStorage.setItem(
     'starwars-timelines.user',
-    JSON.stringify({ id: USER_ID, username: 'padme', displayName: 'Padmé Amidala' }),
+    JSON.stringify({ id: USER_ID, username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
   );
 }
 
@@ -31,7 +31,7 @@ describe('AccountSettingsPage', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [AccountSettingsPage],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
@@ -143,7 +143,7 @@ describe('AccountSettingsPage', () => {
     expect(component.displayNameSaved()).toBe(true);
     expect(component.account()?.displayName).toBe('Queen Amidala');
     expect(fixture.nativeElement.textContent).toContain('Your display name was updated.');
-    expect(JSON.parse(localStorage.getItem('starwars-timelines.user')!).displayName).toBe(
+    expect(JSON.parse(sessionStorage.getItem('starwars-timelines.user')!).displayName).toBe(
       'Queen Amidala',
     );
   });

@@ -13,7 +13,7 @@ describe('RegisterPage', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [RegisterPage],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],

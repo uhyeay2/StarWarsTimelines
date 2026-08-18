@@ -13,7 +13,7 @@ describe('NameCatalogAdmin', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [NameCatalogAdmin],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],

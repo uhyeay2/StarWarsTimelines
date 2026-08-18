@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -11,7 +12,7 @@ import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from '../timeline/timeline';
 import { KnownTimelinePage } from './known-timeline-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
 
 const TRACKED: LibraryItem[] = [
   {
@@ -46,7 +47,7 @@ async function setup(currentUser: User | null): Promise<{
     imports: [KnownTimelinePage],
     providers: [
       provideRouter([]),
-      { provide: AuthService, useValue: { currentUser$: of(currentUser) as Observable<User | null> } },
+      { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
       { provide: TimelineEventsService, useValue: { getEvents: () => of([]) } },
       {

@@ -1,5 +1,4 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { LibraryItem } from '../../models/library-item';
@@ -24,7 +23,7 @@ export class TrackedEventsPage {
   private readonly libraryService = inject(LibraryService);
   private readonly catalogService = inject(CatalogService);
 
-  readonly user = toSignal(this.auth.currentUser$);
+  readonly user = this.auth.currentUser;
   readonly userId = computed(() => this.user()?.id ?? null);
   readonly tracked = signal<readonly LibraryItem[]>([]);
   readonly statuses = TRACKING_STATUSES;

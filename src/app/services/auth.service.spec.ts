@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
@@ -10,16 +10,28 @@ const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 const REGISTER_URL = `${environment.apiBaseUrl}/api/auth/register`;
 const VERIFY_EMAIL_URL = `${environment.apiBaseUrl}/api/auth/verify-email`;
 const RESEND_VERIFICATION_URL = `${environment.apiBaseUrl}/api/auth/resend-verification-email`;
+const ACCOUNT_URL = `${environment.apiBaseUrl}/api/users`;
 const TOKEN = 'token-value';
+const REFRESH_TOKEN = 'refresh-token-value';
+
+const PADME_ID = '22222222-0000-0000-0000-000000000000';
+const PADME_ACCOUNT = {
+  id: PADME_ID,
+  username: 'padme',
+  displayName: 'Padmé Amidala',
+  email: 'padme@example.com',
+  emailVerified: true,
+  role: 0,
+};
 
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -35,37 +47,44 @@ describe('AuthService', () => {
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ username: 'padme', password: 'padme123' });
     request.flush({
-      token: TOKEN,
-      user: {
-        id: '22222222-0000-0000-0000-000000000000',
-        username: 'padme',
-        displayName: 'Padmé Amidala',
-        role: 0,
-      },
+      accessToken: TOKEN,
+      refreshToken: REFRESH_TOKEN,
+      user: { id: PADME_ID, username: 'padme', displayName: 'Padmé Amidala', role: 0 },
     });
+
+    // The login chains getAccount() to fetch the full profile.
+    const accountReq = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}`);
+    accountReq.flush(PADME_ACCOUNT);
 
     const user = await loginPromise;
     expect(user).toEqual({
-      id: '22222222-0000-0000-0000-000000000000',
+      id: PADME_ID,
       username: 'padme',
       displayName: 'Padmé Amidala',
+      email: 'padme@example.com',
+      emailVerified: true,
       role: 'Standard',
     });
     expect(service.isLoggedIn()).toBe(true);
     expect(service.getToken()).toBe(TOKEN);
-    expect(localStorage.getItem('starwars-timelines.token')).toBe(TOKEN);
+    expect(sessionStorage.getItem('starwars-timelines.token')).toBe(TOKEN);
   });
 
   it('maps the admin role', async () => {
+    const ADMIN_ID = '11111111-0000-0000-0000-000000000000';
     const loginPromise = firstValueFrom(service.login('admin', 'admin123'));
     httpMock.expectOne(LOGIN_URL).flush({
-      token: TOKEN,
-      user: {
-        id: '11111111-0000-0000-0000-000000000000',
-        username: 'admin',
-        displayName: 'Administrator',
-        role: 1,
-      },
+      accessToken: TOKEN,
+      refreshToken: REFRESH_TOKEN,
+      user: { id: ADMIN_ID, username: 'admin', displayName: 'Administrator', role: 1 },
+    });
+    httpMock.expectOne(`${ACCOUNT_URL}/${ADMIN_ID}`).flush({
+      id: ADMIN_ID,
+      username: 'admin',
+      displayName: 'Administrator',
+      email: 'admin@example.com',
+      emailVerified: true,
+      role: 1,
     });
 
     const user = await loginPromise;
@@ -192,8 +211,17 @@ describe('AuthService', () => {
   it('logs out and clears the current user and token', async () => {
     const loginPromise = firstValueFrom(service.login('rey', 'rey123'));
     httpMock.expectOne(LOGIN_URL).flush({
-      token: TOKEN,
+      accessToken: TOKEN,
+      refreshToken: REFRESH_TOKEN,
       user: { id: 'rey', username: 'rey', displayName: 'Rey', role: 0 },
+    });
+    httpMock.expectOne(`${ACCOUNT_URL}/rey`).flush({
+      id: 'rey',
+      username: 'rey',
+      displayName: 'Rey',
+      email: 'rey@example.com',
+      emailVerified: true,
+      role: 0,
     });
     await loginPromise;
 
@@ -203,71 +231,72 @@ describe('AuthService', () => {
     expect(service.getToken()).toBeNull();
   });
 
-  it('exposes the current user through the observable', async () => {
-    const users: (User | null)[] = [];
-    const subscription = service.currentUser$.subscribe((user) => users.push(user));
+  it('exposes the current user through the signal', async () => {
+    expect(service.currentUser()).toBeNull();
 
     const loginPromise = firstValueFrom(service.login('luke', 'luke123'));
     httpMock.expectOne(LOGIN_URL).flush({
-      token: TOKEN,
+      accessToken: TOKEN,
+      refreshToken: REFRESH_TOKEN,
       user: { id: 'luke', username: 'luke', displayName: 'Luke Skywalker', role: 0 },
     });
+    httpMock.expectOne(`${ACCOUNT_URL}/luke`).flush({
+      id: 'luke',
+      username: 'luke',
+      displayName: 'Luke Skywalker',
+      email: 'luke@example.com',
+      emailVerified: true,
+      role: 0,
+    });
     await loginPromise;
-    await lastValueFrom(service.logout());
-    subscription.unsubscribe();
-
-    expect(users).toEqual([
-      null,
+    expect(service.currentUser()).toEqual(
       expect.objectContaining({ username: 'luke', displayName: 'Luke Skywalker' }),
-      null,
-    ]);
+    );
+
+    await lastValueFrom(service.logout());
+    expect(service.currentUser()).toBeNull();
   });
 
   it('restores a stored session on creation', () => {
-    localStorage.setItem('starwars-timelines.token', TOKEN);
-    localStorage.setItem(
+    sessionStorage.setItem('starwars-timelines.token', TOKEN);
+    sessionStorage.setItem(
       'starwars-timelines.user',
-      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' }),
+      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
     );
 
-    const restored = new AuthService(TestBed.inject(HttpClient));
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const restored = TestBed.inject(AuthService);
 
     expect(restored.isLoggedIn()).toBe(true);
     expect(restored.getToken()).toBe(TOKEN);
   });
 
   it('fetches the account details and stores the user', async () => {
-    const fetchPromise = firstValueFrom(service.getAccount('22222222-0000-0000-0000-000000000000'));
-    const request = httpMock.expectOne(
-      `${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000`,
-    );
+    const fetchPromise = firstValueFrom(service.getAccount(PADME_ID));
+    const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}`);
     expect(request.request.method).toBe('GET');
-    request.flush({
-      id: '22222222-0000-0000-0000-000000000000',
-      username: 'padme',
-      displayName: 'Padmé Amidala',
-      email: 'padme@example.com',
-      emailVerified: true,
-      role: 0,
-    });
+    request.flush(PADME_ACCOUNT);
 
     const account = await fetchPromise;
     expect(account).toEqual({
-      id: '22222222-0000-0000-0000-000000000000',
+      id: PADME_ID,
       username: 'padme',
       displayName: 'Padmé Amidala',
       email: 'padme@example.com',
       emailVerified: true,
       role: 'Standard',
     });
-    expect(JSON.parse(localStorage.getItem('starwars-timelines.user')!)).toEqual(
+    expect(JSON.parse(sessionStorage.getItem('starwars-timelines.user')!)).toEqual(
       expect.objectContaining({ email: 'padme@example.com', emailVerified: true }),
     );
   });
 
   it('surfaces a server error when the account cannot be loaded', async () => {
     const fetchPromise = firstValueFrom(service.getAccount('unknown-id'));
-    httpMock.expectOne(`${environment.apiBaseUrl}/api/users/unknown-id`).flush(
+    httpMock.expectOne(`${ACCOUNT_URL}/unknown-id`).flush(
       { detail: 'No user with the requested identifier was found.' },
       { status: 404, statusText: 'Not Found' },
     );
@@ -279,60 +308,42 @@ describe('AuthService', () => {
 
   it('updates the display name and stores the updated user', async () => {
     const updatePromise = firstValueFrom(
-      service.updateDisplayName('22222222-0000-0000-0000-000000000000', 'Queen Amidala'),
+      service.updateDisplayName(PADME_ID, 'Queen Amidala'),
     );
-    const request = httpMock.expectOne(
-      `${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000/display-name`,
-    );
+    const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/display-name`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ displayName: 'Queen Amidala' });
-    request.flush({
-      id: '22222222-0000-0000-0000-000000000000',
-      username: 'padme',
-      displayName: 'Queen Amidala',
-      email: 'padme@example.com',
-      emailVerified: true,
-      role: 0,
-    });
+    request.flush({ ...PADME_ACCOUNT, displayName: 'Queen Amidala' });
 
     const account = await updatePromise;
     expect(account.displayName).toBe('Queen Amidala');
-    expect(JSON.parse(localStorage.getItem('starwars-timelines.user')!).displayName).toBe(
+    expect(JSON.parse(sessionStorage.getItem('starwars-timelines.user')!).displayName).toBe(
       'Queen Amidala',
     );
   });
 
   it('updates the email address and reports the unverified state', async () => {
     const updatePromise = firstValueFrom(
-      service.updateEmail('22222222-0000-0000-0000-000000000000', 'queen@example.com'),
+      service.updateEmail(PADME_ID, 'queen@example.com'),
     );
-    const request = httpMock.expectOne(
-      `${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000/email`,
-    );
+    const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/email`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ email: 'queen@example.com' });
-    request.flush({
-      id: '22222222-0000-0000-0000-000000000000',
-      username: 'padme',
-      displayName: 'Padmé Amidala',
-      email: 'queen@example.com',
-      emailVerified: false,
-      role: 0,
-    });
+    request.flush({ ...PADME_ACCOUNT, email: 'queen@example.com', emailVerified: false });
 
     const account = await updatePromise;
     expect(account.email).toBe('queen@example.com');
     expect(account.emailVerified).toBe(false);
-    expect(JSON.parse(localStorage.getItem('starwars-timelines.user')!)).toEqual(
+    expect(JSON.parse(sessionStorage.getItem('starwars-timelines.user')!)).toEqual(
       expect.objectContaining({ email: 'queen@example.com', emailVerified: false }),
     );
   });
 
   it('surfaces a server error when the email is already in use', async () => {
     const updatePromise = firstValueFrom(
-      service.updateEmail('22222222-0000-0000-0000-000000000000', 'taken@example.com'),
+      service.updateEmail(PADME_ID, 'taken@example.com'),
     );
-    httpMock.expectOne(`${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000/email`).flush(
+    httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/email`).flush(
       { detail: 'A user with this email address is already registered.' },
       { status: 400, statusText: 'Bad Request' },
     );
@@ -344,15 +355,9 @@ describe('AuthService', () => {
 
   it('changes the password with the current and new password', async () => {
     const updatePromise = firstValueFrom(
-      service.updatePassword(
-        '22222222-0000-0000-0000-000000000000',
-        'padme123',
-        'noblequeen1',
-      ),
+      service.updatePassword(PADME_ID, 'padme123', 'noblequeen1'),
     );
-    const request = httpMock.expectOne(
-      `${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000/password`,
-    );
+    const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/password`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({
       currentPassword: 'padme123',
@@ -365,9 +370,9 @@ describe('AuthService', () => {
 
   it('surfaces a server error when the current password is incorrect', async () => {
     const updatePromise = firstValueFrom(
-      service.updatePassword('22222222-0000-0000-0000-000000000000', 'wrong', 'noblequeen1'),
+      service.updatePassword(PADME_ID, 'wrong', 'noblequeen1'),
     );
-    httpMock.expectOne(`${environment.apiBaseUrl}/api/users/22222222-0000-0000-0000-000000000000/password`).flush(
+    httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/password`).flush(
       { detail: 'The current password is incorrect.' },
       { status: 400, statusText: 'Bad Request' },
     );

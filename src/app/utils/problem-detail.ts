@@ -6,9 +6,11 @@
  */
 
 import { HttpErrorResponse } from '@angular/common/http';
+import { ProblemDetails } from '../models/problem-details';
 
 /**
- * Reads the `detail` field from an ASP.NET Core {@link https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.problemdetails|ProblemDetails}
+ * Reads the `detail` field from an ASP.NET Core
+ * {@link https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.problemdetails|ProblemDetails}
  * error body.
  *
  * Falls back to the provided `fallback` message when the response body is
@@ -19,6 +21,6 @@ import { HttpErrorResponse } from '@angular/common/http';
  * @returns The server-provided detail string, or `fallback`.
  */
 export function readProblemDetail(error: HttpErrorResponse, fallback: string): string {
-  const body = error.error as { detail?: string } | null;
+  const body = error.error as ProblemDetails | null;
   return body?.detail || fallback;
 }

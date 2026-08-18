@@ -2,30 +2,27 @@
  * @fileoverview Client-side authentication service.
  *
  * Manages login / registration / email-verification flows and holds the
- * authenticated user state in a {@link https://github.com/ngrx/platform/blob/main/docs/rxjs/spec/operators.ts|BehaviorSubject}
- * that is kept in sync with localStorage.
+ * authenticated user state in an Angular signal that is kept in sync with
+ * sessionStorage.
  *
  * @see {@link AuthGuard} for route-level access control.
  * @see {@link AuthInterceptor} for automatic token attachment.
  */
 
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, map, of, throwError } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthError, AuthErrorCode } from '../models/auth/auth-error';
 import { RegisterRequest } from '../models/auth/register-request';
 import { User, UserRole, USER_ROLES } from '../models/user';
 import { readProblemDetail } from '../utils/problem-detail';
-import { AccountResponse, LoginResponse } from './auth/auth.dto';
+import { AccountResponse, LoginResponse, RefreshTokenResponse } from './auth/auth.dto';
+import { LoggerService } from './logger.service';
+import { STORAGE_KEYS, StorageService } from './storage.service';
 
 /** Re-export so existing consumers can import from this module. */
 export type { RegisterRequest } from '../models/auth/register-request';
-
-/** localStorage key for the JWT bearer token. */
-const TOKEN_STORAGE_KEY = 'starwars-timelines.token';
-/** localStorage key for the serialized {@link User} object. */
-const USER_STORAGE_KEY = 'starwars-timelines.user';
 
 /**
  * Handles authentication, registration, and account-management operations.
@@ -33,37 +30,45 @@ const USER_STORAGE_KEY = 'starwars-timelines.user';
  * This is a root-scoped singleton (`providedIn: 'root'`).
  *
  * **State management:**
- * - The authenticated user is held in `currentUserSubject` and exposed via the
- *   read-only observable `currentUser$`.
- * - On construction the subject is seeded from localStorage so that a page
+ * - The authenticated user is held in a writable {@link currentUserSignal}
+ *   and exposed as a read-only signal `currentUser`.
+ * - On construction the signal is seeded from sessionStorage so that a page
  *   refresh preserves the session without an extra HTTP call.
  * - Every mutating method (`login`, `getAccount`, `updateDisplayName`,
- *   `updateEmail`, `logout`) synchronously updates the subject **and**
- *   localStorage.
+ *   `updateEmail`, `logout`) synchronously updates the signal **and**
+ *   sessionStorage.
  *
  * **Error handling:**
- * - All HTTP errors are caught and re-thrown as plain `Error` or
- *   {@link AuthError} instances with a human-readable message extracted from the
- *   ASP.NET Core {@link https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.problemdetails|ProblemDetails}
- *   response body.
+ * - All HTTP errors are logged via {@link LoggerService} and re-thrown as
+ *   plain `Error` or {@link AuthError} instances with a human-readable
+ *   message extracted from the ASP.NET Core ProblemDetails response body.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly currentUserSubject = new BehaviorSubject<User | null>(this.restoreUser());
+  private readonly currentUserSignal = signal<User | null>(this.restoreUser());
 
-  /** Observable stream of the current user (or `null` when logged out). */
-  readonly currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+  /** Read-only signal of the current user (or `null` when logged out). */
+  readonly currentUser = this.currentUserSignal.asReadonly();
 
-  /** Cached JWT token — kept in sync with localStorage. */
-  private tokenValue = this.restoreToken();
+  /** Cached JWT access token — kept in sync with sessionStorage. */
+  private accessTokenValue = this.restoreToken();
 
-  constructor(private readonly http: HttpClient) {}
+  /** Cached refresh token — kept in sync with sessionStorage. */
+  private refreshTokenValue = this.restoreRefreshToken();
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly storage: StorageService,
+    private readonly logger: LoggerService,
+  ) {}
 
   /**
    * Authenticates a user with username and password.
    *
-   * On success the JWT token and user profile are persisted to localStorage
-   * and the `currentUser$` observable emits the new user.
+   * On success the JWT token, refresh token, and full user profile are
+   * persisted to sessionStorage and the `currentUser` signal emits the new
+   * user. The full profile is fetched via `getAccount()` to ensure
+   * `email` and `emailVerified` are always present.
    *
    * @param username  The user's login name or email.
    * @param password  The user's password.
@@ -82,18 +87,32 @@ export class AuthService {
             const code: AuthErrorCode = body?.title === 'Email not verified'
               ? 'email-not-verified'
               : 'invalid-credentials';
+            this.logger.warn('Login failed', { code, detail });
             return throwError(() => new AuthError(detail, code));
           }
+          this.logger.error('Login request failed', error);
           return throwError(() => new Error('Unable to log in. Please try again.'));
         }),
         map((response) => {
-          const user = this.mapUser(response.user);
-          localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-          this.tokenValue = response.token;
-          this.currentUserSubject.next(user);
-          return user;
+          const partialUser = this.mapUser(response.user);
+          this.storage.setItem(STORAGE_KEYS.token, response.accessToken);
+          this.storage.setItem(STORAGE_KEYS.refreshToken, response.refreshToken);
+          this.storage.setItem(STORAGE_KEYS.user, JSON.stringify(partialUser));
+          this.accessTokenValue = response.accessToken;
+          this.refreshTokenValue = response.refreshToken;
+          this.currentUserSignal.set(partialUser);
+          return partialUser;
         }),
+        // Fetch the full profile so email + emailVerified are always present.
+        switchMap((partialUser) =>
+          this.getAccount(partialUser.id).pipe(
+            catchError(() => {
+              // If the profile fetch fails, return the partial user from login.
+              this.logger.warn('Failed to fetch full profile after login, using partial user');
+              return of(partialUser);
+            }),
+          ),
+        ),
       );
   }
 
@@ -109,14 +128,15 @@ export class AuthService {
     return this.http
       .post<void>(`${environment.apiBaseUrl}/api/auth/register`, request)
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.warn('Registration failed', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to create your account. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
       );
   }
 
@@ -130,42 +150,59 @@ export class AuthService {
     return this.http
       .post<void>(`${environment.apiBaseUrl}/api/auth/verify-email`, { token })
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.warn('Email verification failed', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to verify your email address. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
       );
   }
 
   /**
    * Resends the verification email to the given username or email address.
    *
+   * If the currently logged-in user's email is already verified, this method
+   * returns immediately without making an HTTP call.
+   *
    * @param usernameOrEmail  The username or email of the account to verify.
    * @returns An observable that completes when the email has been queued.
    */
   resendVerificationEmail(usernameOrEmail: string): Observable<void> {
+    if (this.currentUserSignal()?.emailVerified) {
+      return of(undefined);
+    }
     return this.http
       .post<void>(`${environment.apiBaseUrl}/api/auth/resend-verification-email`, { usernameOrEmail })
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.warn('Resend verification email failed', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to resend the verification email. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
       );
+  }
+
+  /**
+   * Whether the currently logged-in user's email has been verified.
+   *
+   * @returns `true` if the current user exists and their email is verified.
+   */
+  isEmailVerified(): boolean {
+    return this.currentUserSignal()?.emailVerified ?? false;
   }
 
   /**
    * Fetches the full account profile for the given user.
    *
-   * Also updates the local user state and localStorage.
+   * Also updates the local user state and sessionStorage.
    *
    * @param userId  The ID of the user to load.
    * @returns An observable that emits the refreshed {@link User}.
@@ -174,14 +211,15 @@ export class AuthService {
     return this.http
       .get<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}`)
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.error('Failed to load account details', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to load your account details. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
         map((response) => this.applyAccount(response)),
       );
   }
@@ -197,14 +235,15 @@ export class AuthService {
     return this.http
       .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/display-name`, { displayName })
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.error('Failed to update display name', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to update your display name. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
         map((response) => this.applyAccount(response)),
       );
   }
@@ -220,14 +259,15 @@ export class AuthService {
     return this.http
       .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/email`, { email })
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.error('Failed to update email', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to update your email address. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
         map((response) => this.applyAccount(response)),
       );
   }
@@ -247,74 +287,126 @@ export class AuthService {
         newPassword,
       })
       .pipe(
-        catchError((error: HttpErrorResponse) =>
-          throwError(
+        catchError((error: HttpErrorResponse) => {
+          this.logger.error('Failed to change password', error);
+          return throwError(
             () =>
               new Error(
                 readProblemDetail(error, 'Unable to change your password. Please try again.'),
               ),
-          ),
-        ),
+          );
+        }),
       );
   }
 
   /**
    * Ends the current session.
    *
-   * Clears the JWT token and user profile from localStorage and resets the
-   * `currentUser$` observable to `null`.
+   * Clears the JWT token, refresh token, and user profile from sessionStorage
+   * and resets the `currentUser` signal to `null`.
    *
    * @returns An observable that immediately completes.
    */
   logout(): Observable<void> {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    this.tokenValue = null;
-    this.currentUserSubject.next(null);
+    this.storage.removeItem(STORAGE_KEYS.token);
+    this.storage.removeItem(STORAGE_KEYS.refreshToken);
+    this.storage.removeItem(STORAGE_KEYS.user);
+    this.accessTokenValue = null;
+    this.refreshTokenValue = null;
+    this.currentUserSignal.set(null);
     return of(undefined);
   }
 
   /**
    * Whether a user is currently authenticated.
    *
-   * @returns `true` when the `currentUser$` subject holds a non-null value.
+   * @returns `true` when the `currentUser` signal holds a non-null value.
    */
   isLoggedIn(): boolean {
-    return this.currentUserSubject.value !== null;
+    return this.currentUserSignal() !== null;
   }
 
   /**
-   * Returns the current user synchronously from the in-memory subject.
-   *
-   * This is the preferred way to read the current user — it avoids the cost of
-   * re-parsing localStorage on every call.
+   * Returns the current user synchronously from the in-memory signal.
    *
    * @returns The current {@link User}, or `null` when logged out.
    */
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    return this.currentUserSignal();
   }
 
   /**
-   * Returns the cached JWT bearer token.
+   * Returns the cached JWT access token.
    *
    * @returns The token string, or `null` when not authenticated.
    */
   getToken(): string | null {
-    return this.tokenValue;
+    return this.accessTokenValue;
   }
 
   /**
-   * Reads the cached JWT token from localStorage.
+   * Returns the cached refresh token.
+   *
+   * @returns The refresh token string, or `null` when not authenticated.
+   */
+  getRefreshToken(): string | null {
+    return this.refreshTokenValue;
+  }
+
+  /**
+   * Exchanges the current refresh token for a new access + refresh token pair.
+   *
+   * On success the new tokens are persisted to sessionStorage and the cached
+   * values are updated. On failure the user is logged out.
+   *
+   * @returns An observable that emits `true` on success, `false` on failure.
+   */
+  refreshAccessToken(): Observable<boolean> {
+    const refreshToken = this.refreshTokenValue;
+    if (!refreshToken) {
+      this.logout();
+      return of(false);
+    }
+    return this.http
+      .post<RefreshTokenResponse>(`${environment.apiBaseUrl}/api/auth/refresh`, { refreshToken })
+      .pipe(
+        map((response) => {
+          this.storage.setItem(STORAGE_KEYS.token, response.accessToken);
+          this.storage.setItem(STORAGE_KEYS.refreshToken, response.refreshToken);
+          this.accessTokenValue = response.accessToken;
+          this.refreshTokenValue = response.refreshToken;
+          return true;
+        }),
+        catchError((error) => {
+          this.logger.warn('Token refresh failed, logging out', error);
+          this.logout();
+          return of(false);
+        }),
+      );
+  }
+
+  // ─── Private helpers ─────────────────────────────────────────────────────
+
+  /**
+   * Reads the cached JWT access token from sessionStorage.
    *
    * @returns The token, or `null` if not present.
    */
   private restoreToken(): string | null {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
+    return sessionStorage.getItem(STORAGE_KEYS.token);
   }
 
   /**
-   * Reads and parses the cached user from localStorage.
+   * Reads the cached refresh token from sessionStorage.
+   *
+   * @returns The refresh token, or `null` if not present.
+   */
+  private restoreRefreshToken(): string | null {
+    return sessionStorage.getItem(STORAGE_KEYS.refreshToken);
+  }
+
+  /**
+   * Reads and parses the cached user from sessionStorage.
    *
    * If the stored JSON is malformed the entry is removed and `null` is
    * returned.
@@ -322,14 +414,14 @@ export class AuthService {
    * @returns The cached {@link User}, or `null`.
    */
   private restoreUser(): User | null {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEYS.user);
     if (!stored) {
       return null;
     }
     try {
       return JSON.parse(stored) as User;
     } catch {
-      localStorage.removeItem(USER_STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEYS.user);
       return null;
     }
   }
@@ -347,17 +439,22 @@ export class AuthService {
   }
 
   /**
-   * Maps the minimal user object from the login response to a full
+   * Maps the minimal user object from the login response to a partial
    * {@link User}.
    *
+   * The returned object does **not** include `email` or `emailVerified` —
+   * call {@link getAccount} to fetch the full profile.
+   *
    * @param response  The `user` field from {@link LoginResponse}.
-   * @returns A domain-level {@link User}.
+   * @returns A partial domain-level {@link User}.
    */
   private mapUser(response: LoginResponse['user']): User {
     return {
       id: response.id,
       username: response.username,
       displayName: response.displayName,
+      email: '',
+      emailVerified: false,
       role: this.mapRole(response.role),
     };
   }
@@ -365,7 +462,7 @@ export class AuthService {
   /**
    * Applies a full {@link AccountResponse} to the local user state.
    *
-   * Updates localStorage and notifies subscribers via `currentUserSubject`.
+   * Updates sessionStorage and notifies signal subscribers.
    *
    * @param response  The full account DTO from the server.
    * @returns The updated domain-level {@link User}.
@@ -379,8 +476,8 @@ export class AuthService {
       emailVerified: response.emailVerified,
       role: this.mapRole(response.role),
     };
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    this.currentUserSubject.next(user);
+    this.storage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+    this.currentUserSignal.set(user);
     return user;
   }
 }

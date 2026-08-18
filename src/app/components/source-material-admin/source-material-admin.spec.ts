@@ -14,7 +14,7 @@ describe('SourceMaterialAdmin', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [SourceMaterialAdmin],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],

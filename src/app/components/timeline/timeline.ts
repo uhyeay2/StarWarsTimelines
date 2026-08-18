@@ -35,7 +35,7 @@ export class Timeline {
   protected readonly views = CANON_VIEWS;
   protected readonly events = toSignal(this.eventsService.getEvents(), { initialValue: [] });
   readonly filters = signal<TimelineFilters>(createEmptyFilters());
-  private readonly user = toSignal(this.auth.currentUser$);
+  private readonly user = this.auth.currentUser;
   private readonly tracked = signal<readonly LibraryItem[]>([]);
 
   readonly sourceIds = input<readonly string[] | null>(null);

@@ -24,7 +24,7 @@ describe('VerifyEmailPage', () => {
   let tokenValue: string | null = null;
 
   beforeEach(async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     tokenValue = null;
     await TestBed.configureTestingModule({
       imports: [VerifyEmailPage],

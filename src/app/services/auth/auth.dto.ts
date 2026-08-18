@@ -16,13 +16,22 @@
  * - `1` → Admin
  */
 export interface LoginResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: {
     id: string;
     username: string;
     displayName: string;
     role: number;
   };
+}
+
+/**
+ * Response body of `POST /api/auth/refresh`.
+ */
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
 }
 
 /**

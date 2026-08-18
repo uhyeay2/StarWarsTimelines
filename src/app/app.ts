@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
@@ -11,7 +10,7 @@ import { AuthService } from './services/auth.service';
 })
 export class App {
   private readonly auth = inject(AuthService);
-  protected readonly user = toSignal(this.auth.currentUser$);
+  protected readonly user = this.auth.currentUser;
 
   logout(): void {
     this.auth.logout().subscribe();

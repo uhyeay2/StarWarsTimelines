@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -68,7 +69,7 @@ describe('Timeline', () => {
     routerMock = { navigate: vi.fn() };
     await setupTimeline([
       { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
-      { provide: AuthService, useValue: { currentUser$: of(null) } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       {
         provide: ActivatedRoute,
@@ -165,7 +166,7 @@ describe('Timeline', () => {
     ];
     await setupTimeline([
       { provide: TimelineEventsService, useValue: { getEvents: () => of(seasonEvents) } },
-      { provide: AuthService, useValue: { currentUser$: of(null) } },
+      { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       {
         provide: ActivatedRoute,
@@ -461,10 +462,10 @@ describe('Timeline', () => {
   });
 
   it('shows the tracking status select on events when the user is logged in', async () => {
-    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
     await setupTimeline([
       { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
-      { provide: AuthService, useValue: { currentUser$: of(user) } },
+      { provide: AuthService, useValue: { currentUser: signal(user) } },
       {
         provide: LibraryService,
         useValue: {
@@ -503,7 +504,7 @@ describe('Timeline', () => {
   });
 
   it('adds an event source to the library and updates its status when logged in', async () => {
-    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala' };
+    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
     const trackedItems: LibraryItem[] = [];
     const libraryMock = {
       getTracked: vi.fn(() => of([...trackedItems])),
@@ -525,7 +526,7 @@ describe('Timeline', () => {
     };
     await setupTimeline([
       { provide: TimelineEventsService, useValue: { getEvents: () => of(FIXTURE_EVENTS) } },
-      { provide: AuthService, useValue: { currentUser$: of(user) } },
+      { provide: AuthService, useValue: { currentUser: signal(user) } },
       { provide: LibraryService, useValue: libraryMock },
       {
         provide: ActivatedRoute,

@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
@@ -11,5 +10,5 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LibraryPage {
   private readonly auth = inject(AuthService);
-  readonly user = toSignal(this.auth.currentUser$);
+  readonly user = this.auth.currentUser;
 }
