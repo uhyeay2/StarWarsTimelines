@@ -18,7 +18,7 @@ import { RegisterRequest } from '../models/auth/register-request';
 import { User, UserRole, USER_ROLES } from '../models/user';
 import { readProblemDetail } from '../utils/problem-detail';
 import { AccountResponse, LoginResponse, RefreshTokenResponse } from './auth/auth.dto';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 import { STORAGE_KEYS, StorageService } from './storage.service';
 
 /** Re-export so existing consumers can import from this module. */
@@ -90,7 +90,7 @@ export class AuthService {
             this.logger.warn('Login failed', { code, detail });
             return throwError(() => new AuthError(detail, code));
           }
-          this.logger.error('Login request failed', error);
+          this.logger.error('Login request failed', { error });
           return throwError(() => new Error('Unable to log in. Please try again.'));
         }),
         map((response) => {
@@ -129,7 +129,7 @@ export class AuthService {
       .post<void>(`${environment.apiBaseUrl}/api/auth/register`, request)
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.warn('Registration failed', error);
+          this.logger.warn('Registration failed', { error });
           return throwError(
             () =>
               new Error(
@@ -151,7 +151,7 @@ export class AuthService {
       .post<void>(`${environment.apiBaseUrl}/api/auth/verify-email`, { token })
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.warn('Email verification failed', error);
+          this.logger.warn('Email verification failed', { error });
           return throwError(
             () =>
               new Error(
@@ -179,7 +179,7 @@ export class AuthService {
       .post<void>(`${environment.apiBaseUrl}/api/auth/resend-verification-email`, { usernameOrEmail })
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.warn('Resend verification email failed', error);
+          this.logger.warn('Resend verification email failed', { error });
           return throwError(
             () =>
               new Error(
@@ -212,7 +212,7 @@ export class AuthService {
       .get<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}`)
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.error('Failed to load account details', error);
+          this.logger.error('Failed to load account details', { error });
           return throwError(
             () =>
               new Error(
@@ -236,7 +236,7 @@ export class AuthService {
       .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/display-name`, { displayName })
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.error('Failed to update display name', error);
+          this.logger.error('Failed to update display name', { error });
           return throwError(
             () =>
               new Error(
@@ -260,7 +260,7 @@ export class AuthService {
       .put<AccountResponse>(`${environment.apiBaseUrl}/api/users/${userId}/email`, { email })
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.error('Failed to update email', error);
+          this.logger.error('Failed to update email', { error });
           return throwError(
             () =>
               new Error(
@@ -288,7 +288,7 @@ export class AuthService {
       })
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.logger.error('Failed to change password', error);
+          this.logger.error('Failed to change password', { error });
           return throwError(
             () =>
               new Error(
@@ -378,7 +378,7 @@ export class AuthService {
           return true;
         }),
         catchError((error) => {
-          this.logger.warn('Token refresh failed, logging out', error);
+          this.logger.warn('Token refresh failed, logging out', { error });
           this.logout();
           return of(false);
         }),

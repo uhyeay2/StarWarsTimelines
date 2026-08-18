@@ -9,7 +9,7 @@ import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
 import { CatalogEventService, CatalogEvent } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog.service';
-import { LibraryService } from '../../services/library.service';
+import { LibraryService } from '../../services/library/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from '../timeline/timeline';
 import { KnownTimelinePage } from './known-timeline-page';

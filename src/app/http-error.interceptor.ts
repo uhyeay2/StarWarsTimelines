@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
-import { LoggerService } from './services/logger.service';
+import { LoggerService } from './services/logging/logger.service';
 
 export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
   const logger = inject(LoggerService);
@@ -18,7 +18,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
           },
         );
       } else {
-        logger.error(`Request failed ${request.method} ${request.urlWithParams}`, error);
+        logger.error(`Request failed ${request.method} ${request.urlWithParams}`, { error });
       }
       return throwError(() => error);
     }),

@@ -5,7 +5,7 @@ import { LibraryItem } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth.service';
 import { CatalogService } from '../../services/catalog.service';
-import { LibraryService } from '../../services/library.service';
+import { LibraryService } from '../../services/library/library.service';
 import { TrackedItemRow } from '../tracked-item-row/tracked-item-row';
 
 const FILTERS = ['All', ...TRACKING_STATUSES] as const;

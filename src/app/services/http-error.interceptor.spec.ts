@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { httpErrorInterceptor } from '../http-error.interceptor';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 
 describe('httpErrorInterceptor', () => {
   let http: HttpClient;

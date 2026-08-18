@@ -17,7 +17,7 @@ import { TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog.service';
-import { LibraryService } from '../../services/library.service';
+import { LibraryService } from '../../services/library/library.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';

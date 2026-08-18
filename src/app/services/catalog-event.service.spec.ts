@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../models/user';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 import { STORAGE_KEYS, StorageService } from './storage.service';
 import { CatalogEventService } from './catalog-event.service';
 

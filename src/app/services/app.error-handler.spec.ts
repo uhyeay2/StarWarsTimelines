@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AppErrorHandler } from '../app.error-handler';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 
 describe('AppErrorHandler', () => {
   let handler: AppErrorHandler;
@@ -18,6 +18,6 @@ describe('AppErrorHandler', () => {
     const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
     const boom = new Error('boom');
     handler.handleError(boom);
-    expect(errorSpy).toHaveBeenCalledWith('Unhandled application error', boom);
+    expect(errorSpy).toHaveBeenCalledWith('Unhandled application error', { error: boom });
   });
 });

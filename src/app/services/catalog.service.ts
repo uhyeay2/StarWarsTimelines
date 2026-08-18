@@ -31,7 +31,7 @@ import { UnitType, unitTypeFromApiCode, unitTypeToApiCode } from '../models/unit
 import { readProblemDetail } from '../utils/problem-detail';
 import { SignalCache } from '../utils/signal-cache';
 import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog/catalog.dto';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 
 /** Re-export so existing consumers can import from this module. */
 export type { CreateSourceMaterialInput } from '../models/catalog/create-source-material-input';
@@ -584,16 +584,16 @@ export class CatalogService {
       const detail = readProblemDetail(error, fallback);
 
       if (error.status === 409) {
-        this.logger.warn(`[CatalogService] ${context}: ${detail}`, error);
+        this.logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
         return throwError(() => new EntityInUseError(detail));
       }
 
       if (error.status === 404) {
-        this.logger.warn(`[CatalogService] ${context}: ${detail}`, error);
+        this.logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
         return throwError(() => new CatalogError(detail, 'not-found'));
       }
 
-      this.logger.error(`[CatalogService] ${context}: ${detail}`, error);
+      this.logger.error(`[CatalogService] ${context}: ${detail}`, { error });
       return throwError(() => new CatalogError(detail, 'network-error'));
     };
   }

@@ -24,7 +24,7 @@ import { Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
-import { LoggerService } from './logger.service';
+import { LoggerService } from './logging/logger.service';
 import { STORAGE_KEYS, StorageService } from './storage.service';
 
 /** Shape of the JSON payload delivered by the SSE endpoint. */
@@ -108,11 +108,11 @@ export class CatalogEventService implements OnDestroy {
         if (!catalogEvent.entity) {
           return;
         }
-        this.logger.debug('[CatalogEventService] Received event', catalogEvent);
+        this.logger.debug('[CatalogEventService] Received event', catalogEvent as unknown as Record<string, unknown>);
         this.catalog.invalidateEntity(catalogEvent.entity, catalogEvent.id);
         this.eventsSubject.next(catalogEvent);
       } catch (err) {
-        this.logger.warn('[CatalogEventService] Failed to parse SSE event', err);
+        this.logger.warn('[CatalogEventService] Failed to parse SSE event', { error: err });
       }
     };
 
