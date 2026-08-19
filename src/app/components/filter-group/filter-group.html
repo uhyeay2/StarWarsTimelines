@@ -1,4 +1,7 @@
+<!-- ─── Filter Group ────────────────────────────────────────────────────── -->
 <div class="filter-group">
+
+  <!-- ─── Trigger Row (label + clear button) ─────────────────────────── -->
   <div class="filter-group-row">
     <button
       type="button"
@@ -24,8 +27,12 @@
       </button>
     }
   </div>
+  <!-- ─── End Trigger Row ────────────────────────────────────────────── -->
 
+  <!-- ─── Filter Panel (search + options) ────────────────────────────── -->
   <div class="filter-group-panel" [hidden]="!open()">
+
+    <!-- ─── Search Input ─────────────────────────────────────────────── -->
     <div class="filter-group-search">
       <input
         type="text"
@@ -34,7 +41,9 @@
         [value]="query()"
         (input)="query.set($any($event.target).value)" />
     </div>
+    <!-- ─── End Search Input ─────────────────────────────────────────── -->
 
+    <!-- ─── Options Tree ─────────────────────────────────────────────── -->
     <div class="filter-group-options" role="listbox" aria-multiselectable="true">
       @for (option of filteredOptions(); track option.value) {
         <app-filter-tree
@@ -49,5 +58,8 @@
         <p class="filter-group-empty">No matches.</p>
       }
     </div>
+    <!-- ─── End Options Tree ─────────────────────────────────────────── -->
   </div>
+  <!-- ─── End Filter Panel ───────────────────────────────────────────── -->
 </div>
+<!-- ─── End Filter Group ──────────────────────────────────────────────────── -->

@@ -51,7 +51,7 @@ async function setup(currentUser: User | null): Promise<{
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]), loading: signal(false), error: signal(null) } },
       {
         provide: CatalogService,
         useValue: {

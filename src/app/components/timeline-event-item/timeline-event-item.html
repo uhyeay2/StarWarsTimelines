@@ -1,14 +1,21 @@
+<!-- ─── Timeline Event Item ─────────────────────────────────────────────── -->
 @let item = event();
 @let detailsId = 'event-details-' + item.id;
 
 <article class="timeline-event">
+  <!-- ─── Timeline Marker ────────────────────────────────────────────── -->
   <div class="event-marker" aria-hidden="true"></div>
+  <!-- ─── End Timeline Marker ────────────────────────────────────────── -->
+
   <div class="event-card">
+
+    <!-- ─── Event Meta (date, canons, details toggle) ────────────────── -->
     <header class="event-meta">
       <time class="event-date">
         {{ item.displayDate }}@if (item.displayDateEnd) { – {{ item.displayDateEnd }} }
       </time>
       <div class="event-meta-actions">
+        <!-- ─── Canon Badges ─────────────────────────────────────────── -->
         <div class="event-canons">
           @for (canon of item.canon; track canon) {
             <span class="canon-badge" [class.canon-badge--canon]="canon === 'Canon'" [class.canon-badge--legends]="canon === 'Legends'">
@@ -16,6 +23,9 @@
             </span>
           }
         </div>
+        <!-- ─── End Canon Badges ─────────────────────────────────────── -->
+
+        <!-- ─── Details Toggle ───────────────────────────────────────── -->
         <button
           type="button"
           class="details-toggle"
@@ -28,11 +38,18 @@
             [class.details-toggle-chevron--open]="detailsOpen()"
             aria-hidden="true">&#9662;</span>
         </button>
+        <!-- ─── End Details Toggle ───────────────────────────────────── -->
       </div>
     </header>
+    <!-- ─── End Event Meta ───────────────────────────────────────────── -->
 
+    <!-- ─── Event Title ──────────────────────────────────────────────── -->
     <h3 class="event-title">{{ item.title }}</h3>
+    <!-- ─── End Event Title ──────────────────────────────────────────── -->
+
+    <!-- ─── Event Source & Tracking Controls ─────────────────────────── -->
     <p class="event-source">
+      <!-- ─── Source Chips ────────────────────────────────────────────── -->
       @for (chip of sourceChips(); track chip.label) {
         <button
           type="button"
@@ -48,9 +65,13 @@
           }
         </button>
       }
+      <!-- ─── End Source Chips ────────────────────────────────────────── -->
+
       @if (sourceUnitDetail(item.source.unit); as detail) {
         <span class="event-source-unit">{{ detail }}</span>
       }
+
+      <!-- ─── Tracking Controls ──────────────────────────────────────── -->
       @if (canTrack()) {
         @if (status(); as trackingStatus) {
           <select
@@ -80,8 +101,11 @@
           [class.status-badge--completed]="trackingStatus === 'Completed'"
           [class.status-badge--wish-listed]="trackingStatus === 'Wish Listed'">{{ trackingStatus }}</span>
       }
+      <!-- ─── End Tracking Controls ──────────────────────────────────── -->
     </p>
+    <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->
 
+    <!-- ─── Event Details (expandable) ───────────────────────────────── -->
     @if (detailsOpen()) {
       <div class="event-details" [id]="detailsId">
         <p class="event-description">{{ item.description }}</p>
@@ -141,5 +165,7 @@
         }
       </div>
     }
+    <!-- ─── End Event Details ─────────────────────────────────────────── -->
   </div>
 </article>
+<!-- ─── End Timeline Event Item ───────────────────────────────────────────── -->

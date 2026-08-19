@@ -1,28 +1,40 @@
+<!-- ─── Tracked Events Page ─────────────────────────────────────────────── -->
 <section class="tracked-events-page">
+
+  <!-- ─── Page Header ────────────────────────────────────────────────── -->
   <header class="page-header">
     <h1>My Tracked Events</h1>
     <p>Manage the source material you have completed, are working through, or have wish listed.</p>
   </header>
+  <!-- ─── End Page Header ────────────────────────────────────────────── -->
 
+  <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
   @if (!user()) {
     <div class="login-prompt">
       <p>Log in to view and manage your tracked events.</p>
       <a class="btn btn-primary" routerLink="/login">Log in</a>
     </div>
+  <!-- ─── Tracked Layout (when logged in) ────────────────────────────── -->
   } @else {
     <div class="tracked-layout">
+
+      <!-- ─── Status Filter Tabs ─────────────────────────────────────── -->
       <div class="filter-tabs" role="group" aria-label="Filter tracked items by status">
         @for (tab of filters; track tab) {
           <button
             type="button"
+            role="switch"
             class="filter-tab"
             [class.filter-tab--active]="filter() === tab"
+            [attr.aria-pressed]="filter() === tab"
             (click)="setFilter(tab)">
             {{ tab }}
           </button>
         }
       </div>
+      <!-- ─── End Status Filter Tabs ─────────────────────────────────── -->
 
+      <!-- ─── Add Material Row ───────────────────────────────────────── -->
       <div class="add-row">
         <select
           class="add-select"
@@ -40,11 +52,15 @@
           [disabled]="!selectedMaterialId()"
           (click)="addTracked()">Add</button>
       </div>
+      <!-- ─── End Add Material Row ───────────────────────────────────── -->
 
+      <!-- ─── Reorder Hint ───────────────────────────────────────────── -->
       @if (showReorder()) {
         <p class="reorder-hint">Drag items or use the arrows to order your wish list.</p>
       }
+      <!-- ─── End Reorder Hint ───────────────────────────────────────── -->
 
+      <!-- ─── Tracked Items List ─────────────────────────────────────── -->
       @if (filteredItems().length === 0) {
         <p class="empty-state">
           {{ filter() === 'All' ? 'No tracked items yet — add something above.' : 'No ' + filter() + ' items yet.' }}
@@ -73,6 +89,8 @@
           }
         </ol>
       }
+      <!-- ─── End Tracked Items List ─────────────────────────────────── -->
     </div>
   }
 </section>
+<!-- ─── End Tracked Events Page ───────────────────────────────────────────── -->

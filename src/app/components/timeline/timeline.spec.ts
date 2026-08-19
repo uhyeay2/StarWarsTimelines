@@ -92,7 +92,7 @@ describe('Timeline', () => {
     routeQueryParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
     routerMock = { navigate: vi.fn() };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       {
@@ -204,7 +204,7 @@ describe('Timeline', () => {
       },
     ];
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(seasonEvents) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(seasonEvents), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalogMock() },
@@ -505,7 +505,7 @@ describe('Timeline', () => {
   it('shows the tracking status select on events when the user is logged in', async () => {
     const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       {
         provide: LibraryService,
@@ -568,7 +568,7 @@ describe('Timeline', () => {
       }),
     };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       { provide: LibraryService, useValue: libraryMock },
       { provide: CatalogService, useValue: catalogMock() },
@@ -624,7 +624,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -666,7 +666,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -708,7 +708,7 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalog },
@@ -737,7 +737,7 @@ describe('Timeline', () => {
   it('refreshes events when a source-material SSE event arrives', async () => {
     const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject, loading: signal(false), error: signal(null) } },
       { provide: AuthService, useValue: { currentUser: signal(null) } },
       { provide: LibraryService, useValue: { getTracked: () => of([]) } },
       { provide: CatalogService, useValue: catalogMock() },
@@ -778,5 +778,231 @@ describe('Timeline', () => {
     fixture.detectChanges();
 
     expect(eventTitles()).toContain('New Event');
+  });
+
+  describe('sourceFilteredEvents', () => {
+    it('returns all events when sourceIds is null', () => {
+      fixture.componentRef.setInput('sourceIds', null);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+    });
+
+    it('returns all events when sourceIds is empty', () => {
+      fixture.componentRef.setInput('sourceIds', []);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+    });
+
+    it('filters events to only those with matching source IDs', () => {
+      component.selectView('Legends');
+      fixture.componentRef.setInput('sourceIds', ['material-b']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Legends Only']);
+    });
+
+    it('excludes events with undefined sourceId', async () => {
+      const eventNoId: TimelineEvent = {
+        id: 'no-source-id',
+        canon: ['Canon'],
+        title: 'No Source ID',
+        description: '',
+        source: { title: 'Unknown', medium: 'Book' },
+        locations: [],
+        characters: [],
+        vehicles: [],
+        year: 5,
+        displayDate: '5 ABY',
+      };
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: { getEvents$: () => of([...FIXTURE_EVENTS, eventNoId]), loading: signal(false), error: signal(null) } },
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.componentRef.setInput('sourceIds', ['no-source-id']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual([]);
+    });
+  });
+
+  describe('continuityEvents', () => {
+    it('filters by Canon view (default)', () => {
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+    });
+
+    it('filters by Legends view', () => {
+      component.selectView('Legends');
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Legends Only']);
+    });
+
+    it('filters by Canon & Legends view (only shared events)', () => {
+      component.selectView('Canon & Legends');
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both']);
+    });
+  });
+
+  describe('filteredEvents', () => {
+    it('sorts events chronologically by year', () => {
+      fixture.detectChanges();
+      const titles = eventTitles();
+      expect(titles).toEqual(['Both', 'Canon Only']);
+    });
+
+    it('applies character AND semantics', () => {
+      component.updateFilter('characters', ['Padme Amidala']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+
+      component.updateFilter('characters', ['Padme Amidala', 'Darth Maul']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both']);
+    });
+
+    it('applies location AND semantics', () => {
+      component.updateFilter('locations', ['Naboo']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+
+      component.updateFilter('locations', ['Naboo', 'Coruscant']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both']);
+    });
+
+    it('applies vehicle AND semantics', () => {
+      component.selectView('Legends');
+      component.updateFilter('vehicles', ['Sith Infiltrator']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Legends Only']);
+    });
+
+    it('combines canon view with facet filters', () => {
+      component.selectView('Legends');
+      component.updateFilter('characters', ['Darth Maul']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both', 'Legends Only']);
+
+      component.updateFilter('characters', ['Padme Amidala', 'Darth Maul']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Both']);
+    });
+
+    it('returns empty when filters exclude all events', () => {
+      component.updateFilter('characters', ['Nonexistent Character']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual([]);
+      expect(fixture.nativeElement.textContent).toContain('No events match your filters.');
+    });
+  });
+
+  describe('loading and error states', () => {
+    it('shows skeleton loading when events are loading initially', async () => {
+      const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>([]);
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject, loading: signal(true), error: signal(null) } },
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+
+      const skeleton = fixture.nativeElement.querySelector('.skeleton-list');
+      expect(skeleton).toBeTruthy();
+      expect(skeleton.querySelectorAll('.skeleton-item').length).toBe(5);
+    });
+
+    it('shows error state when events fail to load', async () => {
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: { getEvents$: () => of([] as readonly TimelineEvent[]), loading: signal(false), error: signal('Failed to load timeline events') } },
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const errorState = fixture.nativeElement.querySelector('.error-state');
+      expect(errorState).toBeTruthy();
+      expect(errorState.textContent).toContain('Unable to load timeline events');
+      expect(errorState.textContent).toContain('Failed to load timeline events');
+      expect(errorState.querySelector('.error-state-retry')).toBeTruthy();
+    });
+  });
+
+  describe('retryLoad', () => {
+    it('retriggers event loading', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
+      let callCount = 0;
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: { getEvents$: () => { callCount++; return eventsSubject; }, loading: signal(false), error: signal(null) } },
+        { provide: AuthService, useValue: { currentUser: signal(null) } },
+        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const initialCount = callCount;
+
+      component.retryLoad();
+      vi.advanceTimersByTime(400);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(callCount).toBeGreaterThan(initialCount);
+      vi.useRealTimers();
+    });
   });
 });

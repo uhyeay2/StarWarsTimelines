@@ -3,32 +3,54 @@ import { MEDIA, Medium } from './medium';
 import { sourceGroupName } from './source-material';
 import { TimelineEvent } from './timeline-event';
 
+/** Facet category keys for timeline event filtering. */
 export type FacetKey = 'sources' | 'locations' | 'characters' | 'vehicles';
 
+/** A selectable filter option with a value and display label. */
 export interface FilterOption {
+  /** The unique value used for matching. */
   value: string;
+  /** The human-readable display label. */
   label: string;
 }
 
+/** A filter option that may contain nested children (tree structure). */
 export interface FilterTreeNode extends FilterOption {
+  /** Optional child nodes for hierarchical filtering. */
   children?: readonly FilterTreeNode[];
 }
 
+/** Complete filter state for the timeline view. */
 export interface TimelineFilters {
+  /** The active canon view filter. */
   canonView: CanonView;
+  /** Selected source material filter values. */
   sources: readonly string[];
+  /** Selected location filter values. */
   locations: readonly string[];
+  /** Selected character filter values. */
   characters: readonly string[];
+  /** Selected vehicle filter values. */
   vehicles: readonly string[];
 }
 
+/** Facet options derived from the current event set. */
 export interface TimelineFacetOptions {
+  /** Source material tree nodes. */
   sources: readonly FilterTreeNode[];
+  /** Location filter options. */
   locations: readonly FilterTreeNode[];
+  /** Character filter options. */
   characters: readonly FilterTreeNode[];
+  /** Vehicle filter options. */
   vehicles: readonly FilterTreeNode[];
 }
 
+/**
+ * Creates an empty filter state with the default Canon view.
+ *
+ * @returns A {@link TimelineFilters} object with no active facet selections.
+ */
 export function createEmptyFilters(): TimelineFilters {
   return {
     canonView: 'Canon',
@@ -39,10 +61,20 @@ export function createEmptyFilters(): TimelineFilters {
   };
 }
 
+/** Creates a simple leaf-level filter option from a value string. */
 function simpleOption(value: string): FilterTreeNode {
   return { value, label: value };
 }
 
+/**
+ * Recursively collects all leaf values from a tree node.
+ *
+ * If the node has no children, returns its own value. Otherwise,
+ * recursively collects from all descendants.
+ *
+ * @param node  The tree node to collect leaves from.
+ * @returns An array of all leaf values.
+ */
 export function collectTreeLeaves(node: FilterTreeNode): string[] {
   if (node.children !== undefined && node.children.length > 0) {
     return node.children.flatMap(collectTreeLeaves);
@@ -50,12 +82,26 @@ export function collectTreeLeaves(node: FilterTreeNode): string[] {
   return [node.value];
 }
 
+/** A source filter chip displayed on an event card. */
 export interface SourceFilterChip {
+  /** Display label for the chip. */
   label: string;
+  /** The filter values this chip represents. */
   values: readonly string[];
+  /** Whether this is a medium-level chip (affects styling). */
   medium?: boolean;
 }
 
+/**
+ * Builds the source filter chips for a single timeline event.
+ *
+ * Constructs a hierarchy of chips: medium-level chip, material chip,
+ * and optional group-level chips (season, volume, chapter).
+ *
+ * @param event    The timeline event to build chips for.
+ * @param sources  The source filter tree nodes.
+ * @returns An array of source filter chips.
+ */
 export function sourceChipsForEvent(
   event: TimelineEvent,
   sources: readonly FilterTreeNode[],
@@ -93,6 +139,18 @@ export function sourceChipsForEvent(
   return chips;
 }
 
+/**
+ * Generates the unique facet key for an event's source material.
+ *
+ * The key format depends on the unit structure:
+ * - No unit: `sourceId` or `title`
+ * - Season/episode: `sourceId:groupNumber`
+ * - Volume/issue: `sourceId:groupNumber:number`
+ * - Chapter: `sourceId:chapter-number`
+ *
+ * @param event  The timeline event.
+ * @returns The unique source facet key string.
+ */
 export function sourceFacetKey(event: TimelineEvent): string {
   if (event.source.sourceId === undefined) {
     return event.source.title;
@@ -113,6 +171,7 @@ export function sourceFacetKey(event: TimelineEvent): string {
   return event.source.sourceId;
 }
 
+/** Internal state for a material's facet data during collection. */
 interface MaterialFacet {
   title: string;
   sourceId: string | undefined;
@@ -122,6 +181,15 @@ interface MaterialFacet {
   chapters: Map<number, string>;
 }
 
+/**
+ * Builds tree children for a material facet.
+ *
+ * Creates "Whole" entries when the material has both plain and unit-linked
+ * events, and creates group/volume/chapter nodes as appropriate.
+ *
+ * @param facet  The material facet data.
+ * @returns An array of tree nodes representing the material's children.
+ */
 function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
   const children: FilterTreeNode[] = [];
   if (
@@ -148,6 +216,16 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
   return children;
 }
 
+/**
+ * Collects facet options from a set of timeline events.
+ *
+ * Builds a hierarchical source tree grouped by medium and material,
+ * and flat lists of locations, characters, and vehicles. Source tree
+ * nodes include group/volume/chapter nesting for multi-unit materials.
+ *
+ * @param events  The timeline events to collect facet data from.
+ * @returns A complete set of {@link TimelineFacetOptions}.
+ */
 export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineFacetOptions {
   const materialsByMedium = new Map<Medium, Map<string, MaterialFacet>>();
   const locations = new Set<string>();
@@ -238,6 +316,17 @@ export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineF
   };
 }
 
+/**
+ * Tests whether an event matches all active facet filters.
+ *
+ * Uses AND semantics for locations, characters, and vehicles — all
+ * selected values in a category must be present on the event. Sources
+ * use exact key matching.
+ *
+ * @param event    The timeline event to test.
+ * @param filters  The current filter state.
+ * @returns `true` if the event matches all active facet filters.
+ */
 export function matchesFacetFilters(event: TimelineEvent, filters: TimelineFilters): boolean {
   if (filters.sources.length > 0 && !filters.sources.includes(sourceFacetKey(event))) {
     return false;
@@ -254,6 +343,15 @@ export function matchesFacetFilters(event: TimelineEvent, filters: TimelineFilte
   return true;
 }
 
+/**
+ * Tests whether an event matches the complete filter state.
+ *
+ * Combines canon view matching with facet filter matching.
+ *
+ * @param event    The timeline event to test.
+ * @param filters  The complete filter state.
+ * @returns `true` if the event matches all filters.
+ */
 export function matchesFilters(event: TimelineEvent, filters: TimelineFilters): boolean {
   return matchesCanonView(event.canon, filters.canonView) && matchesFacetFilters(event, filters);
 }
