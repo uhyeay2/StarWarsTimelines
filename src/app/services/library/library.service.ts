@@ -207,8 +207,9 @@ export class LibraryService {
   /**
    * Reloads a single material and merges it into the cache.
    *
-   * Falls back to a full reload when the cache is empty or the item is not
-   * found on the server.
+   * Falls back to a full reload when the cache is empty. When the material
+   * is not yet part of the cache (e.g. it was just tracked for the first
+   * time via a partial mutation), it is appended instead of dropped.
    *
    * @param userId     The ID of the user.
    * @param materialId The source material ID to reload.
@@ -222,9 +223,12 @@ export class LibraryService {
         if (current.length === 0) {
           return this.fetchItems(userId).pipe(tap((items) => this.items.set(items)));
         }
-        const updated = current.map((i) => (i.id === materialId ? updatedItem : i)) as readonly LibraryItem[];
-        this.items.set(updated);
-        return of(updated);
+        const exists = current.some((i) => i.id === materialId);
+        const next = exists
+          ? current.map((i) => (i.id === materialId ? updatedItem : i))
+          : [...current, updatedItem];
+        this.items.set(next);
+        return of(next);
       }),
     );
   }
@@ -374,8 +378,15 @@ export class LibraryService {
    * @param material  The source material to track (id, title, medium).
    * @returns An observable of the refreshed library after the addition.
    */
-  addTracked(userId: string, material: CatalogMaterial): Observable<readonly LibraryItem[]> {
-    const body: AddMaterialRequest = { sourceMaterialId: material.id };
+  addTracked(
+    userId: string,
+    material: CatalogMaterial,
+    initialStatus?: TrackingStatus,
+  ): Observable<readonly LibraryItem[]> {
+    const body: AddMaterialRequest = {
+      sourceMaterialId: material.id,
+      ...(initialStatus !== undefined && { status: statusToApiCode(initialStatus) }),
+    };
     return this.mutateAndReload(
       this.http.post(this.urlFor(userId), body),
       userId,
@@ -387,21 +398,27 @@ export class LibraryService {
   }
 
   /**
-   * Updates the tracking status of a library item.
+   * Updates the tracking status of a library item, or the progress of a
+   * specific unit when `unitId` is provided for a unit-based material.
    *
    * Performs a targeted partial reload of the affected material.
    *
    * @param userId     The ID of the user.
    * @param materialId The source material ID.
    * @param status     The new tracking status.
+   * @param unitId     Optional unit ID for sub-unit status updates.
    * @returns An observable of the refreshed library after the update.
    */
   setStatus(
     userId: string,
     materialId: string,
     status: TrackingStatus,
+    unitId?: string,
   ): Observable<readonly LibraryItem[]> {
-    const body: UpdateStatusRequest = { status: statusToApiCode(status) };
+    const body: UpdateStatusRequest = {
+      status: statusToApiCode(status),
+      ...(unitId !== undefined && { unitId }),
+    };
     return this.mutateAndReload(
       this.http.put<void>(this.urlForMaterial(userId, materialId), body),
       userId,
@@ -483,6 +500,33 @@ export class LibraryService {
       'Unable to update unit progress.',
       'setUnitProgress',
       { unitId, isCompleted },
+    );
+  }
+
+  /**
+   * Clears the tracking progress of a unit within a library item, including
+   * any child units (e.g. a season's episodes).
+   *
+   * Performs a full-library reload since clearing the last tracked unit of a
+   * material removes the library entry entirely.
+   *
+   * @param userId     The ID of the user.
+   * @param materialId The source material ID.
+   * @param unitId     The unit ID whose progress should be cleared.
+   * @returns An observable of the refreshed library after the update.
+   */
+  clearUnitProgress(
+    userId: string,
+    materialId: string,
+    unitId: string,
+  ): Observable<readonly LibraryItem[]> {
+    return this.mutateAndReload(
+      this.http.delete<void>(this.urlForUnit(userId, materialId, unitId)),
+      userId,
+      null,
+      'Unable to clear the tracking progress.',
+      'clearUnitProgress',
+      { unitId },
     );
   }
 

@@ -1,26 +1,31 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { AuthService } from '../../services/auth/auth.service';
 import { NameCatalogAdmin } from '../name-catalog-admin/name-catalog-admin';
 import { SourceMaterialAdmin } from '../source-material-admin/source-material-admin';
 
-export type AdminTab = 'characters' | 'vehicles' | 'locations' | 'sources';
+export type CatalogTab = 'characters' | 'vehicles' | 'locations' | 'sources';
 
 @Component({
-  selector: 'app-admin-page',
+  selector: 'app-catalog-page',
   imports: [NameCatalogAdmin, SourceMaterialAdmin],
-  templateUrl: './admin-page.html',
-  styleUrl: './admin-page.scss',
+  templateUrl: './catalog-page.html',
+  styleUrl: './catalog-page.scss',
 })
-export class AdminPage {
-  readonly activeTab = signal<AdminTab>('characters');
+export class CatalogPage {
+  private readonly auth = inject(AuthService);
 
-  readonly tabs: readonly { key: AdminTab; label: string }[] = [
+  readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'Admin');
+
+  readonly activeTab = signal<CatalogTab>('characters');
+
+  readonly tabs: readonly { key: CatalogTab; label: string }[] = [
     { key: 'characters', label: 'Characters' },
     { key: 'vehicles', label: 'Vehicles' },
     { key: 'locations', label: 'Locations' },
     { key: 'sources', label: 'Source materials' },
   ];
 
-  selectTab(tab: AdminTab): void {
+  selectTab(tab: CatalogTab): void {
     this.activeTab.set(tab);
   }
 }

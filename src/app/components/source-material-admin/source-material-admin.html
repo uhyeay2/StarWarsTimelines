@@ -6,33 +6,35 @@
   } @else if (loadError()) {
     <p class="source-admin-error" role="alert">{{ loadError() }}</p>
   } @else {
-    <form class="source-admin-add" (ngSubmit)="add()">
-      <label class="source-admin-field">
-        <span>Title</span>
-        <input name="newTitle" [(ngModel)]="newTitle" placeholder="Add a new source material…" />
-      </label>
-      <label class="source-admin-field">
-        <span>Medium</span>
-        <select name="newMedium" [(ngModel)]="newMedium">
-          @for (medium of media; track medium) {
-            <option [value]="medium">{{ medium }}</option>
-          }
-        </select>
-      </label>
-      <label class="source-admin-field">
-        <span>Canon</span>
-        <select name="newCanonType" [(ngModel)]="newCanonType">
-          @for (canonType of canonTypes; track canonType) {
-            <option [value]="canonType">{{ canonType }}</option>
-          }
-        </select>
-      </label>
-      <button class="btn btn-primary source-admin-add-button" type="submit" [disabled]="adding()">
-        {{ adding() ? 'Adding…' : 'Add' }}
-      </button>
-    </form>
-    @if (addError()) {
-      <p class="source-admin-error" role="alert">{{ addError() }}</p>
+    @if (isAdmin()) {
+      <form class="source-admin-add" (ngSubmit)="add()">
+        <label class="source-admin-field">
+          <span>Title</span>
+          <input name="newTitle" [(ngModel)]="newTitle" placeholder="Add a new source material…" />
+        </label>
+        <label class="source-admin-field">
+          <span>Medium</span>
+          <select name="newMedium" [(ngModel)]="newMedium">
+            @for (medium of media; track medium) {
+              <option [value]="medium">{{ medium }}</option>
+            }
+          </select>
+        </label>
+        <label class="source-admin-field">
+          <span>Canon</span>
+          <select name="newCanonType" [(ngModel)]="newCanonType">
+            @for (canonType of canonTypes; track canonType) {
+              <option [value]="canonType">{{ canonType }}</option>
+            }
+          </select>
+        </label>
+        <button class="btn btn-primary source-admin-add-button" type="submit" [disabled]="adding()">
+          {{ adding() ? 'Adding…' : 'Add' }}
+        </button>
+      </form>
+      @if (addError()) {
+        <p class="source-admin-error" role="alert">{{ addError() }}</p>
+      }
     }
 
     <label class="source-admin-search">
@@ -44,213 +46,469 @@
         [(ngModel)]="searchTerm" />
     </label>
 
-    <ul class="source-admin-list">
-      @for (material of filteredMaterials(); track material.id) {
-        <li class="source-admin-item">
-          @if (editId() === material.id) {
-            <form class="source-admin-edit" (ngSubmit)="saveEdit()">
-              <input
-                name="editTitle"
-                [(ngModel)]="editTitle"
-                aria-label="Renamed source material" />
-              <select name="editMedium" [(ngModel)]="editMedium" aria-label="Medium">
-                @for (medium of media; track medium) {
-                  <option [value]="medium">{{ medium }}</option>
-                }
-              </select>
-              <select name="editCanonType" [(ngModel)]="editCanonType" aria-label="Canon type">
-                @for (canonType of canonTypes; track canonType) {
-                  <option [value]="canonType">{{ canonType }}</option>
-                }
-              </select>
-              <button class="btn btn-small" type="submit" [disabled]="savingId() === material.id">
-                {{ savingId() === material.id ? 'Saving…' : 'Save' }}
-              </button>
-              <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
-            </form>
-          } @else if (confirmDeleteId() === material.id) {
-            <div class="source-admin-delete-prompt">
-              <p>
-                Delete “{{ material.title }}”? This is blocked while it is referenced by a timeline
-                event or a user library.
-              </p>
-              <div class="source-admin-delete-actions">
-                <button
-                  class="btn btn-small btn-danger"
-                  type="button"
-                  [disabled]="deletingId() === material.id"
-                  (click)="confirmDelete()">
-                  {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
-                </button>
-                <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
-              </div>
-            </div>
-          } @else {
-            <div class="source-admin-top">
-              <div class="source-admin-item-main">
-                <button
-                  type="button"
-                  class="source-admin-expand"
-                  [class.source-admin-expand--open]="expandedMaterialId() === material.id"
-                  (click)="toggleUnits(material.id)"
-                  aria-label="Toggle units">
-                  {{ expandedMaterialId() === material.id ? '▾' : '▸' }}
-                </button>
-                <div class="source-admin-item-text">
-                  <span class="source-admin-title">{{ material.title }}</span>
-                  <span class="source-admin-meta">
-                    {{ material.medium }} · {{ material.canonType }}
-                  </span>
-                </div>
-              </div>
-              <div class="source-admin-actions">
-                <button class="btn btn-small" type="button" (click)="beginEdit(material)">
-                  Edit
-                </button>
-                <button
-                  class="btn btn-small btn-danger"
-                  type="button"
-                  (click)="requestDelete(material)">
-                  Delete
-                </button>
-              </div>
-            </div>
-          }
-
-          @if (expandedMaterialId() === material.id && editId() !== material.id) {
-            <div class="unit-admin">
-              @if (unitsLoading()) {
-                <p class="source-admin-status" role="status">Loading units…</p>
-              } @else if (unitsError()) {
-                <p class="source-admin-error" role="alert">{{ unitsError() }}</p>
-              } @else {
-                <form class="unit-admin-add" (ngSubmit)="addUnit(material.id)">
-                  <label class="source-admin-field">
-                    <span class="sr-only">Unit type</span>
-                    <select name="newUnitType" [(ngModel)]="newUnitType">
-                      @for (unitType of unitTypes; track unitType) {
-                        <option [value]="unitType">{{ unitType }}</option>
+    @for (group of mediumGroups(); track group.medium) {
+      <div class="medium-group">
+        <button
+          type="button"
+          class="medium-header"
+          [class.medium-header--open]="isMediumExpanded(group.medium)"
+          (click)="toggleMedium(group.medium)">
+          <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+          <span class="medium-label">{{ group.medium }}</span>
+          <span class="medium-count">{{ group.materials.length }} {{ group.materials.length === 1 ? 'material' : 'materials' }}</span>
+        </button>
+        @if (isMediumExpanded(group.medium)) {
+          <ul class="source-admin-list">
+            @for (material of group.materials; track material.id) {
+              <li class="source-admin-item">
+                @if (editId() === material.id) {
+                  <form class="source-admin-edit" (ngSubmit)="saveEdit()">
+                    <input
+                      name="editTitle"
+                      [(ngModel)]="editTitle"
+                      aria-label="Renamed source material" />
+                    <select name="editMedium" [(ngModel)]="editMedium" aria-label="Medium">
+                      @for (medium of media; track medium) {
+                        <option [value]="medium">{{ medium }}</option>
                       }
                     </select>
-                  </label>
-                  <label class="source-admin-field">
-                    <span class="sr-only">Group number</span>
-                    <input
-                      name="newUnitGroup"
-                      type="number"
-                      min="1"
-                      placeholder="Group"
-                      [(ngModel)]="newUnitGroup" />
-                  </label>
-                  <label class="source-admin-field">
-                    <span class="sr-only">Unit number</span>
-                    <input
-                      name="newUnitNumber"
-                      type="number"
-                      min="1"
-                      placeholder="Number"
-                      required
-                      [(ngModel)]="newUnitNumber" />
-                  </label>
-                  <label class="source-admin-field">
-                    <span class="sr-only">Unit title</span>
-                    <input
-                      name="newUnitTitle"
-                      [(ngModel)]="newUnitTitle"
-                      placeholder="Title (optional)" />
-                  </label>
-                  <button
-                    class="btn btn-small"
-                    type="submit"
-                    [disabled]="addingUnitFor() === material.id">
-                    {{ addingUnitFor() === material.id ? 'Adding…' : 'Add unit' }}
-                  </button>
-                </form>
-                @if (unitAddError()) {
-                  <p class="source-admin-error" role="alert">{{ unitAddError() }}</p>
-                }
+                    <select name="editCanonType" [(ngModel)]="editCanonType" aria-label="Canon type">
+                      @for (canonType of canonTypes; track canonType) {
+                        <option [value]="canonType">{{ canonType }}</option>
+                      }
+                    </select>
+                    <button class="btn btn-small" type="submit" [disabled]="savingId() === material.id">
+                      {{ savingId() === material.id ? 'Saving…' : 'Save' }}
+                    </button>
+                    <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+                  </form>
+                } @else if (confirmDeleteId() === material.id) {
+                  <div class="source-admin-delete-prompt">
+                    <p>
+                      Delete "{{ material.title }}"? This is blocked while it is referenced by a timeline
+                      event or a user library.
+                    </p>
+                    <div class="source-admin-delete-actions">
+                      <button
+                        class="btn btn-small btn-danger"
+                        type="button"
+                        [disabled]="deletingId() === material.id"
+                        (click)="confirmDelete()">
+                        {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
+                      </button>
+                      <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+                    </div>
+                  </div>
+                } @else {
+                  <!-- ═══════════════════════════════════════════════════════════════════
+                       MATERIAL HEADER — expand button + title/meta + actions
+                       ═══════════════════════════════════════════════════════════════════ -->
+                  <div class="source-admin-top">
+                    <div class="source-admin-item-main">
+                      @if (hasUnits()[material.id]) {
+                        <button
+                          type="button"
+                          class="source-admin-expand"
+                          [class.source-admin-expand--open]="isMaterialExpanded(material.id)"
+                          (click)="toggleUnits(material.id)"
+                          aria-label="Toggle units">
+                          {{ isMaterialExpanded(material.id) ? '▾' : '▸' }}
+                        </button>
+                      } @else {
+                        <span class="source-admin-expand"></span>
+                      }
+                      <div class="source-admin-item-text">
+                        <span class="source-admin-title">{{ material.title }}</span>
+                        <span class="source-admin-meta">{{ material.canonType }}</span>
+                      </div>
+                    </div>
 
-                <ul class="unit-admin-list">
-                  @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
-                    <li class="unit-admin-item">
-                      @if (unitEditKey()?.unitId === unit.id) {
-                        <form class="unit-admin-edit" (ngSubmit)="saveUnitEdit()">
-                          <select name="unitEditType" [(ngModel)]="unitEditType">
-                            @for (unitType of unitTypes; track unitType) {
-                              <option [value]="unitType">{{ unitType }}</option>
+                    @if (isAdmin()) {
+                      <div class="source-admin-actions">
+                        <button class="btn btn-small" type="button" (click)="beginEdit(material)">
+                          Edit
+                        </button>
+                        <button
+                          class="btn btn-small btn-danger"
+                          type="button"
+                          (click)="requestDelete(material)">
+                          Delete
+                        </button>
+                      </div>
+                    } @else {
+                      <!-- ═══════════════════════════════════════════════════════════════
+                           NON-ADMIN: top-level tracking dropdown (medium-specific)
+                           Movies, Books, Games → track at title level
+                           Comics, Shows → track per group (below in expanded section)
+                           ═══════════════════════════════════════════════════════════════ -->
+                      @switch (group.medium) {
+                        @case ('Movie') {
+                          <select
+                            class="track-select"
+                            [attr.aria-label]="'Track ' + material.title"
+                            (change)="onTrackMaterial(material.id, $event)">
+                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
+                            @for (status of getTrackingOptions(material.id); track status) {
+                              <option
+                                [value]="status"
+                                [selected]="getMaterialCurrentStatus(material.id) === status"
+                                [class.remove-option]="status === 'remove'">
+                                {{ status === 'remove' ? 'Remove From Library' : status }}
+                              </option>
                             }
                           </select>
-                          <input
-                            name="unitEditGroup"
-                            type="number"
-                            min="1"
-                            placeholder="Group"
-                            [(ngModel)]="unitEditGroup" />
-                          <input
-                            name="unitEditNumber"
-                            type="number"
-                            min="1"
-                            required
-                            [(ngModel)]="unitEditNumber" />
-                          <input
-                            name="unitEditTitle"
-                            [(ngModel)]="unitEditTitle"
-                            placeholder="Title (optional)" />
-                          <button
-                            class="btn btn-small"
-                            type="submit"
-                            [disabled]="unitSavingKey()?.unitId === unit.id">
-                            {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
-                          </button>
-                          <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
-                            Cancel
-                          </button>
-                        </form>
-                      } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
-                        <span class="unit-admin-delete-prompt">
-                          Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
-                          timeline event or user progress.
-                          <button
-                            class="btn btn-small btn-danger"
-                            type="button"
-                            [disabled]="unitDeletingKey()?.unitId === unit.id"
-                            (click)="confirmUnitDelete()">
-                            {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
-                          </button>
-                          <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
-                            Cancel
-                          </button>
-                        </span>
-                      } @else {
-                        <span class="unit-admin-label">
-                          <span class="unit-admin-type">{{ unit.unitType }}</span>
-                          {{ unitLabel(unit) }}
-                        </span>
-                        <div class="unit-admin-actions">
-                          <button
-                            class="btn btn-small"
-                            type="button"
-                            (click)="beginUnitEdit(material.id, unit)">
-                            Edit
-                          </button>
-                          <button
-                            class="btn btn-small btn-danger"
-                            type="button"
-                            (click)="requestUnitDelete(material.id, unit)">
-                            Delete
-                          </button>
-                        </div>
+                        }
+                        @case ('Book') {
+                          <select
+                            class="track-select"
+                            [attr.aria-label]="'Track ' + material.title"
+                            (change)="onTrackMaterial(material.id, $event)">
+                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
+                            @for (status of getTrackingOptions(material.id); track status) {
+                              <option
+                                [value]="status"
+                                [selected]="getMaterialCurrentStatus(material.id) === status"
+                                [class.remove-option]="status === 'remove'">
+                                {{ status === 'remove' ? 'Remove From Library' : status }}
+                              </option>
+                            }
+                          </select>
+                        }
+                        @case ('Video Game') {
+                          <select
+                            class="track-select"
+                            [attr.aria-label]="'Track ' + material.title"
+                            (change)="onTrackMaterial(material.id, $event)">
+                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
+                            @for (status of getTrackingOptions(material.id); track status) {
+                              <option
+                                [value]="status"
+                                [selected]="getMaterialCurrentStatus(material.id) === status"
+                                [class.remove-option]="status === 'remove'">
+                                {{ status === 'remove' ? 'Remove From Library' : status }}
+                              </option>
+                            }
+                          </select>
+                        }
                       }
-                    </li>
+                    }
+                  </div>
+
+                  <!-- ═══════════════════════════════════════════════════════════════════
+                       EXPANDED SECTION — varies by medium
+                       ═══════════════════════════════════════════════════════════════════ -->
+                  @if (shouldShowUnits(material.id) && editId() !== material.id) {
+                    <div class="unit-admin">
+                      @if (unitsLoading()) {
+                        <p class="source-admin-status" role="status">Loading units…</p>
+                      } @else if (unitsError()) {
+                        <p class="source-admin-error" role="alert">{{ unitsError() }}</p>
+                      } @else {
+                        <!-- Admin: unit management form -->
+                        @if (isAdmin()) {
+                          <form class="unit-admin-add" (ngSubmit)="addUnit(material.id)">
+                            <label class="source-admin-field">
+                              <span class="sr-only">Unit type</span>
+                              <select name="newUnitType" [(ngModel)]="newUnitType">
+                                @for (unitType of unitTypes; track unitType) {
+                                  <option [value]="unitType">{{ unitType }}</option>
+                                }
+                              </select>
+                            </label>
+                            <label class="source-admin-field">
+                              <span class="sr-only">Group number</span>
+                              <input
+                                name="newUnitGroup"
+                                type="number"
+                                min="1"
+                                placeholder="Group"
+                                [(ngModel)]="newUnitGroup" />
+                            </label>
+                            <label class="source-admin-field">
+                              <span class="sr-only">Unit number</span>
+                              <input
+                                name="newUnitNumber"
+                                type="number"
+                                min="1"
+                                placeholder="Number"
+                                required
+                                [(ngModel)]="newUnitNumber" />
+                            </label>
+                            <label class="source-admin-field">
+                              <span class="sr-only">Unit title</span>
+                              <input
+                                name="newUnitTitle"
+                                [(ngModel)]="newUnitTitle"
+                                placeholder="Title (optional)" />
+                            </label>
+                            <button
+                              class="btn btn-small"
+                              type="submit"
+                              [disabled]="addingUnitFor() === material.id">
+                              {{ addingUnitFor() === material.id ? 'Adding…' : 'Add unit' }}
+                            </button>
+                          </form>
+                          @if (unitAddError()) {
+                            <p class="source-admin-error" role="alert">{{ unitAddError() }}</p>
+                          }
+                        }
+
+                        <!-- ═══════════════════════════════════════════════════════════
+                             NON-ADMIN UNIT DISPLAY — medium-specific
+                             ═══════════════════════════════════════════════════════════ -->
+                        @if (!isAdmin()) {
+                          <!-- ─── Movies: no units to display ─── -->
+                          @if (group.medium === 'Movie') {
+                          } @else if (group.medium === 'Book' || group.medium === 'Video Game') {
+                            <!-- ─── Books/Games: units listed flat (no per-unit tracking) ─── -->
+                            <ul class="unit-admin-list">
+                              @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                                <li class="unit-admin-item">
+                                  <span class="unit-admin-label">
+                                    <span class="unit-admin-type">{{ unit.unitType }}</span>
+                                    {{ unitLabel(unit) }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
+                          } @else if (group.medium === 'Comic' || group.medium === 'Live Action Show' || group.medium === 'Animated Show') {
+                            <!-- ─── Comics & Shows: season/volume groups with tracking + episodes ─── -->
+                            @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
+                              <div class="group-track-section">
+                                <div class="track-group-row">
+                                  <button
+                                    type="button"
+                                    class="season-header"
+                                    [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
+                                    (click)="toggleSeason(material.id, displayGroup.expandKey)">
+                                    <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                    <span class="season-label">{{ displayGroup.label }}</span>
+                                  </button>
+                                  @if (displayGroup.containerId !== null) {
+                                    <select
+                                      class="group-track-select"
+                                      [attr.aria-label]="'Track ' + displayGroup.label"
+                                      (change)="onTrackGroupUnit(material.id, displayGroup.containerId, $event)">
+                                      <option
+                                        value=""
+                                        disabled
+                                        [selected]="getGroupCurrentStatus(material.id, displayGroup.containerId) === null"
+                                        hidden>Track…</option>
+                                      @for (status of getGroupTrackingOptions(material.id, displayGroup.containerId); track status) {
+                                        <option
+                                          [value]="status"
+                                          [selected]="getGroupCurrentStatus(material.id, displayGroup.containerId) === status"
+                                          [class.remove-option]="status === 'remove'">
+                                          {{ status === 'remove' ? 'Remove From Library' : status }}
+                                        </option>
+                                      }
+                                    </select>
+                                  }
+                                </div>
+                                @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
+                                  <ul class="season-episodes">
+                                    @for (childUnit of displayGroup.units; track childUnit.id) {
+                                      <li class="unit-admin-item">
+                                        <span class="unit-admin-label">
+                                          <span class="unit-admin-type">{{ childUnit.unitType }}</span>
+                                          {{ unitLabel(childUnit) }}
+                                        </span>
+                                      </li>
+                                    }
+                                  </ul>
+                                }
+                              </div>
+                            }
+                          }
+                        }
+
+                        <!-- ═══════════════════════════════════════════════════════════
+                             ADMIN UNIT LIST — flat or grouped by display strategy
+                             ═══════════════════════════════════════════════════════════ -->
+                        @if (isAdmin()) {
+                          @switch (displayStrategy()[material.id]) {
+                            @case ('flat') {
+                              <ul class="unit-admin-list">
+                                @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                                  <li class="unit-admin-item">
+                                    @if (unitEditKey()?.unitId === unit.id) {
+                                      <form class="unit-admin-edit" (ngSubmit)="saveUnitEdit()">
+                                        <select name="unitEditType" [(ngModel)]="unitEditType">
+                                          @for (unitType of unitTypes; track unitType) {
+                                            <option [value]="unitType">{{ unitType }}</option>
+                                          }
+                                        </select>
+                                        <input
+                                          name="unitEditGroup"
+                                          type="number"
+                                          min="1"
+                                          placeholder="Group"
+                                          [(ngModel)]="unitEditGroup" />
+                                        <input
+                                          name="unitEditNumber"
+                                          type="number"
+                                          min="1"
+                                          required
+                                          [(ngModel)]="unitEditNumber" />
+                                        <input
+                                          name="unitEditTitle"
+                                          [(ngModel)]="unitEditTitle"
+                                          placeholder="Title (optional)" />
+                                        <button
+                                          class="btn btn-small"
+                                          type="submit"
+                                          [disabled]="unitSavingKey()?.unitId === unit.id">
+                                          {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
+                                        </button>
+                                        <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
+                                          Cancel
+                                        </button>
+                                      </form>
+                                    } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
+                                      <span class="unit-admin-delete-prompt">
+                                        Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
+                                        timeline event or user progress.
+                                        <button
+                                          class="btn btn-small btn-danger"
+                                          type="button"
+                                          [disabled]="unitDeletingKey()?.unitId === unit.id"
+                                          (click)="confirmUnitDelete()">
+                                          {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
+                                        </button>
+                                        <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
+                                          Cancel
+                                        </button>
+                                      </span>
+                                    } @else {
+                                      <span class="unit-admin-label">
+                                        <span class="unit-admin-type">{{ unit.unitType }}</span>
+                                        {{ unitLabel(unit) }}
+                                      </span>
+                                      <div class="unit-admin-actions">
+                                        <button
+                                          class="btn btn-small"
+                                          type="button"
+                                          (click)="beginUnitEdit(material.id, unit)">
+                                          Edit
+                                        </button>
+                                        <button
+                                          class="btn btn-small btn-danger"
+                                          type="button"
+                                          (click)="requestUnitDelete(material.id, unit)">
+                                          Delete
+                                        </button>
+                                      </div>
+                                    }
+                                  </li>
+                                }
+                              </ul>
+                            }
+                            @default {
+                              <ul class="unit-admin-list">
+                                @for (group of seasonGroups()[material.id] ?? []; track group.groupNumber) {
+                                  <li class="season-group">
+                                    <button
+                                      type="button"
+                                      class="season-header"
+                                      [class.season-header--open]="isSeasonExpanded(material.id, group.groupNumber)"
+                                      (click)="toggleSeason(material.id, group.groupNumber)">
+                                      <span class="season-toggle">{{ isSeasonExpanded(material.id, group.groupNumber) ? '▾' : '▸' }}</span>
+                                      <span class="season-label">{{ groupLabel(group.groupNumber, group.groupTitle, displayStrategy()[material.id]) }}</span>
+                                      <span class="season-count">{{ group.units.length }} {{ group.units.length === 1 ? 'unit' : 'units' }}</span>
+                                    </button>
+                                    @if (isSeasonExpanded(material.id, group.groupNumber)) {
+                                      <ul class="season-episodes">
+                                        @for (unit of group.units; track unit.id) {
+                                          <li class="unit-admin-item">
+                                            @if (unitEditKey()?.unitId === unit.id) {
+                                              <form class="unit-admin-edit" (ngSubmit)="saveUnitEdit()">
+                                                <select name="unitEditType" [(ngModel)]="unitEditType">
+                                                  @for (unitType of unitTypes; track unitType) {
+                                                    <option [value]="unitType">{{ unitType }}</option>
+                                                  }
+                                                </select>
+                                                <input
+                                                  name="unitEditGroup"
+                                                  type="number"
+                                                  min="1"
+                                                  placeholder="Group"
+                                                  [(ngModel)]="unitEditGroup" />
+                                                <input
+                                                  name="unitEditNumber"
+                                                  type="number"
+                                                  min="1"
+                                                  required
+                                                  [(ngModel)]="unitEditNumber" />
+                                                <input
+                                                  name="unitEditTitle"
+                                                  [(ngModel)]="unitEditTitle"
+                                                  placeholder="Title (optional)" />
+                                                <button
+                                                  class="btn btn-small"
+                                                  type="submit"
+                                                  [disabled]="unitSavingKey()?.unitId === unit.id">
+                                                  {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
+                                                </button>
+                                                <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
+                                                  Cancel
+                                                </button>
+                                              </form>
+                                            } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
+                                              <span class="unit-admin-delete-prompt">
+                                                Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
+                                                timeline event or user progress.
+                                                <button
+                                                  class="btn btn-small btn-danger"
+                                                  type="button"
+                                                  [disabled]="unitDeletingKey()?.unitId === unit.id"
+                                                  (click)="confirmUnitDelete()">
+                                                  {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
+                                                </button>
+                                                <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
+                                                  Cancel
+                                                </button>
+                                              </span>
+                                            } @else {
+                                              <span class="unit-admin-label">
+                                                <span class="unit-admin-type">{{ unit.unitType }}</span>
+                                                {{ unitLabel(unit) }}
+                                              </span>
+                                              <div class="unit-admin-actions">
+                                                <button
+                                                  class="btn btn-small"
+                                                  type="button"
+                                                  (click)="beginUnitEdit(material.id, unit)">
+                                                  Edit
+                                                </button>
+                                                <button
+                                                  class="btn btn-small btn-danger"
+                                                  type="button"
+                                                  (click)="requestUnitDelete(material.id, unit)">
+                                                  Delete
+                                                </button>
+                                              </div>
+                                            }
+                                          </li>
+                                        }
+                                      </ul>
+                                    }
+                                  </li>
+                                }
+                              </ul>
+                            }
+                          }
+                        }
+                      }
+                    </div>
                   }
-                </ul>
-              }
-            </div>
-          }
-        </li>
-      }
-    </ul>
-    @if (searchTerm() && filteredMaterials().length === 0 && materials().length > 0) {
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+    @if (searchTerm() && mediumGroups().length === 0 && materials().length > 0) {
       <p class="source-admin-status" role="status">No source materials match your search.</p>
     }
     @if (actionError()) {

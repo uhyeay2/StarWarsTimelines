@@ -167,6 +167,7 @@ export function mapTimelineEvent(dto: TimelineEventDto): TimelineEvent {
       sourceId: dto.sourceMaterial.id,
       unit: dto.sourceMaterialUnit
         ? {
+            id: dto.sourceMaterialUnit.id,
             unitType: unitTypeFromApiCode(dto.sourceMaterialUnit.unitType),
             groupNumber: dto.sourceMaterialUnit.groupNumber ?? undefined,
             number: dto.sourceMaterialUnit.number,

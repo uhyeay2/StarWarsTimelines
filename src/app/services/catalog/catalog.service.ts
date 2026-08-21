@@ -15,7 +15,7 @@
 
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiCharacter } from '../../models/api-character';
 import { ApiLocation } from '../../models/api-location';
@@ -163,6 +163,50 @@ export class CatalogService {
    */
   fetchSourceMaterials(): void {
     this.sourceMaterialsCache.fetch();
+  }
+
+  /**
+   * Probes all source materials to discover which have units.
+   *
+   * Fetches unit caches for every material in parallel. Call
+   * {@link checkProbeResults} after flushing the HTTP requests to
+   * synchronously read the results.
+   */
+  probeUnitPresence(): void {
+    const materials = this.sourceMaterialsCache.data();
+    if (!materials || materials.length === 0) {
+      return;
+    }
+
+    for (const m of materials) {
+      this.getUnitCache(m.id).fetch();
+    }
+  }
+
+  /**
+   * Synchronously checks whether all probe fetches have completed.
+   *
+   * @returns A `Set` of material IDs that have units, or `null` if any
+   *          probe is still loading.
+   */
+  checkProbeResults(): Set<string> | null {
+    const materials = this.sourceMaterialsCache.data();
+    if (!materials || materials.length === 0) {
+      return new Set<string>();
+    }
+
+    if (materials.some((m) => this.getUnitCache(m.id).loading())) {
+      return null;
+    }
+
+    const withUnits = new Set<string>();
+    for (const m of materials) {
+      const units = this.getUnitCache(m.id).data();
+      if (units && units.length > 0) {
+        withUnits.add(m.id);
+      }
+    }
+    return withUnits;
   }
 
   /**

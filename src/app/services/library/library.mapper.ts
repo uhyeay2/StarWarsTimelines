@@ -90,6 +90,7 @@ export function mapLibraryUnit(dto: LibraryUnitDto): LibraryUnit {
     number: dto.number,
     title: dto.title ?? undefined,
     isCompleted: dto.isCompleted,
+    isTracked: dto.isTracked,
   };
 }
 

@@ -44,7 +44,7 @@ describe('App', () => {
     expect(compiled.querySelector('button.logout-button')).toBeTruthy();
   });
 
-  it('shows the Admin link only to admins', async () => {
+  it('shows the Catalog link for logged-in users', async () => {
     sessionStorage.setItem('starwars-timelines.token', 'token-value');
     sessionStorage.setItem(
       'starwars-timelines.user',
@@ -55,10 +55,10 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('a[routerLink="/admin"]')).toBeTruthy();
+    expect(compiled.querySelector('a[routerLink="/catalog"]')).toBeTruthy();
   });
 
-  it('hides the Admin link for non-admin users', async () => {
+  it('shows the Catalog link for non-admin users', async () => {
     sessionStorage.setItem('starwars-timelines.token', 'token-value');
     sessionStorage.setItem(
       'starwars-timelines.user',
@@ -74,6 +74,6 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('a[routerLink="/admin"]')).toBeNull();
+    expect(compiled.querySelector('a[routerLink="/catalog"]')).toBeTruthy();
   });
 });

@@ -6,20 +6,22 @@
   } @else if (loadError()) {
     <p class="name-catalog-error" role="alert">{{ loadError() }}</p>
   } @else {
-    <form class="name-catalog-add" (ngSubmit)="add()">
-      <label class="name-catalog-field">
-        <span class="sr-only">New {{ noun() }} name</span>
-        <input
-          name="newName"
-          [(ngModel)]="newName"
-          [placeholder]="'Add a new ' + noun() + '…'" />
-      </label>
-      <button class="btn btn-primary" type="submit" [disabled]="adding()">
-        {{ adding() ? 'Adding…' : 'Add' }}
-      </button>
-    </form>
-    @if (addError()) {
-      <p class="name-catalog-error" role="alert">{{ addError() }}</p>
+    @if (isAdmin()) {
+      <form class="name-catalog-add" (ngSubmit)="add()">
+        <label class="name-catalog-field">
+          <span class="sr-only">New {{ noun() }} name</span>
+          <input
+            name="newName"
+            [(ngModel)]="newName"
+            [placeholder]="'Add a new ' + noun() + '…'" />
+        </label>
+        <button class="btn btn-primary" type="submit" [disabled]="adding()">
+          {{ adding() ? 'Adding…' : 'Add' }}
+        </button>
+      </form>
+      @if (addError()) {
+        <p class="name-catalog-error" role="alert">{{ addError() }}</p>
+      }
     }
 
     <label class="name-catalog-search">
@@ -61,15 +63,17 @@
             </div>
           } @else {
             <span class="name-catalog-name">{{ item.name }}</span>
-            <div class="name-catalog-actions">
-              <button class="btn btn-small" type="button" (click)="beginEdit(item)">Edit</button>
-              <button
-                class="btn btn-small btn-danger"
-                type="button"
-                (click)="requestDelete(item)">
-                Delete
-              </button>
-            </div>
+            @if (isAdmin()) {
+              <div class="name-catalog-actions">
+                <button class="btn btn-small" type="button" (click)="beginEdit(item)">Edit</button>
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  (click)="requestDelete(item)">
+                  Delete
+                </button>
+              </div>
+            }
           }
         </li>
       }

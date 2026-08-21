@@ -18,8 +18,51 @@ const UNIT_ITEM: LibraryItem = {
   status: 'In progress',
   favorite: false,
   units: [
+    { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
     { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: true },
     { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: false },
+  ],
+};
+
+const UNIT_ITEM_WITHOUT_SEASONS: LibraryItem = {
+  id: 'material-episode-ii',
+  title: 'Star Wars: Episode II - Attack of the Clones',
+  medium: 'Movie',
+  status: 'In progress',
+  favorite: false,
+  units: [
+    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: true },
+    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: false },
+  ],
+};
+
+const UNIT_ITEM_MULTI_SEASON: LibraryItem = {
+  id: 'material-rebels',
+  title: 'Star Wars: Rebels',
+  medium: 'Live Action Show',
+  status: 'In progress',
+  favorite: false,
+  units: [
+    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
+    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', isCompleted: false, isTracked: false },
+    { id: 's3-container', unitType: 'Season', number: 3, title: 'Season 3', isCompleted: true, isTracked: true },
+    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Pilot', isCompleted: true },
+    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'The Disappeared', isCompleted: false },
+    { id: 'e3', unitType: 'Episode', groupNumber: 3, number: 1, title: 'Future Heroes', isCompleted: true },
+  ],
+};
+
+const UNIT_ITEM_NO_TRACKED_SEASONS: LibraryItem = {
+  id: 'material-mandalorian',
+  title: 'The Mandalorian',
+  medium: 'Live Action Show',
+  status: 'Wish Listed',
+  favorite: false,
+  units: [
+    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false },
+    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', isCompleted: false },
+    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1', isCompleted: false },
+    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'Chapter 2', isCompleted: false },
   ],
 };
 
@@ -52,7 +95,7 @@ describe('TrackedItemRow', () => {
     const options = [...fixture.nativeElement.querySelectorAll('option')].map(
       (option) => (option as HTMLOptionElement).value,
     );
-    expect(options).toEqual(['In progress', 'Completed', 'Wish Listed']);
+    expect(options).toEqual(['In progress', 'Completed', 'Wish Listed', 'remove']);
   });
 
   it('emits statusChange when the status select changes', () => {
@@ -67,25 +110,16 @@ describe('TrackedItemRow', () => {
     expect(emissions).toEqual(['Wish Listed']);
   });
 
-  it('emits favoriteChange and remove from their buttons', () => {
-    let favoriteToggled = false;
+  it('emits remove from the Remove From Library option in the status select', () => {
     let removed = false;
-    component.favoriteChange.subscribe(() => (favoriteToggled = true));
     component.remove.subscribe(() => (removed = true));
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('.favorite-button') as HTMLElement).click();
-    (fixture.nativeElement.querySelector('.remove-button') as HTMLElement).click();
+    const select = fixture.nativeElement.querySelector('select.status-select') as HTMLSelectElement;
+    select.value = 'remove';
+    select.dispatchEvent(new Event('change'));
 
-    expect(favoriteToggled).toBe(true);
     expect(removed).toBe(true);
-  });
-
-  it('marks the favorite button as active when the item is favorited', () => {
-    fixture.componentRef.setInput('item', { ...ITEM, favorite: true });
-    fixture.detectChanges();
-    const button = fixture.nativeElement.querySelector('.favorite-button') as HTMLElement;
-    expect(button.classList.contains('favorite-button--active')).toBe(true);
   });
 
   it('hides reorder controls and drag behavior by default', () => {
@@ -162,40 +196,90 @@ describe('TrackedItemRow', () => {
     expect(row.classList.contains('tracked-item-row--dragging')).toBe(true);
   });
 
-  it('shows unit checkboxes instead of a status select for unit-based items', () => {
+  it('shows grouped units with a season status select for unit-based items', () => {
     fixture.componentRef.setInput('item', UNIT_ITEM);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('select')).toBeNull();
-    expect(compiled.querySelector('.status-badge')?.textContent).toContain('In progress');
+    expect(compiled.querySelector('select.status-select')).toBeNull();
+    expect(compiled.querySelector('.status-badge')).toBeNull();
 
-    const checkboxes = compiled.querySelectorAll('.unit-checkbox') as NodeListOf<HTMLInputElement>;
-    expect(checkboxes.length).toBe(2);
-    expect(checkboxes[0].checked).toBe(true);
-    expect(checkboxes[1].checked).toBe(false);
-    expect(compiled.textContent).toContain('Season 1 · Episode 1: Attack of the Clones');
-    expect(compiled.textContent).toContain('Season 1 · Episode 2: Sneak Preview');
+    // Season label is shown with status select
+    expect(compiled.textContent).toContain('Season 1');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(1);
   });
 
-  it('labels units without a group number using just the unit type and number', () => {
+  it('shows grouping by groupNumber when no Season/Volume units exist', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM_WITHOUT_SEASONS);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Season 1');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(1);
+  });
+
+  it('shows grouping for units without a group number', () => {
     fixture.componentRef.setInput('item', {
-      ...UNIT_ITEM,
+      id: 'material-chapter-test',
+      title: 'Test Chapter Material',
+      medium: 'Book',
+      status: 'In progress',
+      favorite: false,
       units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', isCompleted: false }],
     });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Chapter 1: The Menace');
+    expect(fixture.nativeElement.textContent).toContain('All Units');
   });
 
-  it('emits unitProgressChange when a unit checkbox changes', () => {
+  it('emits groupStatusChange when the season status select changes', () => {
     fixture.componentRef.setInput('item', UNIT_ITEM);
     fixture.detectChanges();
-    const emissions: { unitId: string; isCompleted: boolean }[] = [];
-    component.unitProgressChange.subscribe((value) => emissions.push(value));
+    const emissions: { unitId: string; status: TrackingStatus }[] = [];
+    component.groupStatusChange.subscribe((value) => emissions.push(value));
 
-    const checkbox = fixture.nativeElement.querySelectorAll('.unit-checkbox')[1] as HTMLInputElement;
-    checkbox.click();
+    const groupSelect = fixture.nativeElement.querySelector('select.group-status-select') as HTMLSelectElement;
+    groupSelect.value = 'Completed';
+    groupSelect.dispatchEvent(new Event('change'));
 
-    expect(emissions).toEqual([{ unitId: 'unit-2', isCompleted: true }]);
+    expect(emissions).toEqual([{ unitId: 'season-1', status: 'Completed' }]);
+  });
+
+  it('emits groupRemove (not remove) when a season select chooses "Remove From Library"', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM);
+    fixture.detectChanges();
+    const removals: { unitId: string }[] = [];
+    let materialRemovals = 0;
+    component.groupRemove.subscribe((value) => removals.push(value));
+    component.remove.subscribe(() => materialRemovals++);
+
+    const groupSelect = fixture.nativeElement.querySelector('select.group-status-select') as HTMLSelectElement;
+    groupSelect.value = 'remove';
+    groupSelect.dispatchEvent(new Event('change'));
+
+    expect(removals).toEqual([{ unitId: 'season-1' }]);
+    expect(materialRemovals).toBe(0);
+  });
+
+  it('shows the "Track..." placeholder for untracked seasons', () => {
+    // Wholesale-add fallback: no season is tracked, so selects show the placeholder.
+    fixture.componentRef.setInput('item', UNIT_ITEM_NO_TRACKED_SEASONS);
+    fixture.detectChanges();
+    const fallbackSelects = fixture.nativeElement.querySelectorAll(
+      'select.group-status-select',
+    ) as NodeListOf<HTMLSelectElement>;
+    expect(fallbackSelects.length).toBeGreaterThan(0);
+    for (const select of Array.from(fallbackSelects)) {
+      expect(select.selectedOptions[0]?.textContent).toContain('Track');
+    }
+
+    // Mixed case: tracked seasons show their status instead of the placeholder.
+    fixture.componentRef.setInput('item', UNIT_ITEM_MULTI_SEASON);
+    fixture.detectChanges();
+    const trackedSelects = fixture.nativeElement.querySelectorAll(
+      'select.group-status-select',
+    ) as NodeListOf<HTMLSelectElement>;
+    expect(trackedSelects.length).toBe(2);
+    for (const select of Array.from(trackedSelects)) {
+      expect(select.selectedOptions[0]?.textContent).not.toContain('Track');
+    }
   });
 
   it('still shows the status select for items without units', () => {
@@ -203,5 +287,24 @@ describe('TrackedItemRow', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('select')).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll('.unit-checkbox').length).toBe(0);
+  });
+
+  it('shows only tracked seasons when some are tracked', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM_MULTI_SEASON);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Season 1');
+    expect(compiled.textContent).toContain('Season 3');
+    expect(compiled.textContent).not.toContain('Season 2');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(2);
+  });
+
+  it('shows all seasons when none are tracked (wholesale-add case)', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM_NO_TRACKED_SEASONS);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Season 1');
+    expect(compiled.textContent).toContain('Season 2');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(2);
   });
 });

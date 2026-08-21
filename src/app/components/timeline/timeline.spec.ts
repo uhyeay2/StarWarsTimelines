@@ -5,14 +5,8 @@ import { BehaviorSubject, of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { CatalogEvent } from '../../services/catalog-event.service';
 import { TimelineEvent } from '../../models/timeline-event';
-import { LibraryItem } from '../../models/library-item';
-import { Medium } from '../../models/medium';
-import { TrackingStatus } from '../../models/tracking-status';
-import { User } from '../../models/user';
-import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
-import { LibraryService } from '../../services/library/library.service';
 import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { Timeline } from './timeline';
 
@@ -82,6 +76,18 @@ describe('Timeline', () => {
     return { events$: catalogEvents$.asObservable(), connected: signal(false) };
   }
 
+  function eventsServiceMock(events: readonly TimelineEvent[] = FIXTURE_EVENTS, overrides?: Record<string, unknown>) {
+    return {
+      getEvents$: () => of(events),
+      loading: signal(false),
+      error: signal(null),
+      events: signal(events),
+      getEvents: vi.fn(),
+      invalidate: vi.fn(),
+      ...overrides,
+    };
+  }
+
   function setupTimeline(providers: unknown[]): Promise<void> {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({ imports: [Timeline], providers });
@@ -92,9 +98,7 @@ describe('Timeline', () => {
     routeQueryParams = new BehaviorSubject<ParamMap>(convertToParamMap({}));
     routerMock = { navigate: vi.fn() };
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock() },
       {
         provide: CatalogService,
         useValue: catalogMock({
@@ -204,9 +208,7 @@ describe('Timeline', () => {
       },
     ];
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(seasonEvents), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock(seasonEvents) },
       { provide: CatalogService, useValue: catalogMock() },
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -495,126 +497,6 @@ describe('Timeline', () => {
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
-  it('does not show tracking controls when logged out', () => {
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.status-badge').length).toBe(0);
-    expect(fixture.nativeElement.querySelectorAll('.add-to-library-button').length).toBe(0);
-    expect(fixture.nativeElement.querySelectorAll('.status-select').length).toBe(0);
-  });
-
-  it('shows the tracking status select on events when the user is logged in', async () => {
-    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
-    await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(user) } },
-      {
-        provide: LibraryService,
-        useValue: {
-          getTracked: () =>
-            of([
-              {
-                id: 'material-a',
-                title: 'Source A',
-                medium: 'Movie',
-                status: 'In progress',
-                favorite: false,
-              },
-            ]),
-        },
-      },
-      { provide: CatalogService, useValue: catalogMock() },
-      { provide: CatalogEventService, useValue: catalogEventMock() },
-      {
-        provide: ActivatedRoute,
-        useValue: {
-          snapshot: { queryParamMap: convertToParamMap({}) },
-          queryParamMap: routeQueryParams,
-        },
-      },
-      { provide: Router, useValue: routerMock },
-    ]);
-
-    fixture = TestBed.createComponent(Timeline);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const selects = [...fixture.nativeElement.querySelectorAll('.status-select')] as HTMLSelectElement[];
-    expect(selects.length).toBe(1);
-    expect(selects[0].value).toBe('In progress');
-    expect(fixture.nativeElement.querySelectorAll('.add-to-library-button').length).toBe(1);
-  });
-
-  it('adds an event source to the library and updates its status when logged in', async () => {
-    const user: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
-    const trackedItems: LibraryItem[] = [];
-    const libraryMock = {
-      getTracked: vi.fn(() => of([...trackedItems])),
-      addTracked: vi.fn((_userId: string, material: { id: string; title: string; medium: Medium }) => {
-        trackedItems.push({
-          id: material.id,
-          title: material.title,
-          medium: material.medium,
-          status: 'Wish Listed',
-          favorite: false,
-        });
-        return of([...trackedItems]);
-      }),
-      setStatus: vi.fn((_userId: string, id: string, status: TrackingStatus) => {
-        const index = trackedItems.findIndex((item) => item.id === id);
-        trackedItems[index] = { ...trackedItems[index], status };
-        return of([...trackedItems]);
-      }),
-    };
-    await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(user) } },
-      { provide: LibraryService, useValue: libraryMock },
-      { provide: CatalogService, useValue: catalogMock() },
-      { provide: CatalogEventService, useValue: catalogEventMock() },
-      {
-        provide: ActivatedRoute,
-        useValue: {
-          snapshot: { queryParamMap: convertToParamMap({}) },
-          queryParamMap: routeQueryParams,
-        },
-      },
-      { provide: Router, useValue: routerMock },
-    ]);
-
-    fixture = TestBed.createComponent(Timeline);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelectorAll('.status-select').length).toBe(0);
-
-    const addButtons = [...fixture.nativeElement.querySelectorAll('.add-to-library-button')] as HTMLElement[];
-    expect(addButtons.length).toBe(2);
-    addButtons[0].click();
-    fixture.detectChanges();
-
-    expect(libraryMock.addTracked).toHaveBeenCalledWith('user-padme', {
-      id: 'material-c',
-      title: 'Source C',
-      medium: 'Movie',
-    });
-    const selects = [...fixture.nativeElement.querySelectorAll('.status-select')] as HTMLSelectElement[];
-    expect(selects.length).toBe(1);
-    expect(selects[0].value).toBe('Wish Listed');
-
-    selects[0].value = 'Completed';
-    selects[0].dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-
-    expect(libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 'material-c', 'Completed');
-    expect((fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement).value).toBe(
-      'Completed',
-    );
-  });
-
   it('shows catalog characters in the filter even if not in any events', async () => {
     const catalog = catalogMock({
       characters: [
@@ -624,9 +506,8 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock() },
+
       { provide: CatalogService, useValue: catalog },
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -666,9 +547,8 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock() },
+
       { provide: CatalogService, useValue: catalog },
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -708,9 +588,8 @@ describe('Timeline', () => {
       ],
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of(FIXTURE_EVENTS), loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock() },
+
       { provide: CatalogService, useValue: catalog },
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -735,11 +614,25 @@ describe('Timeline', () => {
   });
 
   it('refreshes events when a source-material SSE event arrives', async () => {
-    const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
+    const eventsSig = signal<readonly TimelineEvent[]>(FIXTURE_EVENTS);
+    const newEvent: TimelineEvent = {
+      id: 'new-event',
+      canon: ['Canon'],
+      title: 'New Event',
+      description: '',
+      source: { title: 'Source D', medium: 'Book', sourceId: 'material-d' },
+      locations: [],
+      characters: [],
+      vehicles: [],
+      year: 3,
+      displayDate: '3 ABY',
+    };
+    const invalidateMock = vi.fn(() => {
+      eventsSig.set([...FIXTURE_EVENTS, newEvent]);
+    });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject, loading: signal(false), error: signal(null) } },
-      { provide: AuthService, useValue: { currentUser: signal(null) } },
-      { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+      { provide: TimelineEventsService, useValue: eventsServiceMock(FIXTURE_EVENTS, { events: eventsSig, invalidate: invalidateMock }) },
+
       { provide: CatalogService, useValue: catalogMock() },
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -760,23 +653,12 @@ describe('Timeline', () => {
 
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
 
-    const newEvent: TimelineEvent = {
-      id: 'new-event',
-      canon: ['Canon'],
-      title: 'New Event',
-      description: '',
-      source: { title: 'Source D', medium: 'Book', sourceId: 'material-d' },
-      locations: [],
-      characters: [],
-      vehicles: [],
-      year: 3,
-      displayDate: '3 ABY',
-    };
-    eventsSubject.next([...FIXTURE_EVENTS, newEvent]);
+    catalogEvents$.next({ entity: 'source-materials' } as CatalogEvent);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(invalidateMock).toHaveBeenCalled();
     expect(eventTitles()).toContain('New Event');
   });
 
@@ -814,9 +696,9 @@ describe('Timeline', () => {
         displayDate: '5 ABY',
       };
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: { getEvents$: () => of([...FIXTURE_EVENTS, eventNoId]), loading: signal(false), error: signal(null) } },
-        { provide: AuthService, useValue: { currentUser: signal(null) } },
-        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: TimelineEventsService, useValue: eventsServiceMock([...FIXTURE_EVENTS, eventNoId]) },
+
+
         { provide: CatalogService, useValue: catalogMock() },
         { provide: CatalogEventService, useValue: catalogEventMock() },
         {
@@ -913,11 +795,10 @@ describe('Timeline', () => {
 
   describe('loading and error states', () => {
     it('shows skeleton loading when events are loading initially', async () => {
-      const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>([]);
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: { getEvents$: () => eventsSubject, loading: signal(true), error: signal(null) } },
-        { provide: AuthService, useValue: { currentUser: signal(null) } },
-        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: TimelineEventsService, useValue: eventsServiceMock([], { loading: signal(true), events: signal([]) }) },
+
+
         { provide: CatalogService, useValue: catalogMock() },
         { provide: CatalogEventService, useValue: catalogEventMock() },
         {
@@ -941,9 +822,9 @@ describe('Timeline', () => {
 
     it('shows error state when events fail to load', async () => {
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: { getEvents$: () => of([] as readonly TimelineEvent[]), loading: signal(false), error: signal('Failed to load timeline events') } },
-        { provide: AuthService, useValue: { currentUser: signal(null) } },
-        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: TimelineEventsService, useValue: eventsServiceMock([], { events: signal(null), error: signal('Failed to load timeline events') }) },
+
+
         { provide: CatalogService, useValue: catalogMock() },
         { provide: CatalogEventService, useValue: catalogEventMock() },
         {
@@ -971,14 +852,12 @@ describe('Timeline', () => {
   });
 
   describe('retryLoad', () => {
-    it('retriggers event loading', async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true });
-      const eventsSubject = new BehaviorSubject<readonly TimelineEvent[]>(FIXTURE_EVENTS);
-      let callCount = 0;
+    it('retriggers event loading via invalidate', async () => {
+      const invalidateMock = vi.fn();
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: { getEvents$: () => { callCount++; return eventsSubject; }, loading: signal(false), error: signal(null) } },
-        { provide: AuthService, useValue: { currentUser: signal(null) } },
-        { provide: LibraryService, useValue: { getTracked: () => of([]) } },
+        { provide: TimelineEventsService, useValue: eventsServiceMock(FIXTURE_EVENTS, { invalidate: invalidateMock }) },
+
+
         { provide: CatalogService, useValue: catalogMock() },
         { provide: CatalogEventService, useValue: catalogEventMock() },
         {
@@ -995,14 +874,9 @@ describe('Timeline', () => {
       component = fixture.componentInstance;
       fixture.detectChanges();
       await fixture.whenStable();
-      const initialCount = callCount;
 
       component.retryLoad();
-      vi.advanceTimersByTime(400);
-      fixture.detectChanges();
-      await fixture.whenStable();
-      expect(callCount).toBeGreaterThan(initialCount);
-      vi.useRealTimers();
+      expect(invalidateMock).toHaveBeenCalled();
     });
   });
 });

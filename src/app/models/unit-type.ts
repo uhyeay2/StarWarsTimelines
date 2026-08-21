@@ -1,4 +1,4 @@
-export const UNIT_TYPES = ['Episode', 'Chapter', 'Issue', 'Level'] as const;
+export const UNIT_TYPES = ['Episode', 'Chapter', 'Issue', 'Season', 'Volume', 'Level'] as const;
 
 export type UnitType = (typeof UNIT_TYPES)[number];
 

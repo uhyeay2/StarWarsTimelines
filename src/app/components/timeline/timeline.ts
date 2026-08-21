@@ -15,11 +15,9 @@
  */
 
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { catchError, debounceTime, filter, of, startWith, Subject, switchMap } from 'rxjs';
+import { filter } from 'rxjs';
 import { CANON_VIEWS, CanonView, matchesCanonView } from '../../models/canon';
-import { LibraryItem } from '../../models/library-item';
 import {
   collectFacetOptions,
   createEmptyFilters,
@@ -29,19 +27,13 @@ import {
   sourceChipsForEvent,
   TimelineFilters,
 } from '../../models/timeline-filters';
-import { TrackingStatus } from '../../models/tracking-status';
-import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
-import { LibraryService } from '../../services/library/library.service';
 import { LoggerService } from '../../services/logging/logger.service';
 import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../filter-group/filter-group';
-
-/** Debounce interval (ms) for SSE-driven event refreshes. */
-const SSE_DEBOUNCE_MS = 300;
 
 @Component({
   selector: 'app-timeline',
@@ -54,12 +46,6 @@ export class Timeline {
 
   /** Service for fetching and caching timeline events. */
   private readonly eventsService = inject(TimelineEventsService);
-
-  /** Authentication service for the current user. */
-  private readonly auth = inject(AuthService);
-
-  /** Library service for tracking/untracking source materials. */
-  private readonly libraryService = inject(LibraryService);
 
   /** Active route for reading/writing the `view` query param. */
   private readonly route = inject(ActivatedRoute);
@@ -84,47 +70,18 @@ export class Timeline {
   // ─── Event data ─────────────────────────────────────────────────────────
 
   /**
-   * Subject that triggers an event reload when nexted.
-   *
-   * SSE events and manual refreshes push to this subject. The pipeline
-   * debounces rapid emissions to avoid redundant network requests.
-   */
-  private readonly refreshTrigger$ = new Subject<void>();
-
-  /**
    * Reactive signal of all timeline events from the server.
    *
-   * Initialized from the refresh pipeline which debounces SSE-driven
-   * reloads. Errors are caught and result in an empty list.
+   * Reads directly from the service's signal cache. The cache is populated
+   * on init and invalidated via SSE-driven refreshes. Returns an empty
+   * array when the cache has not been populated yet.
    */
-  protected readonly events = toSignal(
-    this.refreshTrigger$.pipe(
-      debounceTime(SSE_DEBOUNCE_MS),
-      startWith(null as null),
-      switchMap(() =>
-        this.eventsService.getEvents$().pipe(catchError(() => of([] as readonly TimelineEvent[]))),
-      ),
-    ),
-    { initialValue: [] },
-  );
+  protected readonly events = computed(() => this.eventsService.events() ?? []);
 
   // ─── Filter state ───────────────────────────────────────────────────────
 
   /** Current filter configuration including canon view and facet selections. */
   readonly filters = signal<TimelineFilters>(createEmptyFilters());
-
-  // ─── Auth / user state ──────────────────────────────────────────────────
-
-  /** The currently authenticated user, or `null`. */
-  private readonly user = this.auth.currentUser;
-
-  /**
-   * The tracked library items for the current user.
-   *
-   * Updated optimistically on add/update operations and reconciled
-   * with the server response.
-   */
-  private readonly tracked = signal<readonly LibraryItem[]>([]);
 
   // ─── Component inputs ───────────────────────────────────────────────────
 
@@ -144,25 +101,6 @@ export class Timeline {
   );
 
   // ─── Computed state ─────────────────────────────────────────────────────
-
-  /** Whether the user is currently authenticated. */
-  readonly isLoggedIn = computed(() => this.user() !== null);
-
-  /** The current user's ID, or `null` if not logged in. */
-  private readonly userId = computed(() => this.user()?.id ?? null);
-
-  /**
-   * Map of source material ID to its tracking status.
-   *
-   * Used to display status badges and selects on event cards.
-   */
-  readonly sourceStatus = computed(() => {
-    const statusBySourceId: Record<string, TrackingStatus> = {};
-    for (const item of this.tracked()) {
-      statusBySourceId[item.id] = item.status;
-    }
-    return statusBySourceId;
-  });
 
   /**
    * Events filtered by source IDs (when in Known Timeline mode).
@@ -267,6 +205,9 @@ export class Timeline {
     // Read the initial `view` query param and set the canon filter.
     this.applyViewParam(this.route.snapshot.queryParamMap);
 
+    // Populate the events cache (no-op if already cached).
+    this.eventsService.getEvents();
+
     // Subscribe to ongoing query param changes for the view filter.
     this.route.queryParamMap
       .pipe(
@@ -280,18 +221,14 @@ export class Timeline {
       .pipe(
         filter((e) => e.entity === 'source-materials' || e.entity === 'source-material-units'),
       )
-      .subscribe(() => this.refreshTrigger$.next());
+      .subscribe(() => this.eventsService.invalidate());
 
     // Fetch catalog data when the user changes (or on initial load).
     effect(() => {
-      this.user();
       this.catalog.fetchCharacters();
       this.catalog.fetchLocations();
       this.catalog.fetchVehicles();
     });
-
-    // Subscribe to tracked library items for the current user.
-    this.trackTrackedItems();
 
     this.logger.debug('[Timeline] Component initialized');
   }
@@ -361,81 +298,6 @@ export class Timeline {
     });
   }
 
-  /**
-   * Adds an event's source material to the user's library.
-   *
-   * Optimistically updates the tracked signal with a temporary item
-   * for instant UI feedback, then reconciles with the server response.
-   *
-   * @param event  The timeline event whose source to add.
-   */
-  addToLibrary(event: TimelineEvent): void {
-    const userId = this.userId();
-    const sourceId = event.source.sourceId;
-    if (!userId || !sourceId) {
-      return;
-    }
-
-    // Optimistic update: immediately add a temporary tracked item
-    const tempItem: LibraryItem = {
-      id: sourceId,
-      title: event.source.title,
-      medium: event.source.medium,
-      status: 'Wish Listed',
-      favorite: false,
-    };
-    this.tracked.update((items) => [...items, tempItem]);
-    this.logger.info('[Timeline] Adding to library', { sourceId });
-
-    this.libraryService
-      .addTracked(userId, {
-        id: sourceId,
-        title: event.source.title,
-        medium: event.source.medium,
-      })
-      .subscribe({
-        next: (items) => this.tracked.set(items),
-        error: () => {
-          // Revert optimistic update on failure
-          this.tracked.update((items) => items.filter((i) => i.id !== sourceId));
-        },
-      });
-  }
-
-  /**
-   * Updates the tracking status of an event's source material.
-   *
-   * Optimistically updates the tracked signal for instant feedback,
-   * then reconciles with the server response.
-   *
-   * @param event   The timeline event whose status to update.
-   * @param status  The new tracking status.
-   */
-  updateStatus(event: TimelineEvent, status: TrackingStatus): void {
-    const userId = this.userId();
-    const sourceId = event.source.sourceId;
-    if (!userId || !sourceId) {
-      return;
-    }
-
-    // Optimistic update: immediately change status locally
-    const previousItems = this.tracked();
-    this.tracked.update((items) =>
-      items.map((item) => (item.id === sourceId ? { ...item, status } : item)),
-    );
-    this.logger.info('[Timeline] Status updated', { sourceId, status });
-
-    this.libraryService
-      .setStatus(userId, sourceId, status)
-      .subscribe({
-        next: (items) => this.tracked.set(items),
-        error: () => {
-          // Revert optimistic update on failure
-          this.tracked.set(previousItems);
-        },
-      });
-  }
-
   /** Clears all facet filters while preserving the canon view selection. */
   clearFilters(): void {
     this.logger.info('[Timeline] Filters cleared');
@@ -450,28 +312,6 @@ export class Timeline {
 
   /** Retries loading events after an error. */
   retryLoad(): void {
-    this.refreshTrigger$.next();
-  }
-
-  // ─── Internal helpers ───────────────────────────────────────────────────
-
-  /**
-   * Subscribes to tracked library items for the current user.
-   *
-   * Uses the effect's `onCleanup` callback for automatic cleanup when
-   * the user ID changes or the component is destroyed.
-   */
-  private trackTrackedItems(): void {
-    effect((onCleanup) => {
-      const userId = this.userId();
-      if (!userId) {
-        this.tracked.set([]);
-        return;
-      }
-      const subscription = this.libraryService
-        .getTracked(userId)
-        .subscribe((items) => this.tracked.set(items));
-      onCleanup(() => subscription.unsubscribe());
-    });
+    this.eventsService.invalidate();
   }
 }

@@ -62,7 +62,7 @@
 }
 
 .status-select {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   padding: 0.4rem 0.5rem;
@@ -75,7 +75,66 @@
   border-color: #ffd54a;
 }
 
-.favorite-button,
+.group-status-select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+  color: #e6e8ee;
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.group-status-select:focus {
+  border-color: #ffd54a;
+}
+
+.status-badge {
+  background: rgba(255, 213, 74, 0.1);
+  border: 1px solid rgba(255, 213, 74, 0.3);
+  color: #ffd54a;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.unit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.unit-group {
+  list-style: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+}
+
+.unit-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.unit-group-label {
+  font-weight: 600;
+  color: #c5c8d3;
+  font-size: 0.8rem;
+}
+
+.unit-sublist,
+.unit-item,
+.unit-checkbox,
+.unit-label,
+.favorite-button {
+  display: none;
+}
+
 .remove-button,
 .move-button {
   background: transparent;

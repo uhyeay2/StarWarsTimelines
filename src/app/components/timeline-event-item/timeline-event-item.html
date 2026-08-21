@@ -71,37 +71,7 @@
         <span class="event-source-unit">{{ detail }}</span>
       }
 
-      <!-- ─── Tracking Controls ──────────────────────────────────────── -->
-      @if (canTrack()) {
-        @if (status(); as trackingStatus) {
-          <select
-            class="status-select"
-            [class.status-select--in-progress]="trackingStatus === 'In progress'"
-            [class.status-select--completed]="trackingStatus === 'Completed'"
-            [class.status-select--wish-listed]="trackingStatus === 'Wish Listed'"
-            [attr.aria-label]="'Status for ' + item.source.title"
-            (change)="onStatusChange($event)">
-            @for (option of statuses; track option) {
-              <option [value]="option" [selected]="option === trackingStatus">{{ option }}</option>
-            }
-          </select>
-        } @else {
-          <button
-            type="button"
-            class="add-to-library-button"
-            [attr.aria-label]="'Add ' + item.source.title + ' to your library'"
-            (click)="emitAddToLibrary()">
-            <span aria-hidden="true">+</span> Add to library
-          </button>
-        }
-      } @else if (status(); as trackingStatus) {
-        <span
-          class="status-badge"
-          [class.status-badge--in-progress]="trackingStatus === 'In progress'"
-          [class.status-badge--completed]="trackingStatus === 'Completed'"
-          [class.status-badge--wish-listed]="trackingStatus === 'Wish Listed'">{{ trackingStatus }}</span>
-      }
-      <!-- ─── End Tracking Controls ──────────────────────────────────── -->
+
     </p>
     <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->
 

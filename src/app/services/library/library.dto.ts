@@ -21,6 +21,7 @@ export interface LibraryUnitDto {
   number: number;
   title: string | null;
   isCompleted: boolean;
+  isTracked?: boolean;
 }
 
 /** Wire-format for a library item returned by the API. */
@@ -42,14 +43,16 @@ export interface LibraryItemDto {
  */
 export interface AddMaterialRequest {
   sourceMaterialId: string;
+  status?: number;
 }
 
 /**
  * Payload sent to `PUT /api/users/:id/source-materials/:materialId` to update
- * the tracking status.
+ * the tracking status or unit-specific progress.
  */
 export interface UpdateStatusRequest {
   status: number;
+  unitId?: string;
 }
 
 /**

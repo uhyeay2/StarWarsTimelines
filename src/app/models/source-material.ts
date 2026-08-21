@@ -2,6 +2,7 @@ import { Medium } from './medium';
 import { UnitType } from './unit-type';
 
 export interface SourceMaterialUnit {
+  id?: string;
   unitType: UnitType;
   groupNumber?: number;
   number: number;
@@ -30,6 +31,12 @@ export function sourceUnitLabel(unit: SourceMaterialUnit): string {
           ? `Issue ${unit.number}`
           : `Volume ${unit.groupNumber} · Issue ${unit.number}`;
       break;
+    case 'Volume':
+      base = `Volume ${unit.number}`;
+      break;
+    case 'Season':
+      base = `Season ${unit.number}`;
+      break;
     case 'Chapter':
       base = `Chapter ${unit.number}`;
       break;
@@ -43,8 +50,10 @@ export function sourceUnitLabel(unit: SourceMaterialUnit): string {
 export function sourceGroupName(unitType: UnitType): string | undefined {
   switch (unitType) {
     case 'Episode':
+    case 'Season':
       return 'Season';
     case 'Issue':
+    case 'Volume':
       return 'Volume';
     default:
       return undefined;
@@ -63,6 +72,10 @@ export function sourceUnitDetail(unit: SourceMaterialUnit | undefined): string |
     }
     case 'Chapter':
       return unit.title ? `Chapter ${unit.number}: ${unit.title}` : undefined;
+    case 'Season':
+      return `Season ${unit.number}`;
+    case 'Volume':
+      return `Volume ${unit.number}`;
     case 'Level':
       return `Level ${unit.number}`;
   }

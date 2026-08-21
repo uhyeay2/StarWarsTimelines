@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { vi } from 'vitest';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
@@ -51,7 +52,7 @@ async function setup(currentUser: User | null): Promise<{
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]), loading: signal(false), error: signal(null) } },
+      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]), loading: signal(false), error: signal(null), events: signal([]), getEvents: vi.fn(), invalidate: vi.fn() } },
       {
         provide: CatalogService,
         useValue: {

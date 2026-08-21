@@ -17,14 +17,14 @@
   margin: 0 0 2rem;
 }
 
-.admin-tabs {
+.catalog-tabs {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-bottom: 2rem;
 }
 
-.admin-tab {
+.catalog-tab {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
@@ -36,12 +36,12 @@
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.admin-tab:hover {
+.catalog-tab:hover {
   color: #fff;
   border-color: rgba(255, 213, 74, 0.6);
 }
 
-.admin-tab--active {
+.catalog-tab--active {
   background: rgba(255, 213, 74, 0.14);
   border-color: #ffd54a;
   color: #ffd54a;

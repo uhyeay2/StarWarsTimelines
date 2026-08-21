@@ -80,6 +80,7 @@ describe('TimelineEventsService', () => {
             medium: 'Movie',
             sourceId: EPISODE_ONE,
             unit: {
+              id: 'unit-1',
               unitType: 'Episode',
               groupNumber: 1,
               number: 1,

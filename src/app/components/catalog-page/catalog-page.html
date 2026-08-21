@@ -1,15 +1,15 @@
-<section class="admin-page">
+<section class="catalog-page">
   <div class="page-header">
-    <h1>Admin</h1>
-    <p>Manage the timeline catalog.</p>
+    <h1>Catalog</h1>
+    <p>Browse the timeline catalog.</p>
   </div>
 
-  <nav class="admin-tabs" aria-label="Catalog sections">
+  <nav class="catalog-tabs" aria-label="Catalog sections">
     @for (tab of tabs; track tab.key) {
       <button
         type="button"
-        class="admin-tab"
-        [class.admin-tab--active]="activeTab() === tab.key"
+        class="catalog-tab"
+        [class.catalog-tab--active]="activeTab() === tab.key"
         [attr.aria-pressed]="activeTab() === tab.key"
         (click)="selectTab(tab.key)">
         {{ tab.label }}
@@ -19,16 +19,16 @@
 
   @switch (activeTab()) {
     @case ('characters') {
-      <app-name-catalog-admin catalog="characters" title="Characters" noun="character" />
+      <app-name-catalog-admin [isAdmin]="isAdmin()" catalog="characters" title="Characters" noun="character" />
     }
     @case ('vehicles') {
-      <app-name-catalog-admin catalog="vehicles" title="Vehicles" noun="vehicle" />
+      <app-name-catalog-admin [isAdmin]="isAdmin()" catalog="vehicles" title="Vehicles" noun="vehicle" />
     }
     @case ('locations') {
-      <app-name-catalog-admin catalog="locations" title="Locations" noun="location" />
+      <app-name-catalog-admin [isAdmin]="isAdmin()" catalog="locations" title="Locations" noun="location" />
     }
     @case ('sources') {
-      <app-source-material-admin />
+      <app-source-material-admin [isAdmin]="isAdmin()" />
     }
   }
 </section>

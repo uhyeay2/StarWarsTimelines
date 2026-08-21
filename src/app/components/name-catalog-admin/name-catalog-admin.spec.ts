@@ -24,6 +24,7 @@ describe('NameCatalogAdmin', () => {
     fixture.componentRef.setInput('catalog', 'characters');
     fixture.componentRef.setInput('title', 'Characters');
     fixture.componentRef.setInput('noun', 'character');
+    fixture.componentRef.setInput('isAdmin', true);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
     catalogService = TestBed.inject(CatalogService);
@@ -40,7 +41,7 @@ describe('NameCatalogAdmin', () => {
 
   /** Triggers a new fetch and flushes it with the given items. */
   function loadCharacters(items: { id: string; name: string }[]): void {
-    catalogService.fetchCharacters();
+    catalogService.invalidateEntity('characters');
     httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush(items);
     fixture.detectChanges();
   }

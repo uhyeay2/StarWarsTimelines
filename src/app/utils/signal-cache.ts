@@ -54,11 +54,11 @@ export class SignalCache<T> {
   /**
    * Fetches data from the source and updates the signals.
    *
-   * Guarded against concurrent calls — if a fetch is already in flight,
-   * this method is a no-op.
+   * Guarded against concurrent calls — if a fetch is already in flight
+   * or data is already cached, this method is a no-op.
    */
   fetch(): void {
-    if (this.loading()) {
+    if (this.loading() || this.data() !== null) {
       return;
     }
 

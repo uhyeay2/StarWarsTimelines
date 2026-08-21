@@ -9,6 +9,7 @@ export interface LibraryUnit {
   number: number;
   title?: string;
   isCompleted: boolean;
+  isTracked?: boolean;
 }
 
 export interface LibraryItem {

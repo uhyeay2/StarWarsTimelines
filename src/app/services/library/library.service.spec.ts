@@ -78,6 +78,24 @@ const UNIT_B: LibraryUnit = {
   isCompleted: true,
 };
 
+const UNIT_C: LibraryUnit = {
+  id: 'u3',
+  unitType: 'Season',
+  groupNumber: undefined,
+  number: 1,
+  title: 'Season 1',
+  isCompleted: false,
+};
+
+const UNIT_DTO_C: LibraryUnitDto = {
+  id: 'u3',
+  unitType: 3,
+  groupNumber: null,
+  number: 1,
+  title: 'Season 1',
+  isCompleted: false,
+};
+
 const ITEM_A: LibraryItem = {
   id: 'sm1',
   title: 'The High Republic',
@@ -94,6 +112,25 @@ const ITEM_B: LibraryItem = {
   status: 'Completed',
   favorite: false,
   units: [],
+};
+
+const ITEM_DTO_C: LibraryItemDto = {
+  sourceMaterialId: 'sm3',
+  title: 'Rebels',
+  medium: 4,
+  canonType: 0,
+  status: 0,
+  isFavorite: false,
+  units: [UNIT_DTO_C],
+};
+
+const ITEM_C: LibraryItem = {
+  id: 'sm3',
+  title: 'Rebels',
+  medium: 'Live Action Show',
+  status: 'Wish Listed',
+  favorite: false,
+  units: [UNIT_C],
 };
 
 const BASE = `${environment.apiBaseUrl}/api/users`;
@@ -510,6 +547,25 @@ describe('LibraryService', () => {
       httpMock.expectOne(`${BASE}/u1/source-materials/missing`).flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
+
+    it('appends the reloaded item to the cache when tracking a material not yet in the library', async () => {
+      const setupPromise = firstValueFrom(service.getTracked('u1'));
+      flushGetRequest().flush(makeItemList([ITEM_DTO_A]));
+      await setupPromise;
+      expect(service.items().map((i) => i.id)).toEqual(['sm1']);
+
+      const promise = firstValueFrom(service.setStatus('u1', 'sm3', 'Wish Listed'));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm3`);
+      expect(req.request.method).toBe('PUT');
+      req.flush({}, { status: 200, statusText: 'OK' });
+
+      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm3`);
+      reloadReq.flush(ITEM_DTO_C);
+
+      const items = await promise;
+      expect(items.map((i) => i.id)).toEqual(['sm1', 'sm3']);
+      expect(service.items().map((i) => i.id)).toEqual(['sm1', 'sm3']);
+    });
   });
 
   // ── setFavorite (partial reload) ──────────────────────────────────────
@@ -586,6 +642,25 @@ describe('LibraryService', () => {
       const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', false));
       httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u1`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
+    });
+  });
+
+  // ── clearUnitProgress (full reload) ───────────────────────────────────
+
+  describe('clearUnitProgress', () => {
+    it('DELETEs the unit progress URL and performs a full reload', async () => {
+      const promise = firstValueFrom(service.clearUnitProgress('u1', 'sm1', 'u2'));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u2`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      flushGetRequest().flush(makeItemList());
+      expect(await promise).toEqual([ITEM_A, ITEM_B]);
+    });
+
+    it('throws LibraryError with NotFound code on 404', async () => {
+      const promise = firstValueFrom(service.clearUnitProgress('u1', 'missing', 'u1'));
+      httpMock.expectOne(`${BASE}/u1/source-materials/missing/units/u1`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
   });
 

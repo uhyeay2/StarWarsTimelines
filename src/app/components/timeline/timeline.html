@@ -136,11 +136,7 @@
                 [selectedCharacters]="filters().characters"
                 [selectedVehicles]="filters().vehicles"
                 [selectedSources]="filters().sources"
-                [status]="sourceStatus()[event.source.sourceId ?? '']"
-                [canTrack]="isLoggedIn() && !!event.source.sourceId"
-                (toggleFacet)="onToggleFacet($event)"
-                (addToLibrary)="addToLibrary(event)"
-                (statusChange)="updateStatus(event, $event)" />
+                (toggleFacet)="onToggleFacet($event)" />
             </li>
           }
         </ol>

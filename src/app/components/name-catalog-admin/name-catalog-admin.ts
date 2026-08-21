@@ -20,6 +20,7 @@ export class NameCatalogAdmin implements OnInit {
   readonly catalog = input.required<NameCatalogKind>();
   readonly title = input.required<string>();
   readonly noun = input.required<string>();
+  readonly isAdmin = input<boolean>(false);
 
   private readonly catalogService = inject(CatalogService);
 

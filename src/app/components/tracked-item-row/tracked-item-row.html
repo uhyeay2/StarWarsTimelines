@@ -29,23 +29,29 @@
         (click)="emitMoveDown()">▼</button>
     }
     @if ((item().units?.length ?? 0) > 0) {
-      <span class="status-badge">{{ item().status }}</span>
+      @if (!hasGroupUnits()) {
+        <span class="status-badge">{{ item().status }}</span>
+      }
       <ul class="unit-list" [attr.aria-label]="'Progress for ' + item().title">
-        @for (unit of item().units; track unit.id) {
-          <li class="unit-item">
-            <label>
-              <input
-                type="checkbox"
-                class="unit-checkbox"
-                [checked]="unit.isCompleted"
-                [attr.aria-label]="'Mark ' + unitLabel(unit) + ' complete'"
-                (change)="onUnitChange(unit.id, $event)" />
-              <span class="unit-label">{{ unitLabel(unit) }}</span>
-            </label>
+        @for (group of groupUnits(); track $index) {
+          <li class="unit-group">
+            <div class="unit-group-header">
+              <span class="unit-group-label">{{ group.groupTitle }}</span>
+              <select
+                class="group-status-select"
+                [attr.aria-label]="'Status for ' + group.groupTitle"
+                (change)="onGroupStatusChange(group.containerId, $event)">
+                <option value="" disabled [selected]="getGroupStatus(group) === null" hidden>Track…</option>
+                @for (status of statuses; track status) {
+                  <option [value]="status" [selected]="getGroupStatus(group) === status">{{ status }}</option>
+                }
+                <option value="remove">Remove From Library</option>
+              </select>
+            </div>
           </li>
         }
       </ul>
-    } @else {
+     } @else {
       <select
         class="status-select"
         [attr.aria-label]="'Status for ' + item().title"
@@ -53,21 +59,8 @@
         @for (status of statuses; track status) {
           <option [value]="status" [selected]="item().status === status">{{ status }}</option>
         }
+        <option value="remove">Remove From Library</option>
       </select>
     }
-    <button
-      type="button"
-      class="favorite-button"
-      [class.favorite-button--active]="item().favorite"
-      [attr.aria-pressed]="item().favorite"
-      [attr.aria-label]="(item().favorite ? 'Remove ' : 'Add ') + item().title + ' to favorites'"
-      (click)="toggleFavorite()">
-      <span aria-hidden="true">{{ item().favorite ? '★' : '☆' }}</span>
-    </button>
-    <button
-      type="button"
-      class="remove-button"
-      [attr.aria-label]="'Remove ' + item().title + ' from tracking'"
-      (click)="emitRemove()">✕</button>
   </div>
 </div>

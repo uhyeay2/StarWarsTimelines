@@ -36,6 +36,7 @@ import {
   catchError,
   map,
   Observable,
+  of,
   retry,
   tap,
   throwError,
@@ -131,6 +132,11 @@ export class TimelineEventsService {
    * @returns An observable of the mapped timeline events.
    */
   getEvents$(destroyRef?: DestroyRef): Observable<readonly TimelineEvent[]> {
+    const cached = this.eventsCache.data();
+    if (cached !== null) {
+      return destroyRef ? of(cached).pipe(takeUntilDestroyed(destroyRef)) : of(cached);
+    }
+
     const request$ = this.fetchEventsWithRetry().pipe(
       tap((events) => this.eventsCache.data.set(events)),
     );

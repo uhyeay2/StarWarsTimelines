@@ -76,7 +76,6 @@
                 [last]="$last"
                 [dragging]="draggedId() === item.id"
                 (statusChange)="setStatus(item.id, $event)"
-                (favoriteChange)="toggleFavorite(item)"
                 (remove)="removeTracked(item.id)"
                 (moveUp)="moveTrackedItem(item.id, -1)"
                 (moveDown)="moveTrackedItem(item.id, 1)"
@@ -84,7 +83,8 @@
                 (dragOver)="onDragOver($event)"
                 (dragEnd)="onDragEnd()"
                 (drop)="reorderTracked(item.id)"
-                (unitProgressChange)="setUnitProgress(item.id, $event.unitId, $event.isCompleted)" />
+                (groupStatusChange)="setGroupStatus(item.id, $event.unitId, $event.status)"
+                (groupRemove)="clearGroupProgress(item.id, $event.unitId)" />
             </li>
           }
         </ol>

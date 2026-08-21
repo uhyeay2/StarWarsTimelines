@@ -41,8 +41,9 @@ const TRACKED: LibraryItem[] = [
     status: 'In progress',
     favorite: false,
     units: [
-      { id: 'unit-1', unitType: 'Episode', number: 1, title: 'Attack of the Clones', isCompleted: false },
-      { id: 'unit-2', unitType: 'Episode', number: 2, title: 'Sneak Preview', isCompleted: true },
+      { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false },
+      { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: false },
+      { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: true },
     ],
   },
   {
@@ -69,6 +70,7 @@ interface Mocks {
     setFavorite: ReturnType<typeof vi.fn>;
     removeTracked: ReturnType<typeof vi.fn>;
     setUnitProgress: ReturnType<typeof vi.fn>;
+    clearUnitProgress: ReturnType<typeof vi.fn>;
     reorderTrackedItem: ReturnType<typeof vi.fn>;
   };
   catalogMock: ReturnType<typeof buildCatalogMock>;
@@ -98,6 +100,7 @@ async function setup(currentUser: User | null): Promise<{
     setFavorite: vi.fn(),
     removeTracked: vi.fn(),
     setUnitProgress: vi.fn(),
+    clearUnitProgress: vi.fn(),
     reorderTrackedItem: vi.fn(),
   };
   const catalogMock = buildCatalogMock();
@@ -147,6 +150,7 @@ async function setup(currentUser: User | null): Promise<{
   libraryMock.reorderTrackedItem.mockImplementation((_userId: string, orderedIds: string[]) =>
     of(orderedIds.map((id) => TRACKED.find((item) => item.id === id)!)),
   );
+  libraryMock.clearUnitProgress.mockImplementation(() => of(TRACKED));
 
   await TestBed.configureTestingModule({
     imports: [TrackedEventsPage],
@@ -202,43 +206,54 @@ describe('TrackedEventsPage', () => {
     expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 'material-episode-i', 'Completed');
   });
 
-  it('toggles a favorite when the favorite button is clicked', async () => {
+  it('removes an item when Remove From Library is selected in the status select', async () => {
     const { fixture, mocks } = await setup(USER);
-    const button = fixture.nativeElement.querySelector('.favorite-button') as HTMLElement;
-    button.click();
-
-    expect(mocks.libraryMock.setFavorite).toHaveBeenCalledWith('user-padme', 'material-episode-i', false);
-  });
-
-  it('removes an item when the remove button is clicked', async () => {
-    const { fixture, mocks } = await setup(USER);
-    const removeButton = fixture.nativeElement.querySelector('.remove-button') as HTMLElement;
-    removeButton.click();
+    const select = fixture.nativeElement.querySelector('select.status-select') as HTMLSelectElement;
+    select.value = 'remove';
+    select.dispatchEvent(new Event('change'));
 
     expect(mocks.libraryMock.removeTracked).toHaveBeenCalledWith('user-padme', 'material-episode-i');
   });
 
-  it('shows unit checkboxes for unit-based items instead of a status select', async () => {
+  it('shows grouped units for unit-based items instead of a flat status select', async () => {
     const { fixture } = await setup(USER);
     const rows = fixture.nativeElement.querySelectorAll('app-tracked-item-row');
-    expect(rows[1].querySelector('select')).toBeNull();
-    expect(rows[1].querySelectorAll('.unit-checkbox').length).toBe(2);
-    expect(rows[0].querySelector('select')).toBeTruthy();
+    expect(rows[1].querySelector('select.status-select')).toBeNull();
+    expect(rows[1].querySelector('.status-badge')).toBeNull();
+    expect(rows[1].querySelectorAll('select.group-status-select').length).toBe(1);
+    expect(rows[0].querySelector('select.status-select')).toBeTruthy();
   });
 
-  it('updates unit progress when a unit checkbox is toggled', async () => {
+  it('updates group status when a season status select changes', async () => {
     const { fixture, mocks } = await setup(USER);
     const rows = fixture.nativeElement.querySelectorAll('app-tracked-item-row');
-    const checkbox = rows[1].querySelector('.unit-checkbox') as HTMLInputElement;
-    checkbox.click();
+    const groupSelect = rows[1].querySelector('select.group-status-select') as HTMLSelectElement;
+    groupSelect.value = 'Completed';
+    groupSelect.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(mocks.libraryMock.setUnitProgress).toHaveBeenCalledWith(
+    expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith(
       'user-padme',
       'material-episode-ii',
-      'unit-1',
-      true,
+      'Completed',
+      'season-1',
     );
+  });
+
+  it('clears unit progress (not the whole item) when a season select chooses Remove From Library', async () => {
+    const { fixture, mocks } = await setup(USER);
+    const rows = fixture.nativeElement.querySelectorAll('app-tracked-item-row');
+    const groupSelect = rows[1].querySelector('select.group-status-select') as HTMLSelectElement;
+    groupSelect.value = 'remove';
+    groupSelect.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(mocks.libraryMock.clearUnitProgress).toHaveBeenCalledWith(
+      'user-padme',
+      'material-episode-ii',
+      'season-1',
+    );
+    expect(mocks.libraryMock.removeTracked).not.toHaveBeenCalled();
   });
 
   it('adds a selected material to tracking', async () => {

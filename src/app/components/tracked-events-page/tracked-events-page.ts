@@ -190,13 +190,48 @@ export class TrackedEventsPage {
       .subscribe((items) => this.tracked.set(items));
   }
 
+/**
+    * Sets the status of a unit (season/volume) within a tracked item.
+    *
+    * @param materialId  The source material ID.
+    * @param unitId      The unit ID to update.
+    * @param status      The new tracking status.
+    */
+  setGroupStatus(materialId: string, unitId: string, status: TrackingStatus): void {
+    const userId = this.userId();
+    if (!userId) {
+      return;
+    }
+    this.libraryService
+      .setStatus(userId, materialId, status, unitId)
+      .subscribe((items) => this.tracked.set(items));
+  }
+
   /**
-   * Updates unit progress for a tracked item.
+   * Clears the tracking progress of a unit (season/volume) within a tracked
+   * item. When no other units of the material remain tracked, the library
+   * entry itself is removed by the backend.
    *
    * @param materialId  The source material ID.
-   * @param unitId      The unit ID to update.
-   * @param isCompleted  Whether the unit is completed.
+   * @param unitId      The unit ID whose progress should be cleared.
    */
+  clearGroupProgress(materialId: string, unitId: string): void {
+    const userId = this.userId();
+    if (!userId) {
+      return;
+    }
+    this.libraryService
+      .clearUnitProgress(userId, materialId, unitId)
+      .subscribe((items) => this.tracked.set(items));
+  }
+
+  /**
+    * Updates unit progress for a tracked item.
+    *
+    * @param materialId  The source material ID.
+    * @param unitId      The unit ID to update.
+    * @param isCompleted  Whether the unit is completed.
+    */
   setUnitProgress(materialId: string, unitId: string, isCompleted: boolean): void {
     const userId = this.userId();
     if (!userId) {

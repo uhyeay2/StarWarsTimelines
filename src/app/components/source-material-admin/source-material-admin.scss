@@ -58,6 +58,52 @@ select option {
   gap: 0.5rem;
 }
 
+.medium-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.medium-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 213, 74, 0.06);
+  border: 1px solid rgba(255, 213, 74, 0.15);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 213, 74, 0.1);
+  }
+
+  &--open {
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+    border-bottom-color: transparent;
+  }
+}
+
+.medium-toggle {
+  color: #ffd54a;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.medium-label {
+  color: #e6e8ee;
+  font-size: 0.95rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.medium-count {
+  color: #8a8f9e;
+  font-size: 0.75rem;
+}
+
 .source-admin-search {
   display: block;
   margin-bottom: 1rem;
@@ -129,6 +175,63 @@ select option {
   flex-shrink: 0;
 }
 
+.track-select,
+.group-track-select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  color: #e6e8ee;
+  font-size: 0.8rem;
+  outline: none;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.track-select:focus,
+.group-track-select:focus {
+  border-color: #ffd54a;
+}
+
+.track-select {
+  /* Full-width track select for material-level tracking */
+}
+
+.group-track-select {
+  /* Group-level track select for season/volume tracking */
+}
+
+.track-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.group-track-section {
+  margin-top: 0.5rem;
+
+  & + & {
+    margin-top: 0.3rem;
+  }
+}
+
+.track-group-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-group-label {
+  font-weight: 600;
+  color: #c5c8d3;
+  font-size: 0.8rem;
+}
+
+.remove-option {
+  color: #ff6b6b;
+}
+
 .source-admin-edit {
   display: flex;
   gap: 0.4rem;
@@ -176,6 +279,62 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.season-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.season-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  &--open {
+    border-radius: 8px 8px 0 0;
+    border-bottom-color: transparent;
+  }
+}
+
+.season-toggle {
+  color: #ffd54a;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.season-label {
+  color: #e6e8ee;
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.season-count {
+  color: #8a8f9e;
+  font-size: 0.75rem;
+}
+
+.season-episodes {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0 0.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
 }
 
 .unit-admin-item {
