@@ -1,5 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { vi } from 'vitest';
@@ -90,7 +92,10 @@ describe('Timeline', () => {
 
   function setupTimeline(providers: unknown[]): Promise<void> {
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ imports: [Timeline], providers });
+    TestBed.configureTestingModule({
+      imports: [Timeline],
+      providers: [provideHttpClient(), provideHttpClientTesting(), ...providers],
+    });
     return TestBed.compileComponents();
   }
 

@@ -43,7 +43,7 @@ export class TrackedItemRow {
 
   readonly groupUnits = computed(() => {
     const units = this.item().units ?? [];
-    if (units.length === 0) {
+    if (!this.hasGroupUnits()) {
       return [];
     }
 
@@ -54,10 +54,6 @@ export class TrackedItemRow {
     const detailUnits = units.filter(
       (u) => u.unitType !== 'Season' && u.unitType !== 'Volume',
     );
-
-    if (groupContainerUnits.length === 0) {
-      return this.groupByGroupNumber(detailUnits);
-    }
 
     const trackedContainers = groupContainerUnits.filter((u) => u.isTracked === true);
     const containersToDisplay = trackedContainers.length > 0 ? trackedContainers : groupContainerUnits;
@@ -77,37 +73,6 @@ export class TrackedItemRow {
       };
     });
   });
-
-  private groupByGroupNumber(units: readonly LibraryUnit[]): UnitGroup[] {
-    const map = new Map<number | null, LibraryUnit[]>();
-    for (const unit of units) {
-      const key = unit.groupNumber ?? null;
-      const list = map.get(key) ?? [];
-      list.push(unit);
-      map.set(key, list);
-    }
-
-    return [...map.entries()].map(([groupNumber, groupUnits]) => {
-      const unitType = (groupUnits[0]?.unitType ?? 'Episode') as UnitType;
-      const groupName = unitType === 'Episode' ? 'Season' : unitType === 'Issue' ? 'Volume' : '';
-      if (groupNumber === null) {
-        return {
-          groupNumber: 0,
-          groupTitle: groupName ? `All ${groupName}s` : 'All Units',
-          unitType,
-          units: groupUnits,
-          containerId: '',
-        };
-      }
-      return {
-        groupNumber: groupNumber,
-        groupTitle: groupName ? `${groupName} ${groupNumber}` : `Group ${groupNumber}`,
-        unitType,
-        units: groupUnits,
-        containerId: '',
-      };
-    });
-  }
 
   getGroupStatus(group: UnitGroup): TrackingStatus | null {
     const units = this.item().units ?? [];

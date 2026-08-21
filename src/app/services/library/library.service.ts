@@ -121,6 +121,9 @@ export class LibraryService {
   /** The active user ID, used by the debounced reload pipeline. */
   private activeUserId: string | null = null;
 
+  /** The user ID whose library was last fetched successfully, for `ensureTracked`. */
+  private loadedUserId: string | null = null;
+
   /** Subject that triggers debounced reloads. */
   private readonly reloadTrigger = new Subject<void>();
 
@@ -334,6 +337,7 @@ export class LibraryService {
     return this.fetchItems(userId).pipe(
       tap({
         next: (items) => {
+          this.loadedUserId = userId;
           this.items.set(items);
           this.error.set(null);
         },
@@ -359,6 +363,23 @@ export class LibraryService {
    */
   getTracked$(userId: string, destroyRef: DestroyRef): Observable<readonly LibraryItem[]> {
     return this.getTracked(userId).pipe(takeUntilDestroyed(destroyRef));
+  }
+
+  /**
+   * Fetches the user's library only when it has not been fetched for that
+   * user yet (or a fetch is not already in flight).
+   *
+   * Use this in components where many instances may mount simultaneously
+   * (e.g. one per timeline event card) so the library loads exactly once
+   * instead of once per component.
+   *
+   * @param userId  The ID of the user whose library to fetch.
+   */
+  ensureTracked(userId: string): void {
+    if (this.loading() || this.loadedUserId === userId) {
+      return;
+    }
+    this.getTracked(userId).subscribe({ error: () => undefined });
   }
 
   /**

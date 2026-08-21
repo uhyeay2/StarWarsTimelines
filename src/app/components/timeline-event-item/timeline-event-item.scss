@@ -137,6 +137,26 @@
   font-weight: 600;
 }
 
+.event-track-select {
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  color: #e6e8ee;
+  font-family: inherit;
+  font-size: 0.8rem;
+  outline: none;
+
+  /* Constant width sized for the longest option ("Remove From Library"). */
+  box-sizing: border-box;
+  width: 12rem;
+}
+
+.event-track-select:focus {
+  border-color: #ffd54a;
+}
+
 
 
 .event-description {

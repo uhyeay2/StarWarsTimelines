@@ -1,6 +1,15 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
+import { environment } from '../../../environments/environment';
+import { User } from '../../models/user';
+import { AuthService } from '../../services/auth/auth.service';
+import { LibraryItemDto } from '../../services/library/library.dto';
 import { TimelineEventItem, ToggleFacetEvent } from './timeline-event-item';
+
+const API_BASE = `${environment.apiBaseUrl}/api`;
 
 describe('TimelineEventItem', () => {
   let component: TimelineEventItem;
@@ -9,6 +18,7 @@ describe('TimelineEventItem', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TimelineEventItem],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TimelineEventItem);
@@ -324,5 +334,234 @@ describe('TimelineEventItem', () => {
     ]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
+  });
+});
+
+describe('TimelineEventItem tracking dropdown', () => {
+  let fixture: ComponentFixture<TimelineEventItem>;
+  let httpMock: HttpTestingController;
+
+  const USER: User = {
+    id: 'user-1',
+    username: 'luke',
+    displayName: 'Luke Skywalker',
+    email: 'luke@example.com',
+    emailVerified: true,
+    role: 'Standard',
+  };
+
+  const TRACKED_MOVIE_DTO: LibraryItemDto = {
+    sourceMaterialId: 'mat-1',
+    title: 'A New Hope',
+    medium: 0,
+    canonType: 0,
+    status: 1,
+    isFavorite: false,
+    units: [],
+  };
+
+  interface SetupOptions {
+    medium: string;
+    unit?: Record<string, unknown>;
+    catalogUnits?: readonly Record<string, unknown>[];
+    library?: readonly LibraryItemDto[];
+  }
+
+  async function setupTracking(options: SetupOptions): Promise<void> {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [TimelineEventItem],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { currentUser: signal(USER) } },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+
+    fixture = TestBed.createComponent(TimelineEventItem);
+    fixture.componentRef.setInput('event', {
+      id: 'test-event',
+      canon: ['Canon'],
+      title: 'Test Event',
+      description: '',
+      source: {
+        title: 'Test Source',
+        medium: options.medium,
+        sourceId: 'mat-1',
+        ...(options.unit !== undefined && { unit: options.unit }),
+      },
+      locations: [],
+      characters: [],
+      vehicles: [],
+      year: 0,
+      displayDate: '0 BBY',
+    });
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne(`${API_BASE}/users/user-1/source-materials`)
+      .flush(options.library ?? []);
+    if (options.catalogUnits !== undefined) {
+      httpMock.expectOne(`${API_BASE}/source-materials/mat-1/units`).flush(options.catalogUnits);
+    }
+    fixture.detectChanges();
+  }
+
+  function trackSelect(): HTMLSelectElement {
+    return fixture.nativeElement.querySelector('.event-track-select') as HTMLSelectElement;
+  }
+
+  function selectedOptionText(select: HTMLSelectElement): string {
+    return (select.options[select.selectedIndex] as HTMLOptionElement).textContent?.trim() ?? '';
+  }
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('shows a material-level dropdown with the current status for a movie', async () => {
+    await setupTracking({ medium: 'Movie', library: [TRACKED_MOVIE_DTO] });
+
+    const select = trackSelect();
+    expect(select).toBeTruthy();
+    expect(selectedOptionText(select)).toBe('Completed');
+    const values = [...select.options].map((option) => option.value);
+    expect(values).toEqual(['', 'In progress', 'Completed', 'Wish Listed', 'remove']);
+  });
+
+  it('offers statuses without Remove until the material is tracked', async () => {
+    await setupTracking({ medium: 'Video Game' });
+
+    const select = trackSelect();
+    expect(select).toBeTruthy();
+    const values = [...select.options].map((option) => option.value);
+    expect(values).toEqual(['', 'In progress', 'Completed', 'Wish Listed']);
+    expect(selectedOptionText(select)).toBe('Track…');
+  });
+
+  it('adds an untracked book to the library with the chosen status', async () => {
+    await setupTracking({ medium: 'Book' });
+
+    const select = trackSelect();
+    select.value = 'In progress';
+    select.dispatchEvent(new Event('change'));
+
+    const post = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ sourceMaterialId: 'mat-1', status: 0 });
+    post.flush(null);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([]);
+  });
+
+  it('updates material-level status directly once tracked', async () => {
+    await setupTracking({ medium: 'Movie', library: [TRACKED_MOVIE_DTO] });
+
+    const select = trackSelect();
+    select.value = 'Wish Listed';
+    select.dispatchEvent(new Event('change'));
+
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ status: 2 });
+    put.flush(null);
+    httpMock
+      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .flush(TRACKED_MOVIE_DTO);
+  });
+
+  it('removes a tracked material from the library', async () => {
+    await setupTracking({ medium: 'Movie', library: [TRACKED_MOVIE_DTO] });
+
+    const select = trackSelect();
+    select.value = 'remove';
+    select.dispatchEvent(new Event('change'));
+
+    const remove = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush(null);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([]);
+  });
+
+  it('tracks comics at the volume level resolved from the catalog units', async () => {
+    await setupTracking({
+      medium: 'Comic',
+      unit: { unitType: 'Issue', groupNumber: 2, number: 5 },
+      catalogUnits: [
+        { id: 'unit-vol2', sourceMaterialId: 'mat-1', unitType: 4, groupNumber: null, number: 2, title: null },
+        { id: 'unit-issue5', sourceMaterialId: 'mat-1', unitType: 2, groupNumber: 2, number: 5, title: null },
+      ],
+      library: [],
+    });
+
+    const select = trackSelect();
+    expect(select).toBeTruthy();
+    expect(selectedOptionText(select)).toBe('Track…');
+
+    select.value = 'Completed';
+    select.dispatchEvent(new Event('change'));
+
+    const post = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`);
+    expect(post.request.body).toEqual({ sourceMaterialId: 'mat-1', status: 1 });
+    post.flush(null);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([TRACKED_MOVIE_DTO]);
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    expect(put.request.body).toEqual({ status: 1, unitId: 'unit-vol2' });
+    put.flush(null);
+    httpMock
+      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .flush(TRACKED_MOVIE_DTO);
+  });
+
+  it('derives the season status from tracked episodes for shows', async () => {
+    await setupTracking({
+      medium: 'Animated Show',
+      unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+      catalogUnits: [
+        { id: 'unit-s7', sourceMaterialId: 'mat-1', unitType: 3, groupNumber: null, number: 7, title: null },
+        { id: 'unit-ep9', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: 7, number: 9, title: null },
+      ],
+      library: [
+        {
+          sourceMaterialId: 'mat-1',
+          title: 'The Clone Wars',
+          medium: 3,
+          canonType: 0,
+          status: 0,
+          isFavorite: false,
+          units: [
+            { id: 'unit-s7', unitType: 3, groupNumber: null, number: 7, title: null, isCompleted: false, isTracked: false },
+            { id: 'unit-ep9', unitType: 0, groupNumber: 7, number: 9, title: null, isCompleted: true, isTracked: true },
+            { id: 'unit-ep10', unitType: 0, groupNumber: 7, number: 10, title: null, isCompleted: false, isTracked: false },
+          ],
+        },
+      ],
+    });
+
+    const select = trackSelect();
+    expect(select).toBeTruthy();
+    expect(selectedOptionText(select)).toBe('In progress');
+
+    select.value = 'Completed';
+    select.dispatchEvent(new Event('change'));
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    expect(put.request.body).toEqual({ status: 1, unitId: 'unit-s7' });
+    put.flush(null);
+    httpMock
+      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .flush(TRACKED_MOVIE_DTO);
+  });
+
+  it('hides the season dropdown when no explicit season container exists', async () => {
+    await setupTracking({
+      medium: 'Live Action Show',
+      unit: { unitType: 'Episode', groupNumber: 1, number: 4 },
+      catalogUnits: [
+        { id: 'unit-ep4', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: 1, number: 4, title: null },
+      ],
+      library: [],
+    });
+
+    expect(trackSelect()).toBeNull();
   });
 });

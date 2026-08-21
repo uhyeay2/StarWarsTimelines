@@ -8,6 +8,13 @@ import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-sourc
 import { MEDIA, Medium } from '../../models/medium';
 import { UNIT_TYPES, UnitType } from '../../models/unit-type';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
+import {
+  findTrackedItem,
+  groupTrackingStatus,
+  groupUnitIsTracked,
+  materialTrackingStatus,
+  trackSelectOptions,
+} from '../../models/tracking-selection';
 import { AuthService } from '../../services/auth/auth.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
@@ -159,15 +166,7 @@ export class SourceMaterialAdmin implements OnInit {
 
   /** Returns the tracked item for a material ID, or null if not tracked. */
   getTrackedItem(materialId: string): LibraryItem | null {
-    return this.trackedItems().find((item) => item.id === materialId) ?? null;
-  }
-
-  /**
-   * Builds the option list for a tracking status select.
-   * Always offers every status; appends 'Remove From Library' once tracked.
-   */
-  private trackSelectOptions(isTracked: boolean): readonly string[] {
-    return isTracked ? [...TRACKING_STATUSES, 'remove'] : [...TRACKING_STATUSES];
+    return findTrackedItem(this.trackedItems(), materialId);
   }
 
   /**
@@ -175,17 +174,15 @@ export class SourceMaterialAdmin implements OnInit {
    * Includes 'Remove From Library' when the material is already tracked.
    */
   getTrackingOptions(materialId: string): readonly string[] {
-    return this.trackSelectOptions(this.getTrackedItem(materialId) !== null);
+    return trackSelectOptions(this.getTrackedItem(materialId) !== null);
   }
 
-/**
-    * Determines the tracking status options for a specific group (season/volume) unit.
-    * Includes 'Remove From Library' when that specific unit is already tracked.
-    */
+  /**
+   * Determines the tracking status options for a specific group (season/volume) unit.
+   * Includes 'Remove From Library' when that specific unit is already tracked.
+   */
   getGroupTrackingOptions(materialId: string, unitId: string): readonly string[] {
-    const trackedItem = this.getTrackedItem(materialId);
-    const isTracked = trackedItem?.units?.some((u) => u.id === unitId && u.isTracked === true) ?? false;
-    return this.trackSelectOptions(isTracked);
+    return trackSelectOptions(groupUnitIsTracked(this.getTrackedItem(materialId), unitId));
   }
 
   /**
@@ -193,7 +190,7 @@ export class SourceMaterialAdmin implements OnInit {
    * Used to preselect the material-level tracking dropdown.
    */
   getMaterialCurrentStatus(materialId: string): TrackingStatus | null {
-    return this.getTrackedItem(materialId)?.status ?? null;
+    return materialTrackingStatus(this.getTrackedItem(materialId));
   }
 
   /**
@@ -203,28 +200,7 @@ export class SourceMaterialAdmin implements OnInit {
    * container's children only so sibling seasons never influence the result.
    */
   getGroupCurrentStatus(materialId: string, unitId: string): TrackingStatus | null {
-    const units = this.getTrackedItem(materialId)?.units ?? [];
-    const container = units.find((u) => u.id === unitId);
-    if (!container) {
-      return null;
-    }
-    if (container.isTracked === true) {
-      return container.isCompleted ? 'Completed' : 'In progress';
-    }
-    const children = units.filter(
-      (u) =>
-        u.unitType !== 'Season' &&
-        u.unitType !== 'Volume' &&
-        u.groupNumber === container.number,
-    );
-    if (!children.some((c) => c.isTracked === true)) {
-      return null;
-    }
-    const completed = children.filter((c) => c.isCompleted).length;
-    if (children.length > 0 && completed === children.length) {
-      return 'Completed';
-    }
-    return completed > 0 ? 'In progress' : 'Wish Listed';
+    return groupTrackingStatus(this.getTrackedItem(materialId), unitId);
   }
 
   readonly newUnitType = signal<UnitType>('Episode');

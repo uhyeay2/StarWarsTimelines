@@ -208,15 +208,19 @@ describe('TrackedItemRow', () => {
     expect(compiled.querySelectorAll('select.group-status-select').length).toBe(1);
   });
 
-  it('shows grouping by groupNumber when no Season/Volume units exist', () => {
+  it('shows the material status select when units have no Season/Volume containers', () => {
     fixture.componentRef.setInput('item', UNIT_ITEM_WITHOUT_SEASONS);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Season 1');
-    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(1);
+    expect(compiled.querySelector('select.status-select')).toBeTruthy();
+    expect((compiled.querySelector('select.status-select') as HTMLSelectElement).value).toBe('In progress');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(0);
   });
 
-  it('shows grouping for units without a group number', () => {
+  it('uses the material-level controls for books with chapters', () => {
+    const emissions: { status?: TrackingStatus; removed?: boolean }[] = [];
+    component.statusChange.subscribe((status) => emissions.push({ status }));
+    component.remove.subscribe(() => emissions.push({ removed: true }));
     fixture.componentRef.setInput('item', {
       id: 'material-chapter-test',
       title: 'Test Chapter Material',
@@ -226,7 +230,22 @@ describe('TrackedItemRow', () => {
       units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', isCompleted: false }],
     });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('All Units');
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).not.toContain('All Units');
+    expect(compiled.querySelectorAll('select.group-status-select').length).toBe(0);
+
+    // The select reflects the material's status and emits item-level events,
+    // so status updates and Remove From Library work like any other material.
+    const select = compiled.querySelector('select.status-select') as HTMLSelectElement;
+    expect(select.value).toBe('In progress');
+
+    select.value = 'Completed';
+    select.dispatchEvent(new Event('change'));
+    select.value = 'remove';
+    select.dispatchEvent(new Event('change'));
+
+    expect(emissions).toEqual([{ status: 'Completed' }, { removed: true }]);
   });
 
   it('emits groupStatusChange when the season status select changes', () => {

@@ -71,6 +71,28 @@
         <span class="event-source-unit">{{ detail }}</span>
       }
 
+      <!-- ─── Tracking Status Dropdown ──────────────────────────────────── -->
+      @if (showTracking()) {
+        <select
+          class="track-select event-track-select"
+          [attr.aria-label]="'Track ' + item.source.title"
+          (change)="onTrackChange($event)">
+          <option
+            value=""
+            disabled
+            [selected]="currentStatus() === null"
+            hidden>Track…</option>
+          @for (status of trackingOptions(); track status) {
+            <option
+              [value]="status"
+              [selected]="currentStatus() === status"
+              [class.remove-option]="status === 'remove'">
+              {{ status === 'remove' ? 'Remove From Library' : status }}
+            </option>
+          }
+        </select>
+      }
+      <!-- ─── End Tracking Status Dropdown ─────────────────────────────── -->
 
     </p>
     <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->

@@ -28,18 +28,17 @@
         [attr.aria-label]="'Move ' + item().title + ' down'"
         (click)="emitMoveDown()">▼</button>
     }
-    @if ((item().units?.length ?? 0) > 0) {
-      @if (!hasGroupUnits()) {
-        <span class="status-badge">{{ item().status }}</span>
-      }
+    @if (hasGroupUnits()) {
       <ul class="unit-list" [attr.aria-label]="'Progress for ' + item().title">
         @for (group of groupUnits(); track $index) {
           <li class="unit-group">
             <div class="unit-group-header">
-              <span class="unit-group-label">{{ group.groupTitle }}</span>
+              @if (group.groupTitle) {
+                <span class="unit-group-label">{{ group.groupTitle }}</span>
+              }
               <select
                 class="group-status-select"
-                [attr.aria-label]="'Status for ' + group.groupTitle"
+                [attr.aria-label]="'Status for ' + (group.groupTitle || item().title)"
                 (change)="onGroupStatusChange(group.containerId, $event)">
                 <option value="" disabled [selected]="getGroupStatus(group) === null" hidden>Track…</option>
                 @for (status of statuses; track status) {
