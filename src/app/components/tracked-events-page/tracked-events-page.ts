@@ -12,13 +12,10 @@
 
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiSourceMaterial } from '../../models/api-source-material';
 import { LibraryItem } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth/auth.service';
-import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
-import { LoggerService } from '../../services/logging/logger.service';
 import { TrackedItemRow } from '../tracked-item-row/tracked-item-row';
 
 /** Available status filter options for the filter tabs. */
@@ -42,12 +39,6 @@ export class TrackedEventsPage {
   /** Library service for managing tracked items. */
   private readonly libraryService = inject(LibraryService);
 
-  /** Catalog service for source material lookup. */
-  private readonly catalogService = inject(CatalogService);
-
-  /** Logger for analytics and diagnostics. */
-  private readonly logger = inject(LoggerService);
-
   // ─── User state ─────────────────────────────────────────────────────────
 
   /** The currently authenticated user, or `null`. */
@@ -64,9 +55,6 @@ export class TrackedEventsPage {
   /** All available tracking status options. */
   readonly statuses = TRACKING_STATUSES;
 
-  /** All source materials from the catalog. */
-  readonly catalog = computed(() => this.catalogService.sourceMaterials() ?? []);
-
   // ─── Filter state ───────────────────────────────────────────────────────
 
   /** Available filter tab options. */
@@ -80,24 +68,7 @@ export class TrackedEventsPage {
   /** ID of the item currently being dragged, or `null`. */
   readonly draggedId = signal<string | null>(null);
 
-  /** ID of the material selected in the "add" dropdown. */
-  readonly selectedMaterialId = signal('');
-
   // ─── Computed state ─────────────────────────────────────────────────────
-
-  /** Set of tracked material IDs for quick lookup. */
-  readonly trackedMaterialIds = computed(() => {
-    const ids = new Set<string>();
-    for (const item of this.tracked()) {
-      ids.add(item.id);
-    }
-    return ids;
-  });
-
-  /** Catalog materials not yet tracked (available to add). */
-  readonly addOptions = computed(() =>
-    this.catalog().filter((material) => !this.trackedMaterialIds().has(material.id)),
-  );
 
   /** Tracked items filtered by the active status filter. */
   readonly filteredItems = computed(() => {
@@ -122,7 +93,6 @@ export class TrackedEventsPage {
         this.tracked.set([]);
         return;
       }
-      this.catalogService.fetchSourceMaterials();
       const subscription = this.libraryService
         .getTracked(userId)
         .subscribe((items) => this.tracked.set(items));
@@ -240,35 +210,6 @@ export class TrackedEventsPage {
     this.libraryService
       .setUnitProgress(userId, materialId, unitId, isCompleted)
       .subscribe((items) => this.tracked.set(items));
-  }
-
-  // ─── Add material methods ───────────────────────────────────────────────
-
-  /**
-   * Handles the material select dropdown change.
-   *
-   * @param event  The native change event.
-   */
-  onSelectMaterial(event: Event): void {
-    this.selectedMaterialId.set((event.target as HTMLSelectElement).value);
-  }
-
-  /** Adds the selected catalog material to the tracked list. */
-  addTracked(): void {
-    const userId = this.userId();
-    const materialId = this.selectedMaterialId();
-    if (!userId || !materialId) {
-      return;
-    }
-    const material = this.catalog().find((entry) => entry.id === materialId);
-    if (!material) {
-      return;
-    }
-    this.logger.info('[TrackedEventsPage] Adding tracked item', { materialId });
-    this.libraryService.addTracked(userId, material).subscribe((items) => {
-      this.tracked.set(items);
-      this.selectedMaterialId.set('');
-    });
   }
 
   // ─── Reorder methods ────────────────────────────────────────────────────

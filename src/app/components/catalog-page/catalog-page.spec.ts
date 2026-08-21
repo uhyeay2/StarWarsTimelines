@@ -21,7 +21,9 @@ describe('CatalogPage', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    const initial = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
+    const initial = httpMock.expectOne(
+      (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'),
+    );
     initial.flush([]);
     fixture.detectChanges();
   });
@@ -39,23 +41,23 @@ describe('CatalogPage', () => {
     const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
     expect(tabs.length).toBe(4);
     expect(Array.from(tabs).map((t) => t.textContent?.trim())).toEqual([
+      'Source materials',
       'Characters',
       'Vehicles',
       'Locations',
-      'Source materials',
     ]);
   });
 
-  it('defaults to the characters tab', () => {
-    expect(component.activeTab()).toBe('characters');
+  it('defaults to the source materials tab', () => {
+    expect(component.activeTab()).toBe('sources');
     expect(fixture.nativeElement.querySelector('.catalog-tab--active')?.textContent?.trim()).toBe(
-      'Characters',
+      'Source materials',
     );
   });
 
   it('switches to the vehicles tab on click', () => {
     const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
-    tabs[1].click();
+    tabs[2].click();
     fixture.detectChanges();
 
     const vehiclesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/vehicles'));

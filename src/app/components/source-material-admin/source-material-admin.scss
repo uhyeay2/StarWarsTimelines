@@ -185,7 +185,10 @@ select option {
   font-size: 0.8rem;
   outline: none;
   flex-shrink: 0;
-  min-width: 140px;
+
+  /* Constant width sized for the longest option ("Remove From Library"). */
+  box-sizing: border-box;
+  width: 12rem;
 }
 
 .track-select:focus,

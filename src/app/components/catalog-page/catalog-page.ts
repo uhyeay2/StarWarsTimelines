@@ -16,13 +16,13 @@ export class CatalogPage {
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'Admin');
 
-  readonly activeTab = signal<CatalogTab>('characters');
+  readonly activeTab = signal<CatalogTab>('sources');
 
   readonly tabs: readonly { key: CatalogTab; label: string }[] = [
+    { key: 'sources', label: 'Source materials' },
     { key: 'characters', label: 'Characters' },
     { key: 'vehicles', label: 'Vehicles' },
     { key: 'locations', label: 'Locations' },
-    { key: 'sources', label: 'Source materials' },
   ];
 
   selectTab(tab: CatalogTab): void {

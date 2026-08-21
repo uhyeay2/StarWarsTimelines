@@ -66,28 +66,6 @@
   color: #ffd54a;
 }
 
-.add-row {
-  display: flex;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.add-select {
-  flex: 1;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 0.55rem 0.65rem;
-  color: #e6e8ee;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.add-select:focus {
-  border-color: #ffd54a;
-}
-
 .btn {
   border: none;
   border-radius: 999px;
@@ -106,17 +84,6 @@
   background: #ffd54a;
   color: #1a1a1a;
   box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
-}
-
-.add-button {
-  flex-shrink: 0;
-}
-
-.add-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-  transform: none;
-  box-shadow: none;
 }
 
 .reorder-hint {

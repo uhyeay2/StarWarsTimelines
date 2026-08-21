@@ -34,26 +34,6 @@
       </div>
       <!-- ─── End Status Filter Tabs ─────────────────────────────────── -->
 
-      <!-- ─── Add Material Row ───────────────────────────────────────── -->
-      <div class="add-row">
-        <select
-          class="add-select"
-          [value]="selectedMaterialId()"
-          (change)="onSelectMaterial($event)"
-          aria-label="Choose material to track">
-          <option value="" disabled>Choose a material…</option>
-          @for (material of addOptions(); track material.id) {
-            <option [value]="material.id">{{ material.title }} ({{ material.medium }})</option>
-          }
-        </select>
-        <button
-          type="button"
-          class="btn btn-primary add-button"
-          [disabled]="!selectedMaterialId()"
-          (click)="addTracked()">Add</button>
-      </div>
-      <!-- ─── End Add Material Row ───────────────────────────────────── -->
-
       <!-- ─── Reorder Hint ───────────────────────────────────────────── -->
       @if (showReorder()) {
         <p class="reorder-hint">Drag items or use the arrows to order your wish list.</p>
@@ -63,7 +43,7 @@
       <!-- ─── Tracked Items List ─────────────────────────────────────── -->
       @if (filteredItems().length === 0) {
         <p class="empty-state">
-          {{ filter() === 'All' ? 'No tracked items yet — add something above.' : 'No ' + filter() + ' items yet.' }}
+          {{ filter() === 'All' ? 'No tracked items yet — track materials from the catalog page.' : 'No ' + filter() + ' items yet.' }}
         </p>
       } @else {
         <ol class="item-list" [class.item-list--numbered]="showReorder()">

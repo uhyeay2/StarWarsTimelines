@@ -5,26 +5,10 @@ import { of } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
-import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TrackedEventsPage } from './tracked-events-page';
 
 const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
-
-const CATALOG = [
-  {
-    id: '00000000-0000-0000-0000-000000000011',
-    title: 'Star Wars: Rebels',
-    medium: 'Animated Show',
-    canonType: 'Canon',
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000012',
-    title: 'The Mandalorian',
-    medium: 'Live Action Show',
-    canonType: 'Canon',
-  },
-] as const;
 
 const TRACKED: LibraryItem[] = [
   {
@@ -65,26 +49,12 @@ const TRACKED: LibraryItem[] = [
 interface Mocks {
   libraryMock: {
     getTracked: ReturnType<typeof vi.fn>;
-    addTracked: ReturnType<typeof vi.fn>;
     setStatus: ReturnType<typeof vi.fn>;
     setFavorite: ReturnType<typeof vi.fn>;
     removeTracked: ReturnType<typeof vi.fn>;
     setUnitProgress: ReturnType<typeof vi.fn>;
     clearUnitProgress: ReturnType<typeof vi.fn>;
     reorderTrackedItem: ReturnType<typeof vi.fn>;
-  };
-  catalogMock: ReturnType<typeof buildCatalogMock>;
-}
-
-function buildCatalogMock() {
-  const sourceMaterials = signal<
-    readonly { id: string; title: string; medium: string; canonType: string }[]
-  >([]);
-  return {
-    sourceMaterials,
-    fetchSourceMaterials: vi.fn().mockImplementation(() => {
-      sourceMaterials.set([...CATALOG]);
-    }),
   };
 }
 
@@ -95,7 +65,6 @@ async function setup(currentUser: User | null): Promise<{
 }> {
   const libraryMock = {
     getTracked: vi.fn(),
-    addTracked: vi.fn(),
     setStatus: vi.fn(),
     setFavorite: vi.fn(),
     removeTracked: vi.fn(),
@@ -103,7 +72,6 @@ async function setup(currentUser: User | null): Promise<{
     clearUnitProgress: vi.fn(),
     reorderTrackedItem: vi.fn(),
   };
-  const catalogMock = buildCatalogMock();
   libraryMock.getTracked.mockReturnValue(of(TRACKED));
   libraryMock.setStatus.mockImplementation(
     (_userId: string, materialId: string, status: string) =>
@@ -112,19 +80,6 @@ async function setup(currentUser: User | null): Promise<{
   libraryMock.setFavorite.mockImplementation(
     (_userId: string, materialId: string, favorite: boolean) =>
       of(TRACKED.map((item) => (item.id === materialId ? { ...item, favorite } : item))),
-  );
-  libraryMock.addTracked.mockImplementation(
-    (_userId: string, material: { id: string; title: string; medium: string }) =>
-      of([
-        ...TRACKED,
-        {
-          id: material.id,
-          title: material.title,
-          medium: material.medium,
-          status: 'Wish Listed',
-          favorite: false,
-        },
-      ]),
   );
   libraryMock.removeTracked.mockImplementation((_userId: string, materialId: string) =>
     of(TRACKED.filter((item) => item.id !== materialId)),
@@ -158,7 +113,6 @@ async function setup(currentUser: User | null): Promise<{
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
       { provide: LibraryService, useValue: libraryMock },
-      { provide: CatalogService, useValue: catalogMock },
     ],
   }).compileComponents();
 
@@ -168,7 +122,7 @@ async function setup(currentUser: User | null): Promise<{
   await fixture.whenStable();
   fixture.detectChanges();
 
-  return { fixture, component, mocks: { libraryMock, catalogMock } };
+  return { fixture, component, mocks: { libraryMock } };
 }
 
 describe('TrackedEventsPage', () => {
@@ -254,22 +208,6 @@ describe('TrackedEventsPage', () => {
       'season-1',
     );
     expect(mocks.libraryMock.removeTracked).not.toHaveBeenCalled();
-  });
-
-  it('adds a selected material to tracking', async () => {
-    const { fixture, component, mocks } = await setup(USER);
-    const select = fixture.nativeElement.querySelector('.add-select') as HTMLSelectElement;
-    select.value = CATALOG[0].id;
-    select.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-
-    const addButton = fixture.nativeElement.querySelector('.add-button') as HTMLButtonElement;
-    expect(addButton.disabled).toBe(false);
-    addButton.click();
-    fixture.detectChanges();
-
-    expect(mocks.libraryMock.addTracked).toHaveBeenCalledWith('user-padme', CATALOG[0]);
-    expect(component.selectedMaterialId()).toBe('');
   });
 
   it('hides reorder controls outside the Wish Listed view', async () => {
