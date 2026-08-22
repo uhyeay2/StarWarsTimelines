@@ -30,7 +30,11 @@
   <!-- ─── End Trigger Row ────────────────────────────────────────────── -->
 
   <!-- ─── Filter Panel (search + options) ────────────────────────────── -->
-  <div class="filter-group-panel" [hidden]="!open()">
+  <div
+    class="filter-group-panel"
+    [class.filter-group-panel--drop-up]="dropUp()"
+    [style.max-height.px]="panelMaxHeight()"
+    [hidden]="!open()">
 
     <!-- ─── Search Input ─────────────────────────────────────────────── -->
     <div class="filter-group-search">

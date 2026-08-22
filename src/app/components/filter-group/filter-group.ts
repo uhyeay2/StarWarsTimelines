@@ -13,6 +13,7 @@
 import {
   Component,
   computed,
+  ElementRef,
   HostListener,
   inject,
   input,
@@ -48,8 +49,20 @@ export class FilterGroup {
   /** Whether the filter panel is currently open. */
   readonly open = signal(false);
 
+  /** Whether the panel opens upward because there is no room below the trigger. */
+  protected readonly dropUp = signal(false);
+
+  /** Inline max height (px) clamping the panel to the visible viewport. */
+  protected readonly panelMaxHeight = signal<number | null>(null);
+
   /** Current search query text for filtering options. */
   protected readonly query = signal('');
+
+  private static readonly MAX_PANEL_HEIGHT_PX = 352; // 22rem at default font size
+  private static readonly MIN_PANEL_HEIGHT_PX = 150;
+  private static readonly PANEL_GAP_PX = 8;
+
+  private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // ─── Computed state ─────────────────────────────────────────────────────
 
@@ -101,13 +114,12 @@ export class FilterGroup {
 
   /** Toggles the filter panel open/closed and clears the search query on open. */
   togglePanel(): void {
-    this.open.update((isOpen) => {
-      const next = !isOpen;
-      if (next) {
-        this.query.set('');
-      }
-      return next;
-    });
+    const next = !this.open();
+    if (next) {
+      this.query.set('');
+      this.updatePosition();
+    }
+    this.open.set(next);
   }
 
   /** Clears all selected values in this filter group. */
@@ -117,11 +129,65 @@ export class FilterGroup {
 
   // ─── Host listeners ────────────────────────────────────────────────────
 
+  /** Closes the panel when a click lands anywhere outside the component. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (
+      this.open() &&
+      !this.elementRef.nativeElement.contains(event.target as Node)
+    ) {
+      this.open.set(false);
+    }
+  }
+
   /** Closes the panel when the Escape key is pressed. */
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.open.set(false);
+    }
+  }
+
+  /** Re-measures available viewport space while the panel is open. */
+  @HostListener('window:resize')
+  @HostListener('window:scroll')
+  onViewportChange(): void {
+    if (this.open()) {
+      this.updatePosition();
+    }
+  }
+
+  // ─── Private methods ───────────────────────────────────────────────────
+
+  /**
+   * Measures the trigger's position relative to the viewport and decides
+   * whether the panel should drop down, flip up, or be clamped in height.
+   *
+   * The panel opens downward by default. When there is not enough room
+   * below (e.g. the trigger sits near the bottom of a sticky sidebar), it
+   * flips upward if that side has more space; otherwise its max height is
+   * clamped so it always stays fully visible.
+   */
+  private updatePosition(): void {
+    const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    if (rect.height === 0 && rect.top === 0) {
+      return;
+    }
+    const gap = FilterGroup.PANEL_GAP_PX;
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+
+    this.panelMaxHeight.set(null);
+    this.dropUp.set(
+      spaceBelow < FilterGroup.MAX_PANEL_HEIGHT_PX &&
+        spaceAbove > spaceBelow,
+    );
+
+    const available = this.dropUp() ? spaceAbove : spaceBelow;
+    if (available < FilterGroup.MAX_PANEL_HEIGHT_PX) {
+      this.panelMaxHeight.set(
+        Math.max(available, FilterGroup.MIN_PANEL_HEIGHT_PX),
+      );
     }
   }
 }

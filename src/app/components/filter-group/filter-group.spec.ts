@@ -106,12 +106,22 @@ describe('FilterGroup', () => {
     expect(fixture.nativeElement.querySelector('.filter-group-clear-trigger')).toBeNull();
   });
 
-  it('keeps the panel open when clicking outside', () => {
+  it('closes the panel when clicking outside', () => {
     fixture.detectChanges();
     (fixture.nativeElement.querySelector('.filter-group-trigger') as HTMLElement).click();
     fixture.detectChanges();
     expect(component.open()).toBe(true);
     document.body.click();
+    fixture.detectChanges();
+    expect(component.open()).toBe(false);
+  });
+
+  it('keeps the panel open when clicking inside it', () => {
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.filter-group-trigger') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(component.open()).toBe(true);
+    (fixture.nativeElement.querySelector('.filter-group-panel input') as HTMLElement).click();
     expect(component.open()).toBe(true);
   });
 

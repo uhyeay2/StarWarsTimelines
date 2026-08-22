@@ -86,6 +86,11 @@
   flex-direction: column;
 }
 
+.filter-group-panel--drop-up {
+  top: auto;
+  bottom: calc(100% + 0.35rem);
+}
+
 .filter-group-panel[hidden] {
   display: none;
 }
