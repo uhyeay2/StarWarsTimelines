@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 .filter-option {
   display: flex;
   align-items: center;
@@ -6,24 +7,24 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #c5c8d3;
+  color: $color-text-secondary;
 }
 
 .filter-option:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: $color-surface-control;
 }
 
 .filter-option input {
-  accent-color: #ffd54a;
+  accent-color: $color-accent;
 }
 
 .filter-option--selected {
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .filter-option--parent {
   font-weight: 600;
-  color: #e6e8ee;
+  color: $color-text;
 }
 
 .filter-option-expand {
@@ -36,13 +37,13 @@
   padding: 0;
   background: transparent;
   border: none;
-  color: #8a8f9e;
+  color: $color-text-muted;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .filter-option-expand:hover {
-  color: #ffd54a;
+  color: $color-accent;
 }
 
 .filter-option-chevron {
@@ -67,7 +68,7 @@
 .filter-option-children {
   margin: 0.05rem 0 0.3rem;
   padding-left: 0.9rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid $color-border-subtle;
   display: flex;
   flex-direction: column;
 }
@@ -75,5 +76,5 @@
 .filter-option--child {
   padding-left: 0.5rem;
   font-weight: 400;
-  color: #c5c8d3;
+  color: $color-text-secondary;
 }

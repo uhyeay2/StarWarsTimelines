@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, finalize, of, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { CANON_TYPES, CanonType } from '../../models/canon-type';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { MEDIA, Medium } from '../../models/medium';
 import { UNIT_TYPES, UnitType } from '../../models/unit-type';
-import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
+import { TrackingStatus } from '../../models/tracking-status';
 import {
   findTrackedItem,
   groupTrackingStatus,
@@ -19,6 +19,10 @@ import { AuthService } from '../../services/auth/auth.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LibraryItem } from '../../models/library-item';
+import { TrackSelect } from '../track-select/track-select';
+import { UnitEditForm } from '../unit-edit-form/unit-edit-form';
+import { runOperation } from '../../utils/async-operation';
+import { addedTo, removedFrom, removedWithPrefix, toggledIn } from '../../utils/set-operations';
 
 interface UnitKey {
   materialId: string;
@@ -39,7 +43,7 @@ interface MaterialDisplayGroup {
 
 @Component({
   selector: 'app-source-material-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, TrackSelect, UnitEditForm],
   templateUrl: './source-material-catalog.html',
   styleUrl: './source-material-catalog.scss',
 })
@@ -53,7 +57,6 @@ export class SourceMaterialCatalog implements OnInit {
   readonly media = MEDIA;
   readonly canonTypes = CANON_TYPES;
   readonly unitTypes = UNIT_TYPES;
-  readonly trackingStatuses = TRACKING_STATUSES;
 
   readonly searchTerm = signal('');
 
@@ -278,7 +281,7 @@ export class SourceMaterialCatalog implements OnInit {
     clearInterval(probePoll);
     const units = cache.data();
     if (units && units.length > 0) {
-      this.materialsWithUnits.update((set) => new Set([...set, materialId]));
+      this.materialsWithUnits.update((set) => addedTo(set, materialId));
       this.unitsByMaterial.update((map) => ({ ...map, [materialId]: units }));
     }
       if (!this.catalogService.sourceMaterialsLoading()) {
@@ -303,25 +306,22 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.addError.set(null);
-    this.adding.set(true);
-    this.catalogService
-      .createSourceMaterial({
+    runOperation({
+      busy: this.adding,
+      busyValue: true,
+      idleValue: false,
+      error: this.addError,
+      operation: this.catalogService.createSourceMaterial({
         title,
         medium: this.newMedium(),
         canonType: this.newCanonType(),
-      })
-      .pipe(
-        catchError((err: Error) => {
-          this.addError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.adding.set(false)),
-      )
-      .subscribe((created) => {
+      }),
+      onSuccess: (created) => {
         if (created) {
           this.newTitle.set('');
         }
-      });
+      },
+    });
   }
 
   beginEdit(material: ApiSourceMaterial): void {
@@ -349,26 +349,23 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.savingId.set(id);
-    this.catalogService
-      .updateSourceMaterial(id, {
+    runOperation({
+      busy: this.savingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.updateSourceMaterial(id, {
         title,
         medium: this.editMedium(),
         canonType: this.editCanonType(),
-      })
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.savingId.set(null)),
-      )
-      .subscribe((updated) => {
+      }),
+      onSuccess: (updated) => {
         if (updated) {
           this.editId.set(null);
           this.editTitle.set('');
         }
-      });
+      },
+    });
   }
 
   requestDelete(material: ApiSourceMaterial): void {
@@ -387,25 +384,20 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.deletingId.set(id);
-    this.catalogService
-      .deleteSourceMaterial(id)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.deletingId.set(null)),
-      )
-      .subscribe(() => {
-        if (this.actionError() === null) {
-          this.confirmDeleteId.set(null);
-          this.expandedMaterialId.set(null);
-          this.userCollapsedIds.set(new Set());
-          this.expandedSeasonKeys.set(new Set());
-          this.unitsByMaterial.set({});
-        }
-      });
+    runOperation({
+      busy: this.deletingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.deleteSourceMaterial(id),
+      onSuccess: () => {
+        this.confirmDeleteId.set(null);
+        this.expandedMaterialId.set(null);
+        this.userCollapsedIds.set(new Set());
+        this.expandedSeasonKeys.set(new Set());
+        this.unitsByMaterial.set({});
+      },
+    });
   }
 
   toggleUnits(materialId: string): void {
@@ -419,11 +411,7 @@ export class SourceMaterialCatalog implements OnInit {
       this.clearSeasonKeys(materialId);
       return;
     }
-    this.userCollapsedIds.update((set) => {
-      const next = new Set(set);
-      next.delete(materialId);
-      return next;
-    });
+    this.userCollapsedIds.update((set) => removedFrom(set, materialId));
     this.expandedMaterialId.set(materialId);
     this.loadUnits(materialId);
   }
@@ -434,15 +422,7 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   private clearSeasonKeys(materialId: string): void {
-    this.expandedSeasonKeys.update((set) => {
-      const next = new Set(set);
-      for (const key of next) {
-        if (key.startsWith(`${materialId}:`)) {
-          next.delete(key);
-        }
-      }
-      return next;
-    });
+    this.expandedSeasonKeys.update(removedWithPrefix(`${materialId}:`));
   }
 
   addUnit(materialId: string): void {
@@ -461,26 +441,23 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.unitAddError.set(null);
-    this.addingUnitFor.set(materialId);
-    this.catalogService
-      .createSourceMaterialUnit(materialId, input)
-      .pipe(
-        catchError((err: Error) => {
-          this.unitAddError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.addingUnitFor.set(null)),
-      )
-      .subscribe((created) => {
+    runOperation({
+      busy: this.addingUnitFor,
+      busyValue: materialId,
+      idleValue: null,
+      error: this.unitAddError,
+      operation: this.catalogService.createSourceMaterialUnit(materialId, input),
+      onSuccess: (created) => {
         if (created) {
           this.newUnitType.set('Episode');
           this.newUnitGroup.set(null);
           this.newUnitNumber.set(null);
           this.newUnitTitle.set('');
-          this.materialsWithUnits.update((set) => new Set([...set, materialId]));
+          this.materialsWithUnits.update((set) => addedTo(set, materialId));
           this.loadUnits(materialId);
         }
-      });
+      },
+    });
   }
 
   beginUnitEdit(materialId: string, unit: ApiSourceMaterialUnit): void {
@@ -514,23 +491,20 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.unitSavingKey.set(key);
-    this.catalogService
-      .updateSourceMaterialUnit(key.materialId, key.unitId, input)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.unitSavingKey.set(null)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.unitSavingKey,
+      busyValue: key,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.updateSourceMaterialUnit(key.materialId, key.unitId, input),
+      onSuccess: (updated) => {
         if (updated) {
           this.unitEditKey.set(null);
           this.unitEditTitle.set('');
           this.loadUnits(key.materialId);
         }
-      });
+      },
+    });
   }
 
   requestUnitDelete(materialId: string, unit: ApiSourceMaterialUnit): void {
@@ -549,22 +523,17 @@ export class SourceMaterialCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.unitDeletingKey.set(key);
-    this.catalogService
-      .deleteSourceMaterialUnit(key.materialId, key.unitId)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.unitDeletingKey.set(null)),
-      )
-      .subscribe(() => {
-        if (this.actionError() === null) {
-          this.unitConfirmDeleteKey.set(null);
-          this.loadUnits(key.materialId);
-        }
-      });
+    runOperation({
+      busy: this.unitDeletingKey,
+      busyValue: key,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.deleteSourceMaterialUnit(key.materialId, key.unitId),
+      onSuccess: () => {
+        this.unitConfirmDeleteKey.set(null);
+        this.loadUnits(key.materialId);
+      },
+    });
   }
 
   unitLabel(unit: ApiSourceMaterialUnit): string {
@@ -687,8 +656,7 @@ export class SourceMaterialCatalog implements OnInit {
    * If status is 'remove', removes the item from the library;
    * otherwise, adds or updates the tracked item with the given status.
    */
-  onTrackMaterial(materialId: string, event: Event): void {
-    const status = (event.target as HTMLSelectElement).value;
+  onTrackMaterial(materialId: string, status: string): void {
     this.doTrackMaterial(materialId, status);
   }
 
@@ -697,8 +665,7 @@ export class SourceMaterialCatalog implements OnInit {
    * If status is 'remove', removes the unit's progress;
    * otherwise, sets the unit's status.
    */
-  onTrackGroupUnit(materialId: string, unitId: string, event: Event): void {
-    const status = (event.target as HTMLSelectElement).value;
+  onTrackGroupUnit(materialId: string, unitId: string, status: string): void {
     this.doTrackGroupUnit(materialId, unitId, status);
   }
 
@@ -779,15 +746,7 @@ export class SourceMaterialCatalog implements OnInit {
 
   toggleSeason(materialId: string, groupKey: number | string | null): void {
     const key = this.seasonKey(materialId, groupKey);
-    this.expandedSeasonKeys.update((set) => {
-      const next = new Set(set);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+    this.expandedSeasonKeys.update((set) => toggledIn(set, key));
   }
 
   isMediumExpanded(medium: Medium): boolean {
@@ -795,15 +754,7 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   toggleMedium(medium: Medium): void {
-    this.expandedMedia.update((set) => {
-      const next = new Set(set);
-      if (next.has(medium)) {
-        next.delete(medium);
-      } else {
-        next.add(medium);
-      }
-      return next;
-    });
+    this.expandedMedia.update((set) => toggledIn(set, medium));
   }
 
   private getDisplayStrategy(medium: Medium): 'grouped-season' | 'grouped-volume' | 'flat' {
@@ -847,14 +798,10 @@ export class SourceMaterialCatalog implements OnInit {
       const units = cache.data() ?? [];
       this.unitsByMaterial.update((map) => ({ ...map, [materialId]: units }));
       if (units.length > 0) {
-        this.materialsWithUnits.update((set) => new Set([...set, materialId]));
+        this.materialsWithUnits.update((set) => addedTo(set, materialId));
       }
       if (units.length === 0) {
-        this.materialsWithUnits.update((set) => {
-          const next = new Set(set);
-          next.delete(materialId);
-          return next;
-        });
+        this.materialsWithUnits.update((set) => removedFrom(set, materialId));
         this.collapseMaterial(materialId);
       }
       return;
@@ -870,14 +817,10 @@ export class SourceMaterialCatalog implements OnInit {
           const units = cache.data() ?? [];
           this.unitsByMaterial.update((map) => ({ ...map, [materialId]: units }));
           if (units.length > 0) {
-            this.materialsWithUnits.update((set) => new Set([...set, materialId]));
+            this.materialsWithUnits.update((set) => addedTo(set, materialId));
           }
           if (units.length === 0) {
-            this.materialsWithUnits.update((set) => {
-              const next = new Set(set);
-              next.delete(materialId);
-              return next;
-            });
+            this.materialsWithUnits.update((set) => removedFrom(set, materialId));
             this.collapseMaterial(materialId);
           }
         }
@@ -886,11 +829,7 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   private collapseMaterial(materialId: string): void {
-    this.userCollapsedIds.update((set) => {
-      const next = new Set(set);
-      next.delete(materialId);
-      return next;
-    });
+    this.userCollapsedIds.update((set) => removedFrom(set, materialId));
     if (this.expandedMaterialId() === materialId) {
       this.expandedMaterialId.set(null);
       this.clearSeasonKeys(materialId);

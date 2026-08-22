@@ -14,16 +14,16 @@
  */
 
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { LibraryItem } from '../../models/library-item';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LoggerService } from '../../services/logging/logger.service';
 import { Timeline } from '../timeline/timeline';
+import { LoginPrompt } from '../login-prompt/login-prompt';
 
 @Component({
   selector: 'app-known-timeline-page',
-  imports: [Timeline, RouterLink],
+  imports: [Timeline, LoginPrompt],
   templateUrl: './known-timeline-page.html',
   styleUrl: './known-timeline-page.scss',
 })

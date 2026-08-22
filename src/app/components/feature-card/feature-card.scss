@@ -1,6 +1,7 @@
+@use '../../../styles/tokens' as *;
 .feature-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: $color-surface-raised;
+  border: 1px solid $color-border;
   border-radius: 12px;
   padding: 1.5rem;
   backdrop-filter: blur(6px);
@@ -10,11 +11,11 @@ h2 {
   font-family: 'Orbitron', sans-serif;
   font-size: 1.25rem;
   margin: 0 0 0.75rem;
-  color: #ffd54a;
+  color: $color-accent;
 }
 
 p {
   margin: 0;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   line-height: 1.5;
 }

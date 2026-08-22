@@ -1,7 +1,9 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable, catchError, finalize, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CatalogService } from '../../services/catalog/catalog.service';
+import { runOperation } from '../../utils/async-operation';
+import { filterByName } from '../../utils/text-search';
 
 interface NameItem {
   id: string;
@@ -53,13 +55,7 @@ export class NameCatalog implements OnInit {
     }
   });
 
-  readonly filteredItems = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    if (!term) {
-      return this.items();
-    }
-    return this.items().filter((item) => item.name.toLowerCase().includes(term));
-  });
+  readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
   readonly newName = signal('');
   readonly adding = signal(false);
@@ -99,20 +95,18 @@ export class NameCatalog implements OnInit {
     }
 
     this.addError.set(null);
-    this.adding.set(true);
-    this.create(name)
-      .pipe(
-        catchError((err: Error) => {
-          this.addError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.adding.set(false)),
-      )
-      .subscribe((item) => {
+    runOperation({
+      busy: this.adding,
+      busyValue: true,
+      idleValue: false,
+      error: this.addError,
+      operation: this.create(name),
+      onSuccess: (item) => {
         if (item) {
           this.newName.set('');
         }
-      });
+      },
+    });
   }
 
   beginEdit(item: NameItem): void {
@@ -138,21 +132,19 @@ export class NameCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.savingId.set(id);
-    this.update(id, name)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.savingId.set(null)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.savingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.update(id, name),
+      onSuccess: (updated) => {
         if (updated) {
           this.editId.set(null);
           this.editName.set('');
         }
-      });
+      },
+    });
   }
 
   requestDelete(item: NameItem): void {
@@ -171,20 +163,14 @@ export class NameCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.deletingId.set(id);
-    this.remove(id)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.deletingId.set(null)),
-      )
-      .subscribe(() => {
-        if (this.actionError() === null) {
-          this.confirmDeleteId.set(null);
-        }
-      });
+    runOperation({
+      busy: this.deletingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.remove(id),
+      onSuccess: () => this.confirmDeleteId.set(null),
+    });
   }
 
   private create(name: string): Observable<NameItem | null> {

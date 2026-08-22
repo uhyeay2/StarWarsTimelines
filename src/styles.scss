@@ -1,9 +1,20 @@
-/* You can add global styles to this file, and also import other style files */
+// ═══════════════════════════════════════════════════════════════════════
+// Global stylesheet.
+//
+// Shared design-system partials live in `src/styles/` and are imported
+// here. Component-specific styles stay in each component's own SCSS file
+// (Angular view encapsulation); only truly cross-cutting classes belong
+// in this layer.
+// ═══════════════════════════════════════════════════════════════════════
+
+@use 'styles/tokens' as *;
+@use 'styles/utilities';
+@use 'styles/buttons';
 
 html,
 body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background-color: #090a0f;
+  background-color: $color-bg;
 }

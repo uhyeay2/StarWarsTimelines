@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, finalize, of } from 'rxjs';
 import { AuthService } from '../../services/auth/auth.service';
+import { runOperation } from '../../utils/async-operation';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,26 +43,19 @@ export class RegisterPage {
       return;
     }
 
-    this.submitting.set(true);
-    this.auth
-      .register({
+    runOperation({
+      busy: this.submitting,
+      busyValue: true,
+      idleValue: false,
+      error: this.error,
+      operation: this.auth.register({
         username: this.username().trim(),
         displayName: this.displayName().trim() || undefined,
         email: this.email().trim(),
         password: this.password(),
-      })
-      .pipe(
-        catchError((err: Error) => {
-          this.error.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.submitting.set(false)),
-      )
-      .subscribe(() => {
-        if (this.error() === null) {
-          this.registeredEmail.set(this.email().trim());
-        }
-      });
+      }),
+      onSuccess: () => this.registeredEmail.set(this.email().trim()),
+    });
   }
 
   private validate(): string | null {

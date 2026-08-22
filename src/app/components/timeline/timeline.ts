@@ -35,10 +35,12 @@ import { TimelineEventsService } from '../../services/timeline-events/timeline-e
 import { TimelineEvent } from '../../models/timeline-event';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../filter-group/filter-group';
+import { ErrorState } from '../error-state/error-state';
+import { TimelineSkeleton } from '../timeline-skeleton/timeline-skeleton';
 
 @Component({
   selector: 'app-timeline',
-  imports: [TimelineEventItem, FilterGroup],
+  imports: [TimelineEventItem, FilterGroup, ErrorState, TimelineSkeleton],
   templateUrl: './timeline.html',
   styleUrl: './timeline.scss',
 })

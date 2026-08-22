@@ -1,0 +1,14 @@
+<div class="skeleton-list" role="status" aria-label="Loading events">
+  <p class="sr-only">Loading timeline events...</p>
+  @for (i of rowIndexes(); track i) {
+    <div class="skeleton-item">
+      <div class="skeleton-marker"></div>
+      <div class="skeleton-card">
+        <div class="skeleton-date"></div>
+        <div class="skeleton-title"></div>
+        <div class="skeleton-source"></div>
+        <div class="skeleton-description"></div>
+      </div>
+    </div>
+  }
+</div>

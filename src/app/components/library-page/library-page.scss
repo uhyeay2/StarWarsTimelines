@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
   min-height: 100vh;
@@ -9,48 +10,14 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 2rem;
   margin: 0 0 0.4rem;
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .page-header p {
-  color: #8a8f9e;
+  color: $color-text-muted;
   margin: 0 0 2rem;
 }
 
-.login-prompt {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.login-prompt p {
-  color: #c5c8d3;
-  margin: 0 0 1.25rem;
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.85rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
-.btn-primary {
-  background: #ffd54a;
-  color: #1a1a1a;
-  box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
-}
 
 .hub-layout {
   display: grid;
@@ -65,16 +32,16 @@
   flex-direction: column;
   gap: 0.6rem;
   padding: 1.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: $color-surface;
+  border: 1px solid $color-border;
   border-radius: 14px;
   text-decoration: none;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
 .hub-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 213, 74, 0.5);
+  background: $color-surface-control;
+  border-color: rgba($color-accent, 0.35);
   transform: translateY(-2px);
 }
 
@@ -82,11 +49,11 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 1.1rem;
   margin: 0;
-  color: #e6e8ee;
+  color: $color-text;
 }
 
 .hub-card p {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0;
@@ -94,7 +61,7 @@
 
 .hub-card-link {
   margin-top: auto;
-  color: #ffd54a;
+  color: $color-accent;
   font-size: 0.85rem;
   font-weight: 600;
 }

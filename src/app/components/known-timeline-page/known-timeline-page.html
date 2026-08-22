@@ -3,10 +3,7 @@
 
   <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
   @if (!user()) {
-    <div class="login-prompt">
-      <p>Log in to build your known timeline from your tracked events.</p>
-      <a class="btn btn-primary" routerLink="/login">Log in</a>
-    </div>
+    <app-login-prompt>Log in to build your known timeline from your tracked events.</app-login-prompt>
   <!-- ─── Known Timeline Layout (when logged in) ─────────────────────── -->
   } @else {
     <div class="known-timeline-layout">

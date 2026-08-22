@@ -1,0 +1,9 @@
+<div class="error-state" role="alert">
+  <p class="error-state-title">{{ title() }}</p>
+  @if (message()) {
+    <p class="error-state-message">{{ message() }}</p>
+  }
+  <button type="button" class="error-state-retry" (click)="retry.emit()">
+    {{ retryLabel() }}
+  </button>
+</div>

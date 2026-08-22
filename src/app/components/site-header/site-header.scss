@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
 }
@@ -11,22 +12,22 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(9, 10, 15, 0.85);
+  background: rgba($color-bg, 0.85);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid $color-border-subtle;
 }
 
 .brand {
   font-family: 'Orbitron', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #ffd54a;
+  color: $color-accent;
   text-decoration: none;
   letter-spacing: 0.04em;
 }
 
 .brand:hover {
-  color: #ffe68a;
+  color: $color-accent-bright;
 }
 
 .site-header-right {
@@ -42,55 +43,55 @@
 }
 
 .site-nav > a {
-  color: #c5c8d3;
+  color: $color-text-secondary;
   text-decoration: none;
   font-size: 0.95rem;
   padding-bottom: 0.25rem;
 }
 
 .site-nav > a:hover {
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .site-nav > a.active {
-  color: #ffd54a;
-  border-bottom: 2px solid #ffd54a;
+  color: $color-accent;
+  border-bottom: 2px solid $color-accent;
 }
 
 .site-user {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid $color-border-card;
   padding-left: 1.25rem;
 }
 
 .user-name {
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .user-name:hover {
-  color: #ffd54a;
+  color: $color-accent;
 }
 
 .login-link {
-  color: #ffd54a;
+  color: $color-accent;
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .login-link:hover {
-  color: #ffe68a;
+  color: $color-accent-bright;
 }
 
 .logout-button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #c5c8d3;
+  border: 1px solid rgba($color-white, 0.25);
+  color: $color-text-secondary;
   border-radius: 999px;
   padding: 0.35rem 1rem;
   font-size: 0.8rem;
@@ -100,6 +101,6 @@
 }
 
 .logout-button:hover {
-  border-color: #ffd54a;
-  color: #ffd54a;
+  border-color: $color-accent;
+  color: $color-accent;
 }

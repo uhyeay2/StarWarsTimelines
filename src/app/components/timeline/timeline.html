@@ -98,29 +98,13 @@
 
       <!-- ─── Loading State ───────────────────────────────────────────── -->
       @if (isLoading()) {
-        <div class="skeleton-list" role="status" aria-label="Loading events">
-          <p class="sr-only">Loading timeline events...</p>
-          @for (i of [1, 2, 3, 4, 5]; track i) {
-            <div class="skeleton-item">
-              <div class="skeleton-marker"></div>
-              <div class="skeleton-card">
-                <div class="skeleton-date"></div>
-                <div class="skeleton-title"></div>
-                <div class="skeleton-source"></div>
-                <div class="skeleton-description"></div>
-              </div>
-            </div>
-          }
-        </div>
+        <app-timeline-skeleton />
       <!-- ─── Error State ─────────────────────────────────────────────── -->
       } @else if (eventsError(); as errorMsg) {
-        <div class="error-state" role="alert">
-          <p class="error-state-title">Unable to load timeline events</p>
-          <p class="error-state-message">{{ errorMsg }}</p>
-          <button type="button" class="error-state-retry" (click)="retryLoad()">
-            Try again
-          </button>
-        </div>
+        <app-error-state
+          title="Unable to load timeline events"
+          [message]="errorMsg"
+          (retry)="retryLoad()" />
       <!-- ─── Empty State ─────────────────────────────────────────────── -->
       } @else if (filteredEvents().length === 0) {
         <p class="empty-state">No events match your filters.</p>

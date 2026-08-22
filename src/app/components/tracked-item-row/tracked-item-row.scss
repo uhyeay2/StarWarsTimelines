@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
 }
@@ -7,22 +8,22 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border;
   border-radius: 10px;
 }
 
 .tracked-item-row:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: $color-surface-hover;
 }
 
 .tracked-item-row--dragging {
   opacity: 0.5;
-  border-color: #ffd54a;
+  border-color: $color-accent;
 }
 
 .drag-handle {
-  color: #8a8f9e;
+  color: $color-text-muted;
   cursor: grab;
   font-size: 0.9rem;
   user-select: none;
@@ -37,16 +38,16 @@
 }
 
 .item-title {
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.9rem;
   line-height: 1.25;
 }
 
 .medium-chip {
   align-self: flex-start;
-  background: rgba(255, 213, 74, 0.1);
-  border: 1px solid rgba(255, 213, 74, 0.3);
-  color: #ffd54a;
+  background: rgba($color-accent, 0.1);
+  border: 1px solid rgba($color-accent, 0.3);
+  color: $color-accent;
   border-radius: 999px;
   font-size: 0.68rem;
   padding: 0.1rem 0.55rem;
@@ -62,31 +63,31 @@
 }
 
 .status-select {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: $color-well;
+  border: 1px solid $color-border-strong;
   border-radius: 8px;
   padding: 0.4rem 0.5rem;
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.8rem;
   outline: none;
 }
 
 .status-select:focus {
-  border-color: #ffd54a;
+  border-color: $color-accent;
 }
 
 .group-status-select {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: $color-well;
+  border: 1px solid $color-border-strong;
   border-radius: 6px;
   padding: 0.25rem 0.4rem;
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.75rem;
   outline: none;
 }
 
 .group-status-select:focus {
-  border-color: #ffd54a;
+  border-color: $color-accent;
 }
 
 .unit-list {
@@ -100,7 +101,7 @@
 
 .unit-group {
   list-style: none;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba($color-black, 0.1);
   border-radius: 8px;
   padding: 0.4rem 0.5rem;
 }
@@ -114,7 +115,7 @@
 
 .unit-group-label {
   font-weight: 600;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.8rem;
 }
 
@@ -129,9 +130,9 @@
 .remove-button,
 .move-button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid $color-border-strong;
   border-radius: 8px;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   cursor: pointer;
   padding: 0.3rem 0.55rem;
   font-size: 0.85rem;
@@ -142,18 +143,18 @@
 .favorite-button:hover,
 .remove-button:hover,
 .move-button:hover {
-  border-color: rgba(255, 213, 74, 0.6);
-  color: #ffd54a;
+  border-color: rgba($color-accent, 0.6);
+  color: $color-accent;
 }
 
 .favorite-button--active {
-  color: #ffd54a;
-  border-color: rgba(255, 213, 74, 0.6);
+  color: $color-accent;
+  border-color: rgba($color-accent, 0.6);
 }
 
 .move-button:disabled {
   opacity: 0.35;
   cursor: default;
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #8a8f9e;
+  border-color: $color-border;
+  color: $color-text-muted;
 }

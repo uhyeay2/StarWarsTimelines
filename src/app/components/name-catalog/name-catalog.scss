@@ -1,3 +1,6 @@
+@use '../../../styles/tokens' as *;
+@use '../../../styles/mixins' as *;
+
 :host {
   display: block;
 }
@@ -6,7 +9,7 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 1.15rem;
   margin: 0 0 1rem;
-  color: #e6e8ee;
+  color: $color-text;
 }
 
 .name-catalog-add {
@@ -23,17 +26,8 @@
 .name-catalog-field input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  color: #e6e8ee;
-  font-size: 0.95rem;
-  outline: none;
-}
 
-.name-catalog-field input:focus {
-  border-color: #ffd54a;
+  @include dark-control;
 }
 
 .name-catalog-list {
@@ -53,17 +47,8 @@
 .name-catalog-search input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  color: #e6e8ee;
-  font-size: 0.95rem;
-  outline: none;
-}
 
-.name-catalog-search input:focus {
-  border-color: #ffd54a;
+  @include dark-control;
 }
 
 .name-catalog-item {
@@ -71,14 +56,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: $color-surface;
+  border: 1px solid $color-border;
   border-radius: 10px;
   padding: 0.6rem 0.9rem;
 }
 
 .name-catalog-name {
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.95rem;
 }
 
@@ -98,94 +83,7 @@
 .name-catalog-edit input {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
   padding: 0.45rem 0.6rem;
-  color: #e6e8ee;
-  font-size: 0.95rem;
-  outline: none;
-}
 
-.name-catalog-edit input:focus {
-  border-color: #ffd54a;
-}
-
-.name-catalog-delete-prompt p {
-  margin: 0 0 0.6rem;
-  color: #c5c8d3;
-  font-size: 0.9rem;
-}
-
-.name-catalog-delete-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.name-catalog-status,
-.name-catalog-error {
-  margin: 0;
-  padding: 0.5rem 0;
-}
-
-.name-catalog-status {
-  color: #8a8f9e;
-}
-
-.name-catalog-error {
-  color: #ff8a80;
-  font-size: 0.9rem;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.55rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-  transform: none;
-  box-shadow: none;
-}
-
-.btn-primary {
-  background: #ffd54a;
-  color: #1a1a1a;
-  box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
-}
-
-.btn-small {
-  padding: 0.35rem 0.9rem;
-  font-size: 0.8rem;
-  background: transparent;
-  color: #f5f5f5;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.btn-danger {
-  background: #ff8a80;
-  color: #1a1a1a;
-  border: none;
+  @include dark-control;
 }

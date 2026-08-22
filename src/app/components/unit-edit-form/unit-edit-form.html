@@ -1,0 +1,27 @@
+<form class="unit-edit" (ngSubmit)="save.emit()">
+  <select name="unitEditType" [(ngModel)]="unitType">
+    @for (unitType of unitTypes; track unitType) {
+      <option [value]="unitType">{{ unitType }}</option>
+    }
+  </select>
+  <input
+    name="unitEditGroup"
+    type="number"
+    min="1"
+    placeholder="Group"
+    [(ngModel)]="groupNumber" />
+  <input
+    name="unitEditNumber"
+    type="number"
+    min="1"
+    required
+    [(ngModel)]="number" />
+  <input
+    name="unitEditTitle"
+    [(ngModel)]="title"
+    placeholder="Title (optional)" />
+  <button class="btn btn-sm" type="submit" [disabled]="saving()">
+    {{ saving() ? 'Saving…' : 'Save' }}
+  </button>
+  <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+</form>

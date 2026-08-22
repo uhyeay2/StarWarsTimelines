@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 .filter-group {
   position: relative;
   margin-bottom: 0.75rem;
@@ -14,35 +15,35 @@
   gap: 0.5rem;
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: $color-surface-raised;
+  border: 1px solid $color-border-control;
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.85rem;
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
 
 .filter-group-trigger:hover {
-  border-color: rgba(255, 213, 74, 0.6);
+  border-color: rgba($color-accent, 0.6);
 }
 
 .filter-group-clear-trigger {
   flex-shrink: 0;
   width: 2.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid $color-border-control;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffd54a;
+  background: $color-surface-raised;
+  color: $color-accent;
   font-size: 0.8rem;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .filter-group-clear-trigger:hover {
-  border-color: #ffd54a;
-  background: rgba(255, 213, 74, 0.15);
+  border-color: $color-accent;
+  background: rgba($color-accent, 0.15);
 }
 
 .filter-group-label {
@@ -52,9 +53,9 @@
 }
 
 .filter-group-count {
-  background: rgba(255, 213, 74, 0.15);
-  border: 1px solid #ffd54a;
-  color: #ffd54a;
+  background: rgba($color-accent, 0.15);
+  border: 1px solid $color-accent;
+  color: $color-accent;
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -66,7 +67,7 @@
 }
 
 .filter-group-chevron {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.7rem;
 }
 
@@ -76,10 +77,10 @@
   left: 0;
   right: 0;
   z-index: 20;
-  background: #16181f;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: $color-bg-raised;
+  border: 1px solid $color-border-control;
   border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 30px rgba($color-black, 0.5);
   padding: 0.5rem;
   max-height: 22rem;
   display: flex;
@@ -102,17 +103,17 @@
 .filter-group-search input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: $color-surface-control;
+  border: 1px solid $color-border-control;
   border-radius: 6px;
   padding: 0.4rem 0.6rem;
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.85rem;
   outline: none;
 }
 
 .filter-group-search input:focus {
-  border-color: #ffd54a;
+  border-color: $color-accent;
 }
 
 .filter-group-options {
@@ -121,7 +122,7 @@
 
 .filter-group-empty {
   margin: 0.5rem;
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.8rem;
   text-align: center;
 }

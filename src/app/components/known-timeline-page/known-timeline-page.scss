@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
   min-height: 100vh;
@@ -5,40 +6,6 @@
   box-sizing: border-box;
 }
 
-.login-prompt {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.login-prompt p {
-  color: #c5c8d3;
-  margin: 0 0 1.25rem;
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.85rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-}
-
-.btn-primary {
-  background: #ffd54a;
-  color: #1a1a1a;
-  box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
-}
 
 .known-timeline-layout {
   max-width: 1200px;
@@ -54,7 +21,7 @@
 }
 
 .status-toggles-label {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -62,23 +29,23 @@
 }
 
 .status-toggle {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border-card;
   border-radius: 999px;
   padding: 0.45rem 1.1rem;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.85rem;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .status-toggle:hover {
-  border-color: rgba(255, 213, 74, 0.5);
-  color: #ffd54a;
+  border-color: rgba($color-accent, 0.35);
+  color: $color-accent;
 }
 
 .status-toggle--active {
-  background: rgba(255, 213, 74, 0.14);
-  border-color: rgba(255, 213, 74, 0.5);
-  color: #ffd54a;
+  background: rgba($color-accent, 0.5);
+  border-color: rgba($color-accent, 0.14);
+  color: $color-accent;
 }

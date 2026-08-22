@@ -7,10 +7,7 @@
   @if (loading()) {
     <p class="settings-loading" role="status">Loading your account…</p>
   } @else if (loadError()) {
-    <div class="settings-login-prompt">
-      <p>{{ loadError() }}</p>
-      <a routerLink="/login" class="btn btn-primary">Log in</a>
-    </div>
+    <app-login-prompt compact>{{ loadError() }}</app-login-prompt>
   } @else if (account(); as account) {
     <div class="settings-card">
       <h2>Profile</h2>
@@ -35,7 +32,7 @@
         @if (displayNameSaved()) {
           <p class="settings-success" role="status">Your display name was updated.</p>
         }
-        <button class="btn btn-primary" type="submit" [disabled]="displayNameSaving()">
+        <button class="btn btn-lg btn-primary" type="submit" [disabled]="displayNameSaving()">
           {{ displayNameSaving() ? 'Saving…' : 'Save display name' }}
         </button>
       </form>
@@ -72,7 +69,7 @@
             We emailed a verification link to {{ email() }}.
           </p>
         }
-        <button class="btn btn-primary" type="submit" [disabled]="emailSaving()">
+        <button class="btn btn-lg btn-primary" type="submit" [disabled]="emailSaving()">
           {{ emailSaving() ? 'Saving…' : 'Save email' }}
         </button>
       </form>
@@ -146,7 +143,7 @@
         @if (passwordSaved()) {
           <p class="settings-success" role="status">Your password was changed.</p>
         }
-        <button class="btn btn-primary" type="submit" [disabled]="passwordSaving()">
+        <button class="btn btn-lg btn-primary" type="submit" [disabled]="passwordSaving()">
           {{ passwordSaving() ? 'Saving…' : 'Change password' }}
         </button>
       </form>

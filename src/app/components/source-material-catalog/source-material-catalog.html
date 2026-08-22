@@ -2,9 +2,9 @@
   <h2>Source materials</h2>
 
   @if (loading()) {
-    <p class="source-status" role="status">Loading…</p>
+    <p class="form-status" role="status">Loading…</p>
   } @else if (loadError()) {
-    <p class="source-error" role="alert">{{ loadError() }}</p>
+    <p class="form-error" role="alert">{{ loadError() }}</p>
   } @else {
     @if (isAdmin()) {
       <form class="source-add" (ngSubmit)="add()">
@@ -33,7 +33,7 @@
         </button>
       </form>
       @if (addError()) {
-        <p class="source-error" role="alert">{{ addError() }}</p>
+        <p class="form-error" role="alert">{{ addError() }}</p>
       }
     }
 
@@ -77,26 +77,26 @@
                         <option [value]="canonType">{{ canonType }}</option>
                       }
                     </select>
-                    <button class="btn btn-small" type="submit" [disabled]="savingId() === material.id">
+                    <button class="btn btn-sm" type="submit" [disabled]="savingId() === material.id">
                       {{ savingId() === material.id ? 'Saving…' : 'Save' }}
                     </button>
-                    <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+                    <button class="btn btn-sm" type="button" (click)="cancelEdit()">Cancel</button>
                   </form>
                 } @else if (confirmDeleteId() === material.id) {
-                  <div class="source-delete-prompt">
+                  <div class="delete-prompt">
                     <p>
                       Delete "{{ material.title }}"? This is blocked while it is referenced by a timeline
                       event or a user library.
                     </p>
-                    <div class="source-delete-actions">
+                    <div class="delete-actions">
                       <button
-                        class="btn btn-small btn-danger"
+                        class="btn btn-sm btn-danger"
                         type="button"
                         [disabled]="deletingId() === material.id"
                         (click)="confirmDelete()">
                         {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
                       </button>
-                      <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+                      <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
                     </div>
                   </div>
                 } @else {
@@ -125,72 +125,27 @@
 
                     @if (isAdmin()) {
                       <div class="source-actions">
-                        <button class="btn btn-small" type="button" (click)="beginEdit(material)">
+                        <button class="btn btn-sm" type="button" (click)="beginEdit(material)">
                           Edit
                         </button>
                         <button
-                          class="btn btn-small btn-danger"
+                          class="btn btn-sm btn-danger"
                           type="button"
                           (click)="requestDelete(material)">
                           Delete
                         </button>
                       </div>
-                    } @else {
+                    } @else if (group.medium === 'Movie' || group.medium === 'Book' || group.medium === 'Video Game') {
                       <!-- ═══════════════════════════════════════════════════════════════
-                           NON-ADMIN: top-level tracking dropdown (medium-specific)
+                           NON-ADMIN: title-level tracking dropdown
                            Movies, Books, Games → track at title level
                            Comics, Shows → track per group (below in expanded section)
                            ═══════════════════════════════════════════════════════════════ -->
-                      @switch (group.medium) {
-                        @case ('Movie') {
-                          <select
-                            class="track-select"
-                            [attr.aria-label]="'Track ' + material.title"
-                            (change)="onTrackMaterial(material.id, $event)">
-                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
-                            @for (status of getTrackingOptions(material.id); track status) {
-                              <option
-                                [value]="status"
-                                [selected]="getMaterialCurrentStatus(material.id) === status"
-                                [class.remove-option]="status === 'remove'">
-                                {{ status === 'remove' ? 'Remove From Library' : status }}
-                              </option>
-                            }
-                          </select>
-                        }
-                        @case ('Book') {
-                          <select
-                            class="track-select"
-                            [attr.aria-label]="'Track ' + material.title"
-                            (change)="onTrackMaterial(material.id, $event)">
-                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
-                            @for (status of getTrackingOptions(material.id); track status) {
-                              <option
-                                [value]="status"
-                                [selected]="getMaterialCurrentStatus(material.id) === status"
-                                [class.remove-option]="status === 'remove'">
-                                {{ status === 'remove' ? 'Remove From Library' : status }}
-                              </option>
-                            }
-                          </select>
-                        }
-                        @case ('Video Game') {
-                          <select
-                            class="track-select"
-                            [attr.aria-label]="'Track ' + material.title"
-                            (change)="onTrackMaterial(material.id, $event)">
-                            <option value="" disabled [selected]="getMaterialCurrentStatus(material.id) === null" hidden>Track…</option>
-                            @for (status of getTrackingOptions(material.id); track status) {
-                              <option
-                                [value]="status"
-                                [selected]="getMaterialCurrentStatus(material.id) === status"
-                                [class.remove-option]="status === 'remove'">
-                                {{ status === 'remove' ? 'Remove From Library' : status }}
-                              </option>
-                            }
-                          </select>
-                        }
-                      }
+                      <app-track-select
+                        [label]="'Track ' + material.title"
+                        [options]="getTrackingOptions(material.id)"
+                        [currentStatus]="getMaterialCurrentStatus(material.id)"
+                        (statusChange)="onTrackMaterial(material.id, $event)" />
                     }
                   </div>
 
@@ -200,9 +155,9 @@
                   @if (shouldShowUnits(material.id) && editId() !== material.id) {
                     <div class="unit">
                       @if (unitsLoading()) {
-                        <p class="source-status" role="status">Loading units…</p>
+                        <p class="form-status" role="status">Loading units…</p>
                       } @else if (unitsError()) {
-                        <p class="source-error" role="alert">{{ unitsError() }}</p>
+                        <p class="form-error" role="alert">{{ unitsError() }}</p>
                       } @else {
                         <!-- Admin: unit management form -->
                         @if (isAdmin()) {
@@ -242,14 +197,14 @@
                                 placeholder="Title (optional)" />
                             </label>
                             <button
-                              class="btn btn-small"
+                              class="btn btn-sm"
                               type="submit"
                               [disabled]="addingUnitFor() === material.id">
                               {{ addingUnitFor() === material.id ? 'Adding…' : 'Add unit' }}
                             </button>
                           </form>
                           @if (unitAddError()) {
-                            <p class="source-error" role="alert">{{ unitAddError() }}</p>
+                            <p class="form-error" role="alert">{{ unitAddError() }}</p>
                           }
                         }
 
@@ -285,24 +240,12 @@
                                     <span class="season-label">{{ displayGroup.label }}</span>
                                   </button>
                                   @if (displayGroup.containerId !== null) {
-                                    <select
-                                      class="group-track-select"
-                                      [attr.aria-label]="'Track ' + displayGroup.label"
-                                      (change)="onTrackGroupUnit(material.id, displayGroup.containerId, $event)">
-                                      <option
-                                        value=""
-                                        disabled
-                                        [selected]="getGroupCurrentStatus(material.id, displayGroup.containerId) === null"
-                                        hidden>Track…</option>
-                                      @for (status of getGroupTrackingOptions(material.id, displayGroup.containerId); track status) {
-                                        <option
-                                          [value]="status"
-                                          [selected]="getGroupCurrentStatus(material.id, displayGroup.containerId) === status"
-                                          [class.remove-option]="status === 'remove'">
-                                          {{ status === 'remove' ? 'Remove From Library' : status }}
-                                        </option>
-                                      }
-                                    </select>
+                                    <app-track-select
+                                      variant="group"
+                                      [label]="'Track ' + displayGroup.label"
+                                      [options]="getGroupTrackingOptions(material.id, displayGroup.containerId)"
+                                      [currentStatus]="getGroupCurrentStatus(material.id, displayGroup.containerId)"
+                                      (statusChange)="onTrackGroupUnit(material.id, displayGroup.containerId, $event)" />
                                   }
                                 </div>
                                 @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
@@ -332,50 +275,26 @@
                                 @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
                                   <li class="unit-item">
                                     @if (unitEditKey()?.unitId === unit.id) {
-                                      <form class="unit-edit" (ngSubmit)="saveUnitEdit()">
-                                        <select name="unitEditType" [(ngModel)]="unitEditType">
-                                          @for (unitType of unitTypes; track unitType) {
-                                            <option [value]="unitType">{{ unitType }}</option>
-                                          }
-                                        </select>
-                                        <input
-                                          name="unitEditGroup"
-                                          type="number"
-                                          min="1"
-                                          placeholder="Group"
-                                          [(ngModel)]="unitEditGroup" />
-                                        <input
-                                          name="unitEditNumber"
-                                          type="number"
-                                          min="1"
-                                          required
-                                          [(ngModel)]="unitEditNumber" />
-                                        <input
-                                          name="unitEditTitle"
-                                          [(ngModel)]="unitEditTitle"
-                                          placeholder="Title (optional)" />
-                                        <button
-                                          class="btn btn-small"
-                                          type="submit"
-                                          [disabled]="unitSavingKey()?.unitId === unit.id">
-                                          {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
-                                        </button>
-                                        <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
-                                          Cancel
-                                        </button>
-                                      </form>
+                                      <app-unit-edit-form
+                                        [(unitType)]="unitEditType"
+                                        [(groupNumber)]="unitEditGroup"
+                                        [(number)]="unitEditNumber"
+                                        [(title)]="unitEditTitle"
+                                        [saving]="unitSavingKey()?.unitId === unit.id"
+                                        (save)="saveUnitEdit()"
+                                        (cancel)="cancelUnitEdit()" />
                                     } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
                                       <span class="unit-delete-prompt">
                                         Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
                                         timeline event or user progress.
                                         <button
-                                          class="btn btn-small btn-danger"
+                                          class="btn btn-sm btn-danger"
                                           type="button"
                                           [disabled]="unitDeletingKey()?.unitId === unit.id"
                                           (click)="confirmUnitDelete()">
                                           {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
                                         </button>
-                                        <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
+                                        <button class="btn btn-sm" type="button" (click)="cancelUnitDelete()">
                                           Cancel
                                         </button>
                                       </span>
@@ -386,13 +305,13 @@
                                       </span>
                                       <div class="unit-actions">
                                         <button
-                                          class="btn btn-small"
+                                          class="btn btn-sm"
                                           type="button"
                                           (click)="beginUnitEdit(material.id, unit)">
                                           Edit
                                         </button>
                                         <button
-                                          class="btn btn-small btn-danger"
+                                          class="btn btn-sm btn-danger"
                                           type="button"
                                           (click)="requestUnitDelete(material.id, unit)">
                                           Delete
@@ -444,12 +363,12 @@
                                                   [(ngModel)]="unitEditTitle"
                                                   placeholder="Title (optional)" />
                                                 <button
-                                                  class="btn btn-small"
+                                                  class="btn btn-sm"
                                                   type="submit"
                                                   [disabled]="unitSavingKey()?.unitId === unit.id">
                                                   {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
                                                 </button>
-                                                <button class="btn btn-small" type="button" (click)="cancelUnitEdit()">
+                                                <button class="btn btn-sm" type="button" (click)="cancelUnitEdit()">
                                                   Cancel
                                                 </button>
                                               </form>
@@ -458,13 +377,13 @@
                                                 Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
                                                 timeline event or user progress.
                                                 <button
-                                                  class="btn btn-small btn-danger"
+                                                  class="btn btn-sm btn-danger"
                                                   type="button"
                                                   [disabled]="unitDeletingKey()?.unitId === unit.id"
                                                   (click)="confirmUnitDelete()">
                                                   {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
                                                 </button>
-                                                <button class="btn btn-small" type="button" (click)="cancelUnitDelete()">
+                                                <button class="btn btn-sm" type="button" (click)="cancelUnitDelete()">
                                                   Cancel
                                                 </button>
                                               </span>
@@ -475,13 +394,13 @@
                                               </span>
                                               <div class="unit-actions">
                                                 <button
-                                                  class="btn btn-small"
+                                                  class="btn btn-sm"
                                                   type="button"
                                                   (click)="beginUnitEdit(material.id, unit)">
                                                   Edit
                                                 </button>
                                                 <button
-                                                  class="btn btn-small btn-danger"
+                                                  class="btn btn-sm btn-danger"
                                                   type="button"
                                                   (click)="requestUnitDelete(material.id, unit)">
                                                   Delete
@@ -509,10 +428,10 @@
       </div>
     }
     @if (searchTerm() && mediumGroups().length === 0 && materials().length > 0) {
-      <p class="source-status" role="status">No source materials match your search.</p>
+      <p class="form-status" role="status">No source materials match your search.</p>
     }
     @if (actionError()) {
-      <p class="source-error" role="alert">{{ actionError() }}</p>
+      <p class="form-error" role="alert">{{ actionError() }}</p>
     }
   }
 </section>

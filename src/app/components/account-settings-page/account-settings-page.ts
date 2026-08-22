@@ -1,15 +1,15 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { catchError, finalize, of } from 'rxjs';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
+import { runOperation } from '../../utils/async-operation';
+import { LoginPrompt } from '../login-prompt/login-prompt';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: 'app-account-settings-page',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, LoginPrompt],
   templateUrl: './account-settings-page.html',
   styleUrl: './account-settings-page.scss',
 })
@@ -48,20 +48,18 @@ export class AccountSettingsPage implements OnInit {
       return;
     }
 
-    this.auth
-      .getAccount(currentUser.id)
-      .pipe(
-        catchError((err: Error) => {
-          this.loadError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((account) => {
+    runOperation({
+      busy: this.loading,
+      busyValue: true,
+      idleValue: false,
+      error: this.loadError,
+      operation: this.auth.getAccount(currentUser.id),
+      onSuccess: (account) => {
         if (account) {
           this.applyAccount(account);
         }
-      });
+      },
+    });
   }
 
   updateDisplayName(): void {
@@ -77,22 +75,19 @@ export class AccountSettingsPage implements OnInit {
 
     this.displayNameError.set(null);
     this.displayNameSaved.set(false);
-    this.displayNameSaving.set(true);
-    this.auth
-      .updateDisplayName(account.id, name)
-      .pipe(
-        catchError((err: Error) => {
-          this.displayNameError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.displayNameSaving.set(false)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.displayNameSaving,
+      busyValue: true,
+      idleValue: false,
+      error: this.displayNameError,
+      operation: this.auth.updateDisplayName(account.id, name),
+      onSuccess: (updated) => {
         if (updated) {
           this.applyAccount(updated);
           this.displayNameSaved.set(true);
         }
-      });
+      },
+    });
   }
 
   updateEmail(): void {
@@ -112,22 +107,19 @@ export class AccountSettingsPage implements OnInit {
 
     this.emailError.set(null);
     this.emailSaved.set(false);
-    this.emailSaving.set(true);
-    this.auth
-      .updateEmail(account.id, email)
-      .pipe(
-        catchError((err: Error) => {
-          this.emailError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.emailSaving.set(false)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.emailSaving,
+      busyValue: true,
+      idleValue: false,
+      error: this.emailError,
+      operation: this.auth.updateEmail(account.id, email),
+      onSuccess: (updated) => {
         if (updated) {
           this.applyAccount(updated);
           this.emailSaved.set(true);
         }
-      });
+      },
+    });
   }
 
   updatePassword(): void {
@@ -154,24 +146,19 @@ export class AccountSettingsPage implements OnInit {
 
     this.passwordError.set(null);
     this.passwordSaved.set(false);
-    this.passwordSaving.set(true);
-    this.auth
-      .updatePassword(account.id, this.currentPassword(), this.newPassword())
-      .pipe(
-        catchError((err: Error) => {
-          this.passwordError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.passwordSaving.set(false)),
-      )
-      .subscribe(() => {
-        if (this.passwordError() === null) {
-          this.currentPassword.set('');
-          this.newPassword.set('');
-          this.confirmPassword.set('');
-          this.passwordSaved.set(true);
-        }
-      });
+    runOperation({
+      busy: this.passwordSaving,
+      busyValue: true,
+      idleValue: false,
+      error: this.passwordError,
+      operation: this.auth.updatePassword(account.id, this.currentPassword(), this.newPassword()),
+      onSuccess: () => {
+        this.currentPassword.set('');
+        this.newPassword.set('');
+        this.confirmPassword.set('');
+        this.passwordSaved.set(true);
+      },
+    });
   }
 
   private applyAccount(account: User): void {

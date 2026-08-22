@@ -1,10 +1,11 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable, catchError, finalize, of } from 'rxjs';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { ApiCharacter } from '../../models/api-character';
 import { CreateCharacterInput } from '../../models/catalog/create-character-input';
 import { formatGalacticYearRange } from '../../utils/galactic-year';
+import { runOperation } from '../../utils/async-operation';
+import { filterByName } from '../../utils/text-search';
 
 /** Sentinel select value representing "nothing selected". */
 const NONE = '';
@@ -36,13 +37,7 @@ export class CharacterCatalog implements OnInit {
     [...this.speciesList()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  readonly filteredItems = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    if (!term) {
-      return this.items();
-    }
-    return this.items().filter((item) => item.name.toLowerCase().includes(term));
-  });
+  readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
   readonly newName = signal('');
   readonly newPlanetBornOnId = signal(NONE);
@@ -128,21 +123,18 @@ export class CharacterCatalog implements OnInit {
     }
 
     this.addError.set(null);
-    this.adding.set(true);
-    this.catalogService
-      .createCharacter(input)
-      .pipe(
-        catchError((err: Error) => {
-          this.addError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.adding.set(false)),
-      )
-      .subscribe((item) => {
+    runOperation({
+      busy: this.adding,
+      busyValue: true,
+      idleValue: false,
+      error: this.addError,
+      operation: this.catalogService.createCharacter(input),
+      onSuccess: (item) => {
         if (item) {
           this.resetAddForm();
         }
-      });
+      },
+    });
   }
 
   beginEdit(item: ApiCharacter): void {
@@ -195,21 +187,18 @@ export class CharacterCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.savingId.set(id);
-    this.catalogService
-      .updateCharacter(id, input)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.savingId.set(null)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.savingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.updateCharacter(id, input),
+      onSuccess: (updated) => {
         if (updated) {
           this.cancelEdit();
         }
-      });
+      },
+    });
   }
 
   requestDelete(item: ApiCharacter): void {
@@ -228,21 +217,14 @@ export class CharacterCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.deletingId.set(id);
-    this.catalogService
-      .deleteCharacter(id)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.deletingId.set(null)),
-      )
-      .subscribe(() => {
-        if (this.actionError() === null) {
-          this.confirmDeleteId.set(null);
-        }
-      });
+    runOperation({
+      busy: this.deletingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.deleteCharacter(id),
+      onSuccess: () => this.confirmDeleteId.set(null),
+    });
   }
 
   private resetAddForm(): void {

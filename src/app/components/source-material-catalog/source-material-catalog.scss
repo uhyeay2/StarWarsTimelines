@@ -1,3 +1,6 @@
+@use '../../../styles/tokens' as *;
+@use '../../../styles/mixins' as *;
+
 :host {
   display: block;
 }
@@ -6,27 +9,19 @@ h2 {
   font-family: 'Orbitron', sans-serif;
   font-size: 1.15rem;
   margin: 0 0 1rem;
-  color: #e6e8ee;
+  color: $color-text;
 }
 
 input,
 select {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
+  @include dark-control;
   padding: 0.5rem 0.6rem;
-  color: #e6e8ee;
   font-size: 0.9rem;
-  outline: none;
-
-  &:focus {
-    border-color: #ffd54a;
-  }
 }
 
 select option {
-  background: #1a1a1a;
-  color: #e6e8ee;
+  background: $color-on-accent;
+  color: $color-text;
 }
 
 .source-add {
@@ -42,23 +37,32 @@ select option {
   gap: 0.3rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #c5c8d3;
+  color: $color-text-secondary;
 }
 
 .source-add-button {
   align-self: flex-end;
 }
 
-.source-list {
+.source-list,
+.unit-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.source-list {
   gap: 0.5rem;
 }
 
-.medium-group {
+.unit-list {
+  gap: 0.35rem;
+}
+
+.medium-group,
+.season-group {
   display: flex;
   flex-direction: column;
 }
@@ -67,8 +71,8 @@ select option {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 213, 74, 0.06);
-  border: 1px solid rgba(255, 213, 74, 0.15);
+  background: rgba($color-accent, 0.06);
+  border: 1px solid rgba($color-accent, 0.15);
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
   cursor: pointer;
@@ -76,7 +80,7 @@ select option {
   transition: background 0.15s ease;
 
   &:hover {
-    background: rgba(255, 213, 74, 0.1);
+    background: rgba($color-accent, 0.1);
   }
 
   &--open {
@@ -86,21 +90,31 @@ select option {
   }
 }
 
-.medium-toggle {
-  color: #ffd54a;
+.medium-toggle,
+.season-toggle {
+  color: $color-accent;
   font-size: 0.8rem;
   flex-shrink: 0;
 }
 
-.medium-label {
-  color: #e6e8ee;
-  font-size: 0.95rem;
+.medium-label,
+.season-label {
+  color: $color-text;
   font-weight: 600;
   flex: 1;
 }
 
-.medium-count {
-  color: #8a8f9e;
+.medium-label {
+  font-size: 0.95rem;
+}
+
+.season-label {
+  font-size: 0.9rem;
+}
+
+.medium-count,
+.season-count {
+  color: $color-text-muted;
   font-size: 0.75rem;
 }
 
@@ -118,8 +132,8 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: $color-surface;
+  border: 1px solid $color-border;
   border-radius: 10px;
   padding: 0.6rem 0.9rem;
 }
@@ -142,13 +156,13 @@ select option {
 .source-expand {
   background: transparent;
   border: none;
-  color: #ffd54a;
+  color: $color-accent;
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0.2rem;
 
   &--open {
-    color: #ffe68a;
+    color: $color-accent-bright;
   }
 }
 
@@ -160,12 +174,12 @@ select option {
 }
 
 .source-title {
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.95rem;
 }
 
 .source-meta {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.8rem;
 }
 
@@ -173,42 +187,6 @@ select option {
   display: flex;
   gap: 0.4rem;
   flex-shrink: 0;
-}
-
-.track-select,
-.group-track-select {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 0.4rem 0.5rem;
-  color: #e6e8ee;
-  font-size: 0.8rem;
-  outline: none;
-  flex-shrink: 0;
-
-  /* Constant width sized for the longest option ("Remove From Library"). */
-  box-sizing: border-box;
-  width: 12rem;
-}
-
-.track-select:focus,
-.group-track-select:focus {
-  border-color: #ffd54a;
-}
-
-.track-select {
-  /* Full-width track select for material-level tracking */
-}
-
-.group-track-select {
-  /* Group-level track select for season/volume tracking */
-}
-
-.track-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.3rem;
 }
 
 .group-track-section {
@@ -225,16 +203,6 @@ select option {
   gap: 0.5rem;
 }
 
-.track-group-label {
-  font-weight: 600;
-  color: #c5c8d3;
-  font-size: 0.8rem;
-}
-
-.remove-option {
-  color: #ff6b6b;
-}
-
 .source-edit {
   display: flex;
   gap: 0.4rem;
@@ -247,19 +215,8 @@ select option {
   }
 }
 
-.source-delete-prompt p {
-  margin: 0 0 0.6rem;
-  color: #c5c8d3;
-  font-size: 0.9rem;
-}
-
-.source-delete-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
 .unit {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid $color-border-subtle;
   padding-top: 0.75rem;
 }
 
@@ -276,56 +233,28 @@ select option {
 }
 
 .unit-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
   gap: 0.35rem;
-}
-
-.season-group {
-  display: flex;
-  flex-direction: column;
 }
 
 .season-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border-subtle;
   border-radius: 8px;
   padding: 0.5rem 0.7rem;
   cursor: pointer;
   transition: background 0.15s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: $color-surface-hover;
   }
 
   &--open {
     border-radius: 8px 8px 0 0;
     border-bottom-color: transparent;
   }
-}
-
-.season-toggle {
-  color: #ffd54a;
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
-
-.season-label {
-  color: #e6e8ee;
-  font-size: 0.9rem;
-  font-weight: 600;
-  flex: 1;
-}
-
-.season-count {
-  color: #8a8f9e;
-  font-size: 0.75rem;
 }
 
 .season-episodes {
@@ -335,7 +264,7 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid $color-border-subtle;
   border-top: none;
   border-radius: 0 0 8px 8px;
 }
@@ -345,8 +274,8 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: $color-surface;
+  border: 1px solid $color-border-subtle;
   border-radius: 8px;
   padding: 0.45rem 0.7rem;
 }
@@ -355,7 +284,7 @@ select option {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.9rem;
 }
 
@@ -364,8 +293,8 @@ select option {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #ffd54a;
-  border: 1px solid rgba(255, 213, 74, 0.5);
+  color: $color-accent;
+  border: 1px solid rgba($color-accent, 0.5);
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
 }
@@ -376,92 +305,13 @@ select option {
   flex-shrink: 0;
 }
 
-.unit-edit {
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  flex-wrap: wrap;
-  flex: 1;
-
-  input[type='number'] {
-    width: 5rem;
-  }
-}
-
 .unit-delete-prompt {
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-.source-status,
-.source-error {
-  margin: 0;
-  padding: 0.5rem 0;
-}
-
-.source-status {
-  color: #8a8f9e;
-}
-
-.source-error {
-  color: #ff8a80;
-  font-size: 0.9rem;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.55rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: default;
-    transform: none;
-  }
-}
-
-.btn-primary {
-  background: #ffd54a;
-  color: #1a1a1a;
-  box-shadow: 0 6px 20px rgba(255, 213, 74, 0.35);
-}
-
-.btn-small {
-  padding: 0.35rem 0.9rem;
-  font-size: 0.8rem;
-  background: transparent;
-  color: #f5f5f5;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.btn-danger {
-  background: #ff8a80;
-  color: #1a1a1a;
-  border: none;
 }
 
 @media (max-width: 720px) {

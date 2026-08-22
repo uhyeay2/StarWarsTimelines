@@ -1,8 +1,9 @@
 import { Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable, catchError, finalize, of } from 'rxjs';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { ApiSpecies } from '../../models/api-species';
+import { runOperation } from '../../utils/async-operation';
+import { filterByName } from '../../utils/text-search';
 
 /** Sentinel select value representing "no home planet selected". */
 const NO_PLANET = '';
@@ -30,13 +31,7 @@ export class SpeciesCatalog implements OnInit {
     [...this.locations()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  readonly filteredItems = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    if (!term) {
-      return this.items();
-    }
-    return this.items().filter((item) => item.name.toLowerCase().includes(term));
-  });
+  readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
   readonly newName = signal('');
   readonly newHomePlanetId = signal(NO_PLANET);
@@ -68,22 +63,19 @@ export class SpeciesCatalog implements OnInit {
     }
 
     this.addError.set(null);
-    this.adding.set(true);
-    this.catalogService
-      .createSpecies(name, this.newHomePlanetId() || null)
-      .pipe(
-        catchError((err: Error) => {
-          this.addError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.adding.set(false)),
-      )
-      .subscribe((item) => {
+    runOperation({
+      busy: this.adding,
+      busyValue: true,
+      idleValue: false,
+      error: this.addError,
+      operation: this.catalogService.createSpecies(name, this.newHomePlanetId() || null),
+      onSuccess: (item) => {
         if (item) {
           this.newName.set('');
           this.newHomePlanetId.set(NO_PLANET);
         }
-      });
+      },
+    });
   }
 
   beginEdit(item: ApiSpecies): void {
@@ -111,21 +103,18 @@ export class SpeciesCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.savingId.set(id);
-    this.catalogService
-      .updateSpecies(id, name, this.editHomePlanetId() || null)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(null);
-        }),
-        finalize(() => this.savingId.set(null)),
-      )
-      .subscribe((updated) => {
+    runOperation({
+      busy: this.savingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.updateSpecies(id, name, this.editHomePlanetId() || null),
+      onSuccess: (updated) => {
         if (updated) {
           this.cancelEdit();
         }
-      });
+      },
+    });
   }
 
   requestDelete(item: ApiSpecies): void {
@@ -144,20 +133,13 @@ export class SpeciesCatalog implements OnInit {
     }
 
     this.actionError.set(null);
-    this.deletingId.set(id);
-    this.catalogService
-      .deleteSpecies(id)
-      .pipe(
-        catchError((err: Error) => {
-          this.actionError.set(err.message);
-          return of(undefined);
-        }),
-        finalize(() => this.deletingId.set(null)),
-      )
-      .subscribe(() => {
-        if (this.actionError() === null) {
-          this.confirmDeleteId.set(null);
-        }
-      });
+    runOperation({
+      busy: this.deletingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.deleteSpecies(id),
+      onSuccess: () => this.confirmDeleteId.set(null),
+    });
   }
 }

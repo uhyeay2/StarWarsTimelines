@@ -1,0 +1,61 @@
+// ═══════════════════════════════════════════════════════════════════════
+// Global button system.
+//
+// Usage: `<button class="btn btn-primary">` — base + variant, plus an
+// optional size modifier (`btn-sm`, `btn-lg`).
+//
+// Variants: btn-primary · btn-secondary · btn-danger
+// Sizes:    btn-sm · btn-lg        (default size is medium)
+// ═══════════════════════════════════════════════════════════════════════
+
+@use 'tokens' as *;
+
+.btn {
+  border: 1px solid $color-border-ghost;
+  border-radius: $radius-pill;
+  padding: 0.55rem 1.25rem;
+  background: transparent;
+  color: #f5f5f5;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.btn-primary {
+  background: $color-accent;
+  color: $color-on-accent;
+  box-shadow: 0 6px 20px $color-accent-glow;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #f5f5f5;
+}
+
+.btn-danger {
+  background: $color-danger;
+  color: $color-on-accent;
+  border-color: transparent;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+}
+
+.btn-lg {
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+}

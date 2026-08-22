@@ -5,10 +5,7 @@
   </header>
 
   @if (!user()) {
-    <div class="login-prompt">
-      <p>Log in to view and manage your personal library.</p>
-      <a class="btn btn-primary" routerLink="/login">Log in</a>
-    </div>
+    <app-login-prompt>Log in to view and manage your personal library.</app-login-prompt>
   } @else {
     <div class="hub-layout">
       <a class="hub-card" routerLink="/library/tracked">

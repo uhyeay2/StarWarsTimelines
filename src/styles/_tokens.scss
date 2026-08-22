@@ -1,0 +1,101 @@
+// ═══════════════════════════════════════════════════════════════════════
+// Design tokens — single source of truth for colors and typography.
+//
+// SCSS-only partial: produces no CSS output on its own. Import via
+// `@use 'styles/tokens' as *;` from styles.scss or component stylesheets.
+// ═══════════════════════════════════════════════════════════════════════
+
+// ─── Base ───────────────────────────────────────────────────────────────
+
+/// Page background.
+$color-bg: #090a0f;
+
+/// Opaque raised panel background (e.g. open dropdown panels).
+$color-bg-raised: #16181f;
+
+/// Radial glow stop layered over the page background in `styles.scss`.
+$color-bg-glow: #1b2735;
+
+/// Pure white — base for translucent overlays via `rgba($color-white, α)`.
+$color-white: #fff;
+
+/// Pure black — base for shadows and inset wells via `rgba($color-black, α)`.
+$color-black: #000;
+
+/// Darkened backdrop used behind open `<select>` controls.
+$color-well: rgba(0, 0, 0, 0.4);
+
+/// Translucent backdrop behind floating navigation panels.
+$color-overlay-panel: rgba(16, 19, 28, 0.97);
+
+// ─── Surfaces & borders ────────────────────────────────────────────────
+
+$color-surface: rgba($color-white, 0.03);
+$color-surface-subtle: rgba($color-white, 0.04);
+$color-surface-raised: rgba($color-white, 0.05);
+$color-surface-control: rgba($color-white, 0.06);
+$color-surface-hover: rgba($color-white, 0.07);
+$color-border: rgba($color-white, 0.1);
+$color-border-subtle: rgba($color-white, 0.08);
+$color-border-card: rgba($color-white, 0.12);
+$color-border-control: rgba($color-white, 0.14);
+$color-border-strong: rgba($color-white, 0.16);
+$color-border-ghost: rgba($color-white, 0.4);
+
+// ─── Text ───────────────────────────────────────────────────────────────
+
+$color-text-heading: $color-white;
+$color-text-bright: #f5f5f5;
+$color-text: #e6e8ee;
+$color-text-secondary: #c5c8d3;
+$color-text-muted: #8a8f9e;
+$color-placeholder: rgba(230, 232, 238, 0.4);
+
+// ─── Accent (gold) ──────────────────────────────────────────────────────
+//
+// Translucent gold tints (glows, washes, shimmer stops) use the
+// `rgba($color-accent, α)` function form so every alpha stays derived from
+// this one hue.
+
+$color-accent: #ffd54a;
+$color-accent-bright: #ffe68a;
+$color-on-accent: #1a1a1a;
+$color-accent-glow: rgba($color-accent, 0.35);
+$color-accent-border: rgba($color-accent, 0.5);
+
+// ─── Status ─────────────────────────────────────────────────────────────
+
+$color-danger: #ff8a80;
+/// Raw red base for translucent danger panels via `rgba($color-danger-base, α)`.
+$color-danger-base: #ff4444;
+$color-danger-bright: #ff8a8a;
+$color-danger-strong: #ff6b6b;
+$color-success: #69f0ae;
+$color-focus-ring: $color-accent;
+
+// ─── Info (blue) ────────────────────────────────────────────────────────
+//
+// Heading glows and vehicle-chip highlights; tints use the
+// `rgba($color-info, α)` function form.
+
+$color-info: #4ca1ff;
+$color-info-bright: #9cc9ff;
+
+// ─── Warning (orange) ───────────────────────────────────────────────────
+
+$color-warning: #ffb38a;
+/// Raw orange base for translucent warning chips via `rgba($color-warning-base, α)`.
+$color-warning-base: #ff793f;
+
+// ─── Typography ─────────────────────────────────────────────────────────
+
+$font-display: 'Orbitron', sans-serif;
+$font-body: sans-serif;
+
+// ─── Radii ──────────────────────────────────────────────────────────────
+
+$radius-sm: 8px;
+$radius-md: 10px;
+$radius-lg: 12px;
+$radius-xl: 14px;
+$radius-pill: 999px;

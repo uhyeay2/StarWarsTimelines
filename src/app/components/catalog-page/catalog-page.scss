@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
   min-height: 100vh;
@@ -9,11 +10,11 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 2rem;
   margin: 0 0 0.4rem;
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .page-header p {
-  color: #8a8f9e;
+  color: $color-text-muted;
   margin: 0 0 2rem;
 }
 
@@ -25,24 +26,24 @@
 }
 
 .catalog-tab {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border-card;
   border-radius: 999px;
   padding: 0.55rem 1.25rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .catalog-tab:hover {
-  color: #fff;
-  border-color: rgba(255, 213, 74, 0.6);
+  color: $color-text-heading;
+  border-color: rgba($color-accent, 0.6);
 }
 
 .catalog-tab--active {
-  background: rgba(255, 213, 74, 0.14);
-  border-color: #ffd54a;
-  color: #ffd54a;
+  background: rgba($color-accent, 0.14);
+  border-color: $color-accent;
+  color: $color-accent;
 }

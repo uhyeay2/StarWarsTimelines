@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
   min-height: 100vh;
@@ -13,8 +14,8 @@
 .verify-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border-card;
   border-radius: 14px;
   padding: 2rem;
   box-sizing: border-box;
@@ -24,27 +25,27 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 1.6rem;
   margin: 0 0 0.4rem;
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .verify-hint {
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.9rem;
   margin: 0 0 1.5rem;
 }
 
 .verify-copy {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.85rem;
   margin: 0 0 1.5rem;
 }
 
 .verify-copy a {
-  color: #ffd54a;
+  color: $color-accent;
 }
 
 .verify-error {
-  color: #ff8a80;
+  color: $color-danger;
   font-size: 0.85rem;
   margin: 0 0 1rem;
 }

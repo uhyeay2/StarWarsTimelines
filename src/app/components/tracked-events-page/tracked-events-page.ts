@@ -11,12 +11,12 @@
  */
 
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { LibraryItem } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TrackedItemRow } from '../tracked-item-row/tracked-item-row';
+import { LoginPrompt } from '../login-prompt/login-prompt';
 
 /** Available status filter options for the filter tabs. */
 const FILTERS = ['All', ...TRACKING_STATUSES] as const;
@@ -26,7 +26,7 @@ export type TrackedFilter = (typeof FILTERS)[number];
 
 @Component({
   selector: 'app-tracked-events-page',
-  imports: [TrackedItemRow, RouterLink],
+  imports: [TrackedItemRow, LoginPrompt],
   templateUrl: './tracked-events-page.html',
   styleUrl: './tracked-events-page.scss',
 })

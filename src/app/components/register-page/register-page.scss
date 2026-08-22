@@ -1,3 +1,4 @@
+@use '../../../styles/tokens' as *;
 :host {
   display: block;
   min-height: 100vh;
@@ -13,8 +14,8 @@
 .register-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border-card;
   border-radius: 14px;
   padding: 2rem;
   box-sizing: border-box;
@@ -24,27 +25,27 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 1.6rem;
   margin: 0 0 0.4rem;
-  color: #fff;
+  color: $color-text-heading;
 }
 
 .register-hint {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-size: 0.9rem;
   margin: 0 0 1.5rem;
 }
 
 .register-copy {
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.9rem;
   margin: 0 0 1.5rem;
 }
 
 .register-copy strong {
-  color: #ffd54a;
+  color: $color-accent;
 }
 
 .register-optional {
-  color: #8a8f9e;
+  color: $color-text-muted;
   font-style: normal;
   font-weight: 500;
 }
@@ -54,23 +55,23 @@
   flex-direction: column;
   gap: 0.4rem;
   margin-bottom: 1rem;
-  color: #c5c8d3;
+  color: $color-text-secondary;
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .register-field input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: $color-surface-control;
+  border: 1px solid $color-border-strong;
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
-  color: #e6e8ee;
+  color: $color-text;
   font-size: 0.95rem;
   outline: none;
 }
 
 .register-field input:focus {
-  border-color: #ffd54a;
+  border-color: $color-accent;
 }
 
 .password-input {
@@ -87,7 +88,7 @@
 .password-toggle {
   background: transparent;
   border: none;
-  color: #ffd54a;
+  color: $color-accent;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -96,17 +97,17 @@
 }
 
 .password-toggle:hover {
-  color: #ffe68a;
+  color: $color-accent-bright;
 }
 
 .register-field-error {
-  color: #ff8a80;
+  color: $color-danger;
   font-size: 0.8rem;
   margin: 0;
 }
 
 .register-error {
-  color: #ff8a80;
+  color: $color-danger;
   font-size: 0.85rem;
   margin: 0 0 1rem;
 }
@@ -125,12 +126,12 @@
 .register-login {
   margin: 1.25rem 0 0;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #8a8f9e;
+  border-top: 1px solid $color-border;
+  color: $color-text-muted;
   font-size: 0.85rem;
   text-align: center;
 }
 
 .register-login a {
-  color: #ffd54a;
+  color: $color-accent;
 }
