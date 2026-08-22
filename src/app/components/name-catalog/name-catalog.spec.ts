@@ -3,24 +3,24 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CatalogService } from '../../services/catalog/catalog.service';
-import { NameCatalogAdmin } from './name-catalog-admin';
+import { NameCatalog } from './name-catalog';
 
 const LOCATIONS_URL = '/api/locations';
 
-describe('NameCatalogAdmin', () => {
-  let component: NameCatalogAdmin;
-  let fixture: ComponentFixture<NameCatalogAdmin>;
+describe('NameCatalog', () => {
+  let component: NameCatalog;
+  let fixture: ComponentFixture<NameCatalog>;
   let httpMock: HttpTestingController;
   let catalogService: CatalogService;
 
   beforeEach(async () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [NameCatalogAdmin],
+      imports: [NameCatalog],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(NameCatalogAdmin);
+    fixture = TestBed.createComponent(NameCatalog);
     fixture.componentRef.setInput('catalog', 'locations');
     fixture.componentRef.setInput('title', 'Locations');
     fixture.componentRef.setInput('noun', 'location');

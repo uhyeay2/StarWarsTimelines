@@ -38,12 +38,12 @@ interface MaterialDisplayGroup {
 }
 
 @Component({
-  selector: 'app-source-material-admin',
+  selector: 'app-source-material-catalog',
   imports: [FormsModule],
-  templateUrl: './source-material-admin.html',
-  styleUrl: './source-material-admin.scss',
+  templateUrl: './source-material-catalog.html',
+  styleUrl: './source-material-catalog.scss',
 })
-export class SourceMaterialAdmin implements OnInit {
+export class SourceMaterialCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly catalogService = inject(CatalogService);

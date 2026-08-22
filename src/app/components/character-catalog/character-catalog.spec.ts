@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CatalogService } from '../../services/catalog/catalog.service';
-import { CharacterAdmin } from './character-admin';
+import { CharacterCatalog } from './character-catalog';
 
 const CHARACTERS_URL = '/api/characters';
 const LOCATIONS_URL = '/api/locations';
@@ -39,20 +39,20 @@ function flushInitialFetch(
   ]);
 }
 
-describe('CharacterAdmin', () => {
-  let component: CharacterAdmin;
-  let fixture: ComponentFixture<CharacterAdmin>;
+describe('CharacterCatalog', () => {
+  let component: CharacterCatalog;
+  let fixture: ComponentFixture<CharacterCatalog>;
   let httpMock: HttpTestingController;
   let catalogService: CatalogService;
 
   beforeEach(async () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [CharacterAdmin],
+      imports: [CharacterCatalog],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CharacterAdmin);
+    fixture = TestBed.createComponent(CharacterCatalog);
     fixture.componentRef.setInput('isAdmin', true);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);

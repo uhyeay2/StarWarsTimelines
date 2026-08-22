@@ -7,14 +7,14 @@ import {
   CatalogTab,
   NavPreferencesService,
 } from '../../services/nav-preferences/nav-preferences.service';
-import { CharacterAdmin } from '../character-admin/character-admin';
-import { NameCatalogAdmin } from '../name-catalog-admin/name-catalog-admin';
-import { SourceMaterialAdmin } from '../source-material-admin/source-material-admin';
-import { SpeciesAdmin } from '../species-admin/species-admin';
+import { CharacterCatalog } from '../character-catalog/character-catalog';
+import { NameCatalog } from '../name-catalog/name-catalog';
+import { SourceMaterialCatalog } from '../source-material-catalog/source-material-catalog';
+import { SpeciesCatalog } from '../species-catalog/species-catalog';
 
 @Component({
   selector: 'app-catalog-page',
-  imports: [CharacterAdmin, NameCatalogAdmin, SourceMaterialAdmin, SpeciesAdmin],
+  imports: [CharacterCatalog, NameCatalog, SourceMaterialCatalog, SpeciesCatalog],
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
 })

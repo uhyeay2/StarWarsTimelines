@@ -19,19 +19,19 @@
 
   @switch (activeTab()) {
     @case ('characters') {
-      <app-character-admin [isAdmin]="isAdmin()" />
+      <app-character-catalog [isAdmin]="isAdmin()" />
     }
     @case ('vehicles') {
-      <app-name-catalog-admin [isAdmin]="isAdmin()" catalog="vehicles" title="Vehicles" noun="vehicle" />
+      <app-name-catalog [isAdmin]="isAdmin()" catalog="vehicles" title="Vehicles" noun="vehicle" />
     }
     @case ('locations') {
-      <app-name-catalog-admin [isAdmin]="isAdmin()" catalog="locations" title="Locations" noun="location" />
+      <app-name-catalog [isAdmin]="isAdmin()" catalog="locations" title="Locations" noun="location" />
     }
     @case ('species') {
-      <app-species-admin [isAdmin]="isAdmin()" />
+      <app-species-catalog [isAdmin]="isAdmin()" />
     }
     @case ('sources') {
-      <app-source-material-admin [isAdmin]="isAdmin()" />
+      <app-source-material-catalog [isAdmin]="isAdmin()" />
     }
   }
 </section>

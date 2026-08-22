@@ -9,13 +9,13 @@ import { LibraryItem } from '../../models/library-item';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { SourceMaterialAdmin } from './source-material-admin';
+import { SourceMaterialCatalog } from './source-material-catalog';
 
 const MATERIALS_URL = '/api/source-materials';
 
-describe('SourceMaterialAdmin', () => {
-  let component!: SourceMaterialAdmin;
-  let fixture!: ComponentFixture<SourceMaterialAdmin>;
+describe('SourceMaterialCatalog', () => {
+  let component!: SourceMaterialCatalog;
+  let fixture!: ComponentFixture<SourceMaterialCatalog>;
   let httpMock!: HttpTestingController;
   let catalogService!: CatalogService;
   let mockLibraryService: any;
@@ -35,7 +35,7 @@ describe('SourceMaterialAdmin', () => {
       currentUser: signal<{ id: string } | null>(null),
     };
     await TestBed.configureTestingModule({
-      imports: [SourceMaterialAdmin],
+      imports: [SourceMaterialCatalog],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -45,7 +45,7 @@ describe('SourceMaterialAdmin', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SourceMaterialAdmin);
+    fixture = TestBed.createComponent(SourceMaterialCatalog);
     fixture.componentRef.setInput('isAdmin', true);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
@@ -238,7 +238,7 @@ describe('SourceMaterialAdmin', () => {
     expect(component.expandedMaterialId()).toBeNull();
     expect(component.materialsWithUnits().has('material-1')).toBe(false);
 
-    const expandButton = fixture.nativeElement.querySelector('.source-admin-expand[type="button"]');
+    const expandButton = fixture.nativeElement.querySelector('.source-expand[type="button"]');
     expect(expandButton).toBeNull();
     vi.useRealTimers();
   });
@@ -469,7 +469,7 @@ describe('SourceMaterialAdmin', () => {
   it('hides expand toggle when material has no units', () => {
     loadMaterials([{ id: 'm-1', title: 'A New Hope', medium: 0, canonType: 0 }]);
 
-    const expandButton = () => fixture.nativeElement.querySelector('.source-admin-expand[type="button"]');
+    const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
     expect(expandButton()).toBeNull();
     expect(component.materialsWithUnits().has('m-1')).toBe(false);
   });
@@ -477,7 +477,7 @@ describe('SourceMaterialAdmin', () => {
   it('keeps expand toggle visible for materials with units', () => {
     loadMaterials([{ id: 'm-1', title: 'Ahsoka', medium: 4, canonType: 0 }], { 'm-1': 1 });
 
-    const expandButton = () => fixture.nativeElement.querySelector('.source-admin-expand[type="button"]');
+    const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
     expect(expandButton()).toBeTruthy();
     expect(component.materialsWithUnits().has('m-1')).toBe(true);
   });
@@ -486,7 +486,7 @@ describe('SourceMaterialAdmin', () => {
     vi.useFakeTimers();
     loadMaterials([{ id: 'm-1', title: 'Ahsoka', medium: 4, canonType: 0 }]);
 
-    const expandButton = () => fixture.nativeElement.querySelector('.source-admin-expand[type="button"]');
+    const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
     expect(expandButton()).toBeNull();
 
     component.newUnitType.set('Episode');
@@ -631,14 +631,14 @@ describe('SourceMaterialAdmin', () => {
       // The show is auto-expanded for non-admins without clicking the material arrow.
       expect(component.isAutoExpanded('m-1')).toBe(true);
       expect(root.textContent).toContain('Season 1');
-      expect(root.querySelectorAll('.season-episodes .unit-admin-item').length).toBe(0);
+      expect(root.querySelectorAll('.season-episodes .unit-item').length).toBe(0);
 
       const seasonHeader = root.querySelector('.season-header') as HTMLButtonElement;
       expect(seasonHeader).toBeTruthy();
       seasonHeader.click();
       fixture.detectChanges();
 
-      const episodeItems = root.querySelectorAll('.season-episodes .unit-admin-item');
+      const episodeItems = root.querySelectorAll('.season-episodes .unit-item');
       expect(episodeItems.length).toBe(2);
       expect(root.textContent).toContain('Cat and Mouse');
       expect(root.textContent).toContain('A Hidden Enemy');
@@ -664,7 +664,7 @@ describe('SourceMaterialAdmin', () => {
       (headers[0] as HTMLButtonElement).click();
       fixture.detectChanges();
 
-      expect(root.querySelectorAll('.season-episodes .unit-admin-item').length).toBe(2);
+      expect(root.querySelectorAll('.season-episodes .unit-item').length).toBe(2);
       expect(root.textContent).toContain('Cat and Mouse');
 
       // Synthesized groups have no Season container unit, so no tracking dropdowns at all.
@@ -679,7 +679,7 @@ describe('SourceMaterialAdmin', () => {
       ]);
 
       const expandButton = () =>
-        root.querySelector('.source-admin-expand[type="button"]') as HTMLButtonElement;
+        root.querySelector('.source-expand[type="button"]') as HTMLButtonElement;
       expect(expandButton()).toBeTruthy();
       expect(expandButton().textContent?.trim()).toBe('▾');
       expect(root.querySelector('.season-header')).toBeTruthy();

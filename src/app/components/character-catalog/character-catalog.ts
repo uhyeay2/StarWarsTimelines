@@ -10,12 +10,12 @@ import { formatGalacticYearRange } from '../../utils/galactic-year';
 const NONE = '';
 
 @Component({
-  selector: 'app-character-admin',
+  selector: 'app-character-catalog',
   imports: [FormsModule],
-  templateUrl: './character-admin.html',
-  styleUrl: './character-admin.scss',
+  templateUrl: './character-catalog.html',
+  styleUrl: './character-catalog.scss',
 })
-export class CharacterAdmin implements OnInit {
+export class CharacterCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly catalogService = inject(CatalogService);

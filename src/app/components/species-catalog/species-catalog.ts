@@ -8,12 +8,12 @@ import { ApiSpecies } from '../../models/api-species';
 const NO_PLANET = '';
 
 @Component({
-  selector: 'app-species-admin',
+  selector: 'app-species-catalog',
   imports: [FormsModule],
-  templateUrl: './species-admin.html',
-  styleUrl: './species-admin.scss',
+  templateUrl: './species-catalog.html',
+  styleUrl: './species-catalog.scss',
 })
-export class SpeciesAdmin implements OnInit {
+export class SpeciesCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly catalogService = inject(CatalogService);

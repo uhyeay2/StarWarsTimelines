@@ -1,7 +1,7 @@
 /**
  * @fileoverview Shared pure helpers for tracking-status selection UIs.
  *
- * Used by both the catalog page ({@link SourceMaterialAdmin}) and the
+ * Used by both the catalog page ({@link SourceMaterialCatalog}) and the
  * timeline event cards ({@link TimelineEventItem}) so that tracking
  * dropdowns behave identically everywhere:
  *

@@ -9,8 +9,8 @@
  * Mutations auto-invalidate the relevant cache. SSE-driven invalidation is
  * handled via {@link invalidateEntity} and {@link invalidateAll}.
  *
- * @see {@link NameCatalogAdmin} for the character / location / vehicle admin UI.
- * @see {@link SourceMaterialAdmin} for the source material + unit admin UI.
+ * @see {@link NameCatalog} for the character / location / vehicle catalog UI.
+ * @see {@link SourceMaterialCatalog} for the source material + unit catalog UI.
  */
 
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';

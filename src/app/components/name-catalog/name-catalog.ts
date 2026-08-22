@@ -11,12 +11,12 @@ interface NameItem {
 export type NameCatalogKind = 'locations' | 'vehicles';
 
 @Component({
-  selector: 'app-name-catalog-admin',
+  selector: 'app-name-catalog',
   imports: [FormsModule],
-  templateUrl: './name-catalog-admin.html',
-  styleUrl: './name-catalog-admin.scss',
+  templateUrl: './name-catalog.html',
+  styleUrl: './name-catalog.scss',
 })
-export class NameCatalogAdmin implements OnInit {
+export class NameCatalog implements OnInit {
   readonly catalog = input.required<NameCatalogKind>();
   readonly title = input.required<string>();
   readonly noun = input.required<string>();

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CatalogService } from '../../services/catalog/catalog.service';
-import { SpeciesAdmin } from './species-admin';
+import { SpeciesCatalog } from './species-catalog';
 
 const SPECIES_URL = '/api/species';
 const LOCATIONS_URL = '/api/locations';
@@ -22,20 +22,20 @@ function flushInitialFetch(
     .flush(locations);
 }
 
-describe('SpeciesAdmin', () => {
-  let component: SpeciesAdmin;
-  let fixture: ComponentFixture<SpeciesAdmin>;
+describe('SpeciesCatalog', () => {
+  let component: SpeciesCatalog;
+  let fixture: ComponentFixture<SpeciesCatalog>;
   let httpMock: HttpTestingController;
   let catalogService: CatalogService;
 
   beforeEach(async () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
-      imports: [SpeciesAdmin],
+      imports: [SpeciesCatalog],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SpeciesAdmin);
+    fixture = TestBed.createComponent(SpeciesCatalog);
     fixture.componentRef.setInput('isAdmin', true);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);

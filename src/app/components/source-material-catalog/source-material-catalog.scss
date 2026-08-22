@@ -29,14 +29,14 @@ select option {
   color: #e6e8ee;
 }
 
-.source-admin-add {
+.source-add {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
 }
 
-.source-admin-field {
+.source-field {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -45,11 +45,11 @@ select option {
   color: #c5c8d3;
 }
 
-.source-admin-add-button {
+.source-add-button {
   align-self: flex-end;
 }
 
-.source-admin-list {
+.source-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -104,17 +104,17 @@ select option {
   font-size: 0.75rem;
 }
 
-.source-admin-search {
+.source-search {
   display: block;
   margin-bottom: 1rem;
 }
 
-.source-admin-search input {
+.source-search input {
   width: 100%;
   box-sizing: border-box;
 }
 
-.source-admin-item {
+.source-item {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -124,14 +124,14 @@ select option {
   padding: 0.6rem 0.9rem;
 }
 
-.source-admin-top {
+.source-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.source-admin-item-main {
+.source-item-main {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -139,7 +139,7 @@ select option {
   min-width: 0;
 }
 
-.source-admin-expand {
+.source-expand {
   background: transparent;
   border: none;
   color: #ffd54a;
@@ -152,24 +152,24 @@ select option {
   }
 }
 
-.source-admin-item-text {
+.source-item-text {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
 }
 
-.source-admin-title {
+.source-title {
   color: #e6e8ee;
   font-size: 0.95rem;
 }
 
-.source-admin-meta {
+.source-meta {
   color: #8a8f9e;
   font-size: 0.8rem;
 }
 
-.source-admin-actions {
+.source-actions {
   display: flex;
   gap: 0.4rem;
   flex-shrink: 0;
@@ -235,7 +235,7 @@ select option {
   color: #ff6b6b;
 }
 
-.source-admin-edit {
+.source-edit {
   display: flex;
   gap: 0.4rem;
   align-items: center;
@@ -247,23 +247,23 @@ select option {
   }
 }
 
-.source-admin-delete-prompt p {
+.source-delete-prompt p {
   margin: 0 0 0.6rem;
   color: #c5c8d3;
   font-size: 0.9rem;
 }
 
-.source-admin-delete-actions {
+.source-delete-actions {
   display: flex;
   gap: 0.4rem;
 }
 
-.unit-admin {
+.unit {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 0.75rem;
 }
 
-.unit-admin-add {
+.unit-add {
   display: grid;
   grid-template-columns: auto auto auto 1fr auto;
   gap: 0.4rem;
@@ -275,7 +275,7 @@ select option {
   }
 }
 
-.unit-admin-list {
+.unit-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -340,7 +340,7 @@ select option {
   border-radius: 0 0 8px 8px;
 }
 
-.unit-admin-item {
+.unit-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -351,7 +351,7 @@ select option {
   padding: 0.45rem 0.7rem;
 }
 
-.unit-admin-label {
+.unit-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -359,7 +359,7 @@ select option {
   font-size: 0.9rem;
 }
 
-.unit-admin-type {
+.unit-type {
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -370,13 +370,13 @@ select option {
   padding: 0.1rem 0.5rem;
 }
 
-.unit-admin-actions {
+.unit-actions {
   display: flex;
   gap: 0.4rem;
   flex-shrink: 0;
 }
 
-.unit-admin-edit {
+.unit-edit {
   display: flex;
   gap: 0.4rem;
   align-items: center;
@@ -388,7 +388,7 @@ select option {
   }
 }
 
-.unit-admin-delete-prompt {
+.unit-delete-prompt {
   color: #c5c8d3;
   font-size: 0.9rem;
   display: flex;
@@ -397,17 +397,17 @@ select option {
   flex-wrap: wrap;
 }
 
-.source-admin-status,
-.source-admin-error {
+.source-status,
+.source-error {
   margin: 0;
   padding: 0.5rem 0;
 }
 
-.source-admin-status {
+.source-status {
   color: #8a8f9e;
 }
 
-.source-admin-error {
+.source-error {
   color: #ff8a80;
   font-size: 0.9rem;
 }
@@ -465,11 +465,11 @@ select option {
 }
 
 @media (max-width: 720px) {
-  .source-admin-add {
+  .source-add {
     grid-template-columns: 1fr;
   }
 
-  .unit-admin-add {
+  .unit-add {
     grid-template-columns: 1fr 1fr;
   }
 }
