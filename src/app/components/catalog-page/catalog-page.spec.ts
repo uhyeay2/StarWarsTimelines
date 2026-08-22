@@ -37,14 +37,15 @@ describe('CatalogPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Browse the timeline catalog');
   });
 
-  it('renders all four tabs', () => {
+  it('renders all five tabs', () => {
     const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
-    expect(tabs.length).toBe(4);
+    expect(tabs.length).toBe(5);
     expect(Array.from(tabs).map((t) => t.textContent?.trim())).toEqual([
       'Source materials',
       'Characters',
       'Vehicles',
       'Locations',
+      'Species',
     ]);
   });
 
@@ -67,6 +68,23 @@ describe('CatalogPage', () => {
     expect(component.activeTab()).toBe('vehicles');
     expect(fixture.nativeElement.querySelector('.catalog-tab--active')?.textContent?.trim()).toBe(
       'Vehicles',
+    );
+  });
+
+  it('switches to the species tab on click', () => {
+    const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
+    tabs[4].click();
+    fixture.detectChanges();
+
+    const speciesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
+    speciesRequest.flush([]);
+    const locationsRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/locations'));
+    locationsRequest.flush([]);
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe('species');
+    expect(fixture.nativeElement.querySelector('.catalog-tab--active')?.textContent?.trim()).toBe(
+      'Species',
     );
   });
 });

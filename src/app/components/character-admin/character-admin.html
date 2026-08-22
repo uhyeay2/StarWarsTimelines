@@ -1,0 +1,173 @@
+<section class="character-admin">
+  <h2>Characters</h2>
+
+  @if (loading()) {
+    <p class="character-status" role="status">Loading…</p>
+  } @else if (loadError()) {
+    <p class="character-error" role="alert">{{ loadError() }}</p>
+  } @else {
+    @if (isAdmin()) {
+      <form class="character-add" (ngSubmit)="add()">
+        <label class="character-field character-field--name">
+          <span>Name</span>
+          <input name="newName" [(ngModel)]="newName" placeholder="Add a new character…" />
+        </label>
+        <label class="character-field">
+          <span>Species</span>
+          <select name="newSpeciesId" [(ngModel)]="newSpeciesId">
+            <option value="">Unknown</option>
+            @for (species of sortedSpecies(); track species.id) {
+              <option [value]="species.id">{{ species.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="character-field">
+          <span>Birth planet</span>
+          <select name="newPlanetBornOnId" [(ngModel)]="newPlanetBornOnId">
+            <option value="">Unknown</option>
+            @for (location of sortedLocations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="character-field character-field--year">
+          <span>Born from</span>
+          <input
+            name="newBirthFrom"
+            type="number"
+            step="1"
+            placeholder="-41 = 41 BBY"
+            [(ngModel)]="newBirthFrom" />
+        </label>
+        <label class="character-field character-field--year">
+          <span>Born to</span>
+          <input name="newBirthTo" type="number" step="1" placeholder="-39 = 39 BBY" [(ngModel)]="newBirthTo" />
+        </label>
+        <label class="character-field character-field--year">
+          <span>Died from</span>
+          <input name="newDeathFrom" type="number" step="1" placeholder="4 = 4 ABY" [(ngModel)]="newDeathFrom" />
+        </label>
+        <label class="character-field character-field--year">
+          <span>Died to</span>
+          <input name="newDeathTo" type="number" step="1" placeholder="35 = 35 ABY" [(ngModel)]="newDeathTo" />
+        </label>
+        <button class="btn btn-primary character-add-button" type="submit" [disabled]="adding()">
+          {{ adding() ? 'Adding…' : 'Add' }}
+        </button>
+      </form>
+      <p class="character-hint">Years use the galactic timeline: negative for BBY, positive for ABY. Leave a pair blank when unknown.</p>
+      @if (addError()) {
+        <p class="character-error" role="alert">{{ addError() }}</p>
+      }
+    }
+
+    <label class="character-search">
+      <span class="sr-only">Search characters</span>
+      <input
+        name="search"
+        type="search"
+        placeholder="Search characters…"
+        [(ngModel)]="searchTerm" />
+    </label>
+
+    <ul class="character-list">
+      @for (item of filteredItems(); track item.id) {
+        <li class="character-item">
+          @if (editId() === item.id) {
+            <div class="character-edit-wrap">
+              <form class="character-edit" (ngSubmit)="saveEdit()">
+                <input name="editName" [(ngModel)]="editName" aria-label="Character name" />
+                <select name="editSpeciesId" [(ngModel)]="editSpeciesId" aria-label="Species">
+                  <option value="">Unknown</option>
+                  @for (species of sortedSpecies(); track species.id) {
+                    <option [value]="species.id">{{ species.name }}</option>
+                  }
+                </select>
+                <select name="editPlanetBornOnId" [(ngModel)]="editPlanetBornOnId" aria-label="Birth planet">
+                  <option value="">Unknown</option>
+                  @for (location of sortedLocations(); track location.id) {
+                    <option [value]="location.id">{{ location.name }}</option>
+                  }
+                </select>
+                <input
+                  name="editBirthFrom"
+                  type="number"
+                  step="1"
+                  aria-label="Born from year"
+                  placeholder="Born from (BBY is negative)"
+                  [(ngModel)]="editBirthFrom" />
+                <input
+                  name="editBirthTo"
+                  type="number"
+                  step="1"
+                  aria-label="Born to year"
+                  placeholder="Born to"
+                  [(ngModel)]="editBirthTo" />
+                <input
+                  name="editDeathFrom"
+                  type="number"
+                  step="1"
+                  aria-label="Died from year"
+                  placeholder="Died from (ABY is positive)"
+                  [(ngModel)]="editDeathFrom" />
+                <input
+                  name="editDeathTo"
+                  type="number"
+                  step="1"
+                  aria-label="Died to year"
+                  placeholder="Died to"
+                  [(ngModel)]="editDeathTo" />
+                <button class="btn btn-small" type="submit" [disabled]="savingId() === item.id">
+                  {{ savingId() === item.id ? 'Saving…' : 'Save' }}
+                </button>
+                <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+              </form>
+              <p class="character-hint">Saving replaces all details: choose “Unknown” or leave a pair blank to clear the stored value.</p>
+            </div>
+          } @else if (confirmDeleteId() === item.id) {
+            <div class="character-delete-prompt">
+              <p>
+                Delete “{{ item.name }}”? This is blocked while the character is linked to a timeline
+                event.
+              </p>
+              <div class="character-delete-actions">
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === item.id"
+                  (click)="confirmDelete()">
+                  {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
+                </button>
+                <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <span class="character-item-text">
+              <span class="character-name">{{ item.name }}</span>
+              @if (detailLine(item); as details) {
+                <span class="character-meta">{{ details }}</span>
+              }
+            </span>
+            @if (isAdmin()) {
+              <div class="character-actions">
+                <button class="btn btn-small" type="button" (click)="beginEdit(item)">Edit</button>
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  (click)="requestDelete(item)">
+                  Delete
+                </button>
+              </div>
+            }
+          }
+        </li>
+      }
+    </ul>
+    @if (searchTerm() && filteredItems().length === 0 && items().length > 0) {
+      <p class="character-status" role="status">No characters match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="character-error" role="alert">{{ actionError() }}</p>
+    }
+  }
+</section>

@@ -1,0 +1,106 @@
+<section class="species-admin">
+  <h2>Species</h2>
+
+  @if (loading()) {
+    <p class="species-status" role="status">Loading…</p>
+  } @else if (loadError()) {
+    <p class="species-error" role="alert">{{ loadError() }}</p>
+  } @else {
+    @if (isAdmin()) {
+      <form class="species-add" (ngSubmit)="add()">
+        <label class="species-field species-field--name">
+          <span class="sr-only">New species name</span>
+          <input name="newName" [(ngModel)]="newName" placeholder="Add a new species…" />
+        </label>
+        <label class="species-field species-field--planet">
+          <span>Home planet</span>
+          <select name="newHomePlanetId" [(ngModel)]="newHomePlanetId">
+            <option value="">No home planet</option>
+            @for (location of sortedLocations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+        </label>
+        <button class="btn btn-primary" type="submit" [disabled]="adding()">
+          {{ adding() ? 'Adding…' : 'Add' }}
+        </button>
+      </form>
+      @if (addError()) {
+        <p class="species-error" role="alert">{{ addError() }}</p>
+      }
+    }
+
+    <label class="species-search">
+      <span class="sr-only">Search species</span>
+      <input
+        name="search"
+        type="search"
+        placeholder="Search species…"
+        [(ngModel)]="searchTerm" />
+    </label>
+
+    <ul class="species-list">
+      @for (item of filteredItems(); track item.id) {
+        <li class="species-item">
+          @if (editId() === item.id) {
+            <form class="species-edit" (ngSubmit)="saveEdit()">
+              <input name="editName" [(ngModel)]="editName" aria-label="Renamed species" />
+              <select name="editHomePlanetId" [(ngModel)]="editHomePlanetId" aria-label="Home planet">
+                <option value="">No home planet</option>
+                @for (location of sortedLocations(); track location.id) {
+                  <option [value]="location.id">{{ location.name }}</option>
+                }
+              </select>
+              <button class="btn btn-small" type="submit" [disabled]="savingId() === item.id">
+                {{ savingId() === item.id ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="btn btn-small" type="button" (click)="cancelEdit()">Cancel</button>
+            </form>
+            <p class="species-edit-hint">Choose “No home planet” to clear the stored value.</p>
+          } @else if (confirmDeleteId() === item.id) {
+            <div class="species-delete-prompt">
+              <p>
+                Delete “{{ item.name }}”? Characters of this species stay in the catalog, but their
+                species will be cleared.
+              </p>
+              <div class="species-delete-actions">
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === item.id"
+                  (click)="confirmDelete()">
+                  {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
+                </button>
+                <button class="btn btn-small" type="button" (click)="cancelDelete()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <span class="species-item-text">
+              <span class="species-name">{{ item.name }}</span>
+              @if (item.homePlanetName) {
+                <span class="species-meta">Home: {{ item.homePlanetName }}</span>
+              }
+            </span>
+            @if (isAdmin()) {
+              <div class="species-actions">
+                <button class="btn btn-small" type="button" (click)="beginEdit(item)">Edit</button>
+                <button
+                  class="btn btn-small btn-danger"
+                  type="button"
+                  (click)="requestDelete(item)">
+                  Delete
+                </button>
+              </div>
+            }
+          }
+        </li>
+      }
+    </ul>
+    @if (searchTerm() && filteredItems().length === 0 && items().length > 0) {
+      <p class="species-status" role="status">No species match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="species-error" role="alert">{{ actionError() }}</p>
+    }
+  }
+</section>

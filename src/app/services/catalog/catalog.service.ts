@@ -1,10 +1,10 @@
 /**
  * @fileoverview CRUD service for the catalog entities exposed by the API.
  *
- * Provides signal-based state for characters, locations, vehicles, source
- * materials, and source material units. Enum values returned by the server as
- * numeric codes are mapped to domain-level string unions before they reach
- * consumers.
+ * Provides signal-based state for characters, locations, vehicles, species,
+ * source materials, and source material units. Enum values returned by the
+ * server as numeric codes are mapped to domain-level string unions before
+ * they reach consumers.
  *
  * Mutations auto-invalidate the relevant cache. SSE-driven invalidation is
  * handled via {@link invalidateEntity} and {@link invalidateAll}.
@@ -21,9 +21,11 @@ import { ApiCharacter } from '../../models/api-character';
 import { ApiLocation } from '../../models/api-location';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
+import { ApiSpecies } from '../../models/api-species';
 import { ApiVehicle } from '../../models/api-vehicle';
 import { CanonType, canonTypeFromApiCode, canonTypeToApiCode } from '../../models/canon-type';
 import { CatalogError, EntityInUseError } from '../../models/catalog/catalog-error';
+import { CreateCharacterInput } from '../../models/catalog/create-character-input';
 import { CreateSourceMaterialInput } from '../../models/catalog/create-source-material-input';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { Medium, mediumFromApiCode, mediumToApiCode } from '../../models/medium';
@@ -84,6 +86,12 @@ export class CatalogService {
     CACHE_TTL_MS,
   );
 
+  private readonly speciesCache = new SignalCache<readonly ApiSpecies[]>(
+    () => this.http.get<readonly ApiSpecies[]>(`${BASE}/species`),
+    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load species'),
+    CACHE_TTL_MS,
+  );
+
   private readonly sourceMaterialsCache = new SignalCache<readonly ApiSourceMaterial[]>(
     () =>
       this.http
@@ -119,6 +127,13 @@ export class CatalogService {
   /** Last vehicles fetch error, or `null`. */
   readonly vehiclesError = this.vehiclesCache.error.asReadonly();
 
+  /** Species currently loaded in the cache, or `null` if not yet fetched. */
+  readonly species = this.speciesCache.data.asReadonly();
+  /** Whether a species fetch is in flight. */
+  readonly speciesLoading = this.speciesCache.loading.asReadonly();
+  /** Last species fetch error, or `null`. */
+  readonly speciesError = this.speciesCache.error.asReadonly();
+
   /** Source materials currently loaded in the cache, or `null` if not yet fetched. */
   readonly sourceMaterials = this.sourceMaterialsCache.data.asReadonly();
   /** Whether a source materials fetch is in flight. */
@@ -153,6 +168,15 @@ export class CatalogService {
    */
   fetchVehicles(): void {
     this.vehiclesCache.fetch();
+  }
+
+  /**
+   * Fetches all species and stores them in the signal cache.
+   *
+   * No-op if a fetch is already in flight.
+   */
+  fetchSpecies(): void {
+    this.speciesCache.fetch();
   }
 
   /**
@@ -258,6 +282,9 @@ export class CatalogService {
       case 'vehicles':
         this.vehiclesCache.invalidate();
         break;
+      case 'species':
+        this.speciesCache.invalidate();
+        break;
       case 'source-materials':
         this.sourceMaterialsCache.invalidate();
         if (id) {
@@ -299,6 +326,7 @@ export class CatalogService {
     this.charactersCache.invalidate();
     this.locationsCache.invalidate();
     this.vehiclesCache.invalidate();
+    this.speciesCache.invalidate();
     this.sourceMaterialsCache.invalidate();
     for (const cache of this.unitCaches.values()) {
       cache.invalidate();
@@ -310,12 +338,20 @@ export class CatalogService {
   /**
    * Creates a new character.
    *
-   * @param name  The character's display name.
+   * @param input  The character payload, including optional biography fields.
    * @returns An observable of the created character.
    */
-  createCharacter(name: string): Observable<ApiCharacter> {
+  createCharacter(input: CreateCharacterInput): Observable<ApiCharacter> {
     return this.http
-      .post<ApiCharacter>(`${BASE}/characters`, { name })
+      .post<ApiCharacter>(`${BASE}/characters`, {
+        name: input.name,
+        planetBornOnId: input.planetBornOnId ?? null,
+        yearOfBirthEarliest: input.yearOfBirthEarliest ?? null,
+        yearOfBirthLatest: input.yearOfBirthLatest ?? null,
+        yearOfDeathEarliest: input.yearOfDeathEarliest ?? null,
+        yearOfDeathLatest: input.yearOfDeathLatest ?? null,
+        speciesId: input.speciesId ?? null,
+      })
       .pipe(
         catchError(this.handleError('Unable to create the character. Please try again.', 'createCharacter')),
         tap(() => this.charactersCache.invalidate()),
@@ -323,15 +359,26 @@ export class CatalogService {
   }
 
   /**
-   * Updates an existing character's name.
+   * Updates an existing character.
    *
-   * @param id    The ID of the character to update.
-   * @param name  The new display name.
+   * The request replaces the character's data, so a `null` biography field
+   * clears the stored value back to unknown. All fields are always sent.
+   *
+   * @param id     The ID of the character to update.
+   * @param input  The updated payload.
    * @returns An observable of the updated character.
    */
-  updateCharacter(id: string, name: string): Observable<ApiCharacter> {
+  updateCharacter(id: string, input: CreateCharacterInput): Observable<ApiCharacter> {
     return this.http
-      .put<ApiCharacter>(`${BASE}/characters/${id}`, { name })
+      .put<ApiCharacter>(`${BASE}/characters/${id}`, {
+        name: input.name,
+        planetBornOnId: input.planetBornOnId ?? null,
+        yearOfBirthEarliest: input.yearOfBirthEarliest ?? null,
+        yearOfBirthLatest: input.yearOfBirthLatest ?? null,
+        yearOfDeathEarliest: input.yearOfDeathEarliest ?? null,
+        yearOfDeathLatest: input.yearOfDeathLatest ?? null,
+        speciesId: input.speciesId ?? null,
+      })
       .pipe(
         catchError(this.handleError('Unable to update the character. Please try again.', 'updateCharacter')),
         tap(() => this.charactersCache.invalidate()),
@@ -455,6 +502,64 @@ export class CatalogService {
       .pipe(
         catchError(this.handleError('Unable to delete the vehicle. Please try again.', 'deleteVehicle')),
         tap(() => this.vehiclesCache.invalidate()),
+      );
+  }
+
+  // ─── Species ─────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a new species.
+   *
+   * @param name          The species' display name.
+   * @param homePlanetId  The optional home planet location ID.
+   * @returns An observable of the created species.
+   */
+  createSpecies(name: string, homePlanetId: string | null): Observable<ApiSpecies> {
+    return this.http
+      .post<ApiSpecies>(`${BASE}/species`, { name, homePlanetId })
+      .pipe(
+        catchError(this.handleError('Unable to create the species. Please try again.', 'createSpecies')),
+        tap(() => this.speciesCache.invalidate()),
+      );
+  }
+
+  /**
+   * Updates an existing species.
+   *
+   * The request replaces the species' data, so a `null` `homePlanetId` clears
+   * the stored home planet back to unknown.
+   *
+   * @param id            The ID of the species to update.
+   * @param name          The new display name.
+   * @param homePlanetId  The new home planet location ID, or `null` for unknown.
+   * @returns An observable of the updated species.
+   */
+  updateSpecies(id: string, name: string, homePlanetId: string | null): Observable<ApiSpecies> {
+    return this.http
+      .put<ApiSpecies>(`${BASE}/species/${id}`, { name, homePlanetId })
+      .pipe(
+        catchError(this.handleError('Unable to update the species. Please try again.', 'updateSpecies')),
+        tap(() => this.speciesCache.invalidate()),
+      );
+  }
+
+  /**
+   * Deletes a species.
+   *
+   * Deletion always succeeds: characters referencing the species remain in
+   * the catalog with their species attribute cleared (the server sets the
+   * foreign key to `NULL`). The same applies when deleting a location that
+   * is a species' home planet.
+   *
+   * @param id  The ID of the species to delete.
+   * @returns An observable that completes when the species has been deleted.
+   */
+  deleteSpecies(id: string): Observable<void> {
+    return this.http
+      .delete<void>(`${BASE}/species/${id}`)
+      .pipe(
+        catchError(this.handleError('Unable to delete the species. Please try again.', 'deleteSpecies')),
+        tap(() => this.speciesCache.invalidate()),
       );
   }
 

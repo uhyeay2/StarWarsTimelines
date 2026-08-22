@@ -2,56 +2,33 @@ import { Component, computed, inject, input, OnInit, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { Observable, catchError, finalize, of } from 'rxjs';
 import { CatalogService } from '../../services/catalog/catalog.service';
+import { ApiSpecies } from '../../models/api-species';
 
-interface NameItem {
-  id: string;
-  name: string;
-}
-
-export type NameCatalogKind = 'locations' | 'vehicles';
+/** Sentinel select value representing "no home planet selected". */
+const NO_PLANET = '';
 
 @Component({
-  selector: 'app-name-catalog-admin',
+  selector: 'app-species-admin',
   imports: [FormsModule],
-  templateUrl: './name-catalog-admin.html',
-  styleUrl: './name-catalog-admin.scss',
+  templateUrl: './species-admin.html',
+  styleUrl: './species-admin.scss',
 })
-export class NameCatalogAdmin implements OnInit {
-  readonly catalog = input.required<NameCatalogKind>();
-  readonly title = input.required<string>();
-  readonly noun = input.required<string>();
+export class SpeciesAdmin implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly catalogService = inject(CatalogService);
 
   readonly searchTerm = signal('');
 
-  readonly items = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.locations() ?? [];
-      case 'vehicles':
-        return this.catalogService.vehicles() ?? [];
-    }
-  });
+  readonly items = computed(() => this.catalogService.species() ?? []);
+  readonly loading = computed(() => this.catalogService.speciesLoading());
+  readonly loadError = computed(() => this.catalogService.speciesError());
+  readonly locations = computed(() => this.catalogService.locations() ?? []);
 
-  readonly loading = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.locationsLoading();
-      case 'vehicles':
-        return this.catalogService.vehiclesLoading();
-    }
-  });
-
-  readonly loadError = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.locationsError();
-      case 'vehicles':
-        return this.catalogService.vehiclesError();
-    }
-  });
+  /** Home planet options sorted by name so the dropdown is easy to scan. */
+  readonly sortedLocations = computed(() =>
+    [...this.locations()].sort((a, b) => a.name.localeCompare(b.name)),
+  );
 
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -62,11 +39,13 @@ export class NameCatalogAdmin implements OnInit {
   });
 
   readonly newName = signal('');
+  readonly newHomePlanetId = signal(NO_PLANET);
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
   readonly editId = signal<string | null>(null);
   readonly editName = signal('');
+  readonly editHomePlanetId = signal(NO_PLANET);
   readonly savingId = signal<string | null>(null);
 
   readonly confirmDeleteId = signal<string | null>(null);
@@ -74,18 +53,8 @@ export class NameCatalogAdmin implements OnInit {
   readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.load();
-  }
-
-  load(): void {
-    switch (this.catalog()) {
-      case 'locations':
-        this.catalogService.fetchLocations();
-        break;
-      case 'vehicles':
-        this.catalogService.fetchVehicles();
-        break;
-    }
+    this.catalogService.fetchSpecies();
+    this.catalogService.fetchLocations();
   }
 
   add(): void {
@@ -100,7 +69,8 @@ export class NameCatalogAdmin implements OnInit {
 
     this.addError.set(null);
     this.adding.set(true);
-    this.create(name)
+    this.catalogService
+      .createSpecies(name, this.newHomePlanetId() || null)
       .pipe(
         catchError((err: Error) => {
           this.addError.set(err.message);
@@ -111,19 +81,22 @@ export class NameCatalogAdmin implements OnInit {
       .subscribe((item) => {
         if (item) {
           this.newName.set('');
+          this.newHomePlanetId.set(NO_PLANET);
         }
       });
   }
 
-  beginEdit(item: NameItem): void {
+  beginEdit(item: ApiSpecies): void {
     this.actionError.set(null);
     this.editId.set(item.id);
     this.editName.set(item.name);
+    this.editHomePlanetId.set(item.homePlanetId ?? NO_PLANET);
   }
 
   cancelEdit(): void {
     this.editId.set(null);
     this.editName.set('');
+    this.editHomePlanetId.set(NO_PLANET);
   }
 
   saveEdit(): void {
@@ -139,7 +112,8 @@ export class NameCatalogAdmin implements OnInit {
 
     this.actionError.set(null);
     this.savingId.set(id);
-    this.update(id, name)
+    this.catalogService
+      .updateSpecies(id, name, this.editHomePlanetId() || null)
       .pipe(
         catchError((err: Error) => {
           this.actionError.set(err.message);
@@ -149,13 +123,12 @@ export class NameCatalogAdmin implements OnInit {
       )
       .subscribe((updated) => {
         if (updated) {
-          this.editId.set(null);
-          this.editName.set('');
+          this.cancelEdit();
         }
       });
   }
 
-  requestDelete(item: NameItem): void {
+  requestDelete(item: ApiSpecies): void {
     this.actionError.set(null);
     this.confirmDeleteId.set(item.id);
   }
@@ -172,7 +145,8 @@ export class NameCatalogAdmin implements OnInit {
 
     this.actionError.set(null);
     this.deletingId.set(id);
-    this.remove(id)
+    this.catalogService
+      .deleteSpecies(id)
       .pipe(
         catchError((err: Error) => {
           this.actionError.set(err.message);
@@ -185,32 +159,5 @@ export class NameCatalogAdmin implements OnInit {
           this.confirmDeleteId.set(null);
         }
       });
-  }
-
-  private create(name: string): Observable<NameItem | null> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.createLocation(name);
-      case 'vehicles':
-        return this.catalogService.createVehicle(name);
-    }
-  }
-
-  private update(id: string, name: string): Observable<NameItem | null> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.updateLocation(id, name);
-      case 'vehicles':
-        return this.catalogService.updateVehicle(id, name);
-    }
-  }
-
-  private remove(id: string): Observable<void> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.catalogService.deleteLocation(id);
-      case 'vehicles':
-        return this.catalogService.deleteVehicle(id);
-    }
   }
 }

@@ -155,16 +155,24 @@ describe('CatalogService', () => {
   });
 
   describe('createCharacter', () => {
-    it('posts the name and auto-invalidates the characters cache', () => {
+    it('posts the name-only payload and auto-invalidates the characters cache', () => {
       service.fetchCharacters();
       const listReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
       listReq.flush([{ id: 'existing', name: 'Existing' }]);
 
       let created: unknown;
-      service.createCharacter('Luke Skywalker').subscribe((c) => (created = c));
+      service.createCharacter({ name: 'Luke Skywalker' }).subscribe((c) => (created = c));
 
       const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/characters'));
-      expect(request.request.body).toEqual({ name: 'Luke Skywalker' });
+      expect(request.request.body).toEqual({
+        name: 'Luke Skywalker',
+        planetBornOnId: null,
+        yearOfBirthEarliest: null,
+        yearOfBirthLatest: null,
+        yearOfDeathEarliest: null,
+        yearOfDeathLatest: null,
+        speciesId: null,
+      });
       request.flush({ id: '00000000-0000-0000-0000-100000000099', name: 'Luke Skywalker' });
 
       expect(created).toEqual({
@@ -177,14 +185,55 @@ describe('CatalogService', () => {
       refetchReq.flush([]);
       expect(service.characters()).toEqual([]);
     });
+
+    it('posts biography fields when provided', () => {
+      service
+        .createCharacter({
+          name: 'Grogu',
+          planetBornOnId: 'loc-1',
+          yearOfBirthEarliest: -41,
+          yearOfBirthLatest: -41,
+          speciesId: 'sp-2',
+        })
+        .subscribe();
+
+      const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/characters'));
+      expect(request.request.body).toEqual({
+        name: 'Grogu',
+        planetBornOnId: 'loc-1',
+        yearOfBirthEarliest: -41,
+        yearOfBirthLatest: -41,
+        yearOfDeathEarliest: null,
+        yearOfDeathLatest: null,
+        speciesId: 'sp-2',
+      });
+      request.flush({ id: 'char-1', name: 'Grogu' });
+
+      // Cache invalidation triggers an immediate re-fetch.
+      const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
+      refetchReq.flush([]);
+    });
   });
 
   describe('updateCharacter', () => {
-    it('puts the name and auto-invalidates the characters cache', () => {
-      service.updateCharacter('00000000-0000-0000-0000-100000000001', 'New name').subscribe();
+    it('puts the full payload and auto-invalidates the characters cache', () => {
+      service.updateCharacter('00000000-0000-0000-0000-100000000001', {
+        name: 'New name',
+        planetBornOnId: 'loc-1',
+        yearOfDeathEarliest: 4,
+        yearOfDeathLatest: 5,
+      }).subscribe();
 
       const request = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/characters/00000000-0000-0000-0000-100000000001'));
-      expect(request.request.body).toEqual({ name: 'New name' });
+      expect(request.request.body).toEqual({
+        name: 'New name',
+        planetBornOnId: 'loc-1',
+        yearOfBirthEarliest: null,
+        yearOfBirthLatest: null,
+        yearOfDeathEarliest: 4,
+        yearOfDeathLatest: 5,
+        speciesId: null,
+      });
       request.flush({ id: '00000000-0000-0000-0000-100000000001', name: 'New name' });
 
       // Cache was invalidated and re-fetched
@@ -461,6 +510,10 @@ describe('CatalogService', () => {
       const smReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
       smReq.flush([]);
 
+      service.fetchSpecies();
+      const speciesReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
+      speciesReq.flush([{ id: '1', name: 'Human', homePlanetId: null, homePlanetName: null }]);
+
       service.invalidateAll();
 
       const charRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
@@ -471,9 +524,12 @@ describe('CatalogService', () => {
       vehRefetch.flush([]);
       const smRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
       smRefetch.flush([]);
+      const speciesRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
+      speciesRefetch.flush([]);
 
       expect(service.characters()).toEqual([]);
       expect(service.locations()).toEqual([]);
+      expect(service.species()).toEqual([]);
     });
   });
 });
