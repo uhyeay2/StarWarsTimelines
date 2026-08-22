@@ -24,7 +24,7 @@ import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { ApiSpecies } from '../../models/api-species';
 import { ApiVehicle } from '../../models/api-vehicle';
 import { CanonType, canonTypeFromApiCode, canonTypeToApiCode } from '../../models/canon-type';
-import { CatalogError, EntityInUseError } from '../../models/catalog/catalog-error';
+import { CatalogError, CatalogErrorCode, DuplicateEntityError, EntityInUseError } from '../../models/catalog/catalog-error';
 import { CreateCharacterInput } from '../../models/catalog/create-character-input';
 import { CreateSourceMaterialInput } from '../../models/catalog/create-source-material-input';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
@@ -657,7 +657,7 @@ export class CatalogService {
         },
       )
       .pipe(
-        catchError(this.handleError('Unable to create the unit. Please try again.', 'createSourceMaterialUnit')),
+        catchError(this.handleError('Unable to create the unit. Please try again.', 'createSourceMaterialUnit', 'duplicate-entity')),
         map((item) => this.mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
@@ -687,7 +687,7 @@ export class CatalogService {
         },
       )
       .pipe(
-        catchError(this.handleError('Unable to update the unit. Please try again.', 'updateSourceMaterialUnit')),
+        catchError(this.handleError('Unable to update the unit. Please try again.', 'updateSourceMaterialUnit', 'duplicate-entity')),
         map((item) => this.mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
@@ -717,24 +717,31 @@ export class CatalogService {
    * {@link https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.problemdetails|ProblemDetails}
    * body, logs it, and re-throws as a typed catalog error.
    *
-   * - **409 Conflict** → {@link EntityInUseError} (entity referenced by timeline events).
+   * - **409 Conflict** → the error class matching {@link conflictCode}:
+   *   {@link EntityInUseError} (entity referenced by timeline events) by
+   *   default, or {@link DuplicateEntityError} for operations where a conflict
+   *   means a unique value is already taken.
    * - **404 Not Found** → {@link CatalogError} with code `'not-found'`.
    * - **Other** → {@link CatalogError} with code `'network-error'`.
    *
-   * @param fallback  A human-readable default when the server does not provide one.
-   * @param context   A short label for log context (e.g. `'createCharacter'`).
+   * @param fallback      A human-readable default when the server does not provide one.
+   * @param context       A short label for log context (e.g. `'createCharacter'`).
+   * @param conflictCode  The error code used to type conflicts (HTTP 409).
    * @returns A function suitable for `catchError(...)`.
    */
   private handleError(
     fallback: string,
     context: string,
+    conflictCode: CatalogErrorCode = 'entity-in-use',
   ): (error: HttpErrorResponse) => Observable<never> {
     return (error: HttpErrorResponse) => {
       const detail = readProblemDetail(error, fallback);
 
       if (error.status === 409) {
         this.logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
-        return throwError(() => new EntityInUseError(detail));
+        return throwError(() =>
+          conflictCode === 'duplicate-entity' ? new DuplicateEntityError(detail) : new EntityInUseError(detail),
+        );
       }
 
       if (error.status === 404) {

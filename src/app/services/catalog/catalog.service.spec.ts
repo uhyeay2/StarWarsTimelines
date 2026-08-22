@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { CatalogError, EntityInUseError } from '../../models/catalog/catalog-error';
+import { CatalogError, DuplicateEntityError, EntityInUseError } from '../../models/catalog/catalog-error';
 import { CatalogService } from './catalog.service';
 
 describe('CatalogService', () => {
@@ -371,6 +371,30 @@ describe('CatalogService', () => {
       );
       refetchReq.flush([]);
       expect(cache.data()).toEqual([]);
+    });
+
+    it('wraps a duplicate unit number conflict as DuplicateEntityError', () => {
+      let caughtError: unknown;
+      service
+        .createSourceMaterialUnit('00000000-0000-0000-0000-000000000012', {
+          unitType: 'Episode',
+          groupNumber: 1,
+          number: 9,
+          title: null,
+        })
+        .subscribe({
+          error: (err) => (caughtError = err),
+        });
+
+      const request = httpMock.expectOne((r) => r.method === 'POST');
+      request.flush(
+        { title: 'Conflict', detail: 'Source material already has an episode numbered 9.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+      expect(caughtError).toBeInstanceOf(DuplicateEntityError);
+      expect((caughtError as CatalogError).code).toBe('duplicate-entity');
+      expect((caughtError as Error).message).toBe('Source material already has an episode numbered 9.');
     });
   });
 

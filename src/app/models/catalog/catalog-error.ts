@@ -11,12 +11,15 @@
  *
  * - `'entity-in-use'` — The entity cannot be deleted because it is referenced
  *   by one or more timeline events.
+ * - `'duplicate-entity'` — The operation would create a duplicate of a value
+ *   that must be unique (e.g. a unit number already used by the material).
  * - `'not-found'` — The requested entity does not exist.
  * - `'validation-error'` — The request body failed server-side validation.
  * - `'network-error'` — The HTTP request failed entirely.
  */
 export type CatalogErrorCode =
   | 'entity-in-use'
+  | 'duplicate-entity'
   | 'not-found'
   | 'validation-error'
   | 'network-error';
@@ -59,5 +62,21 @@ export class EntityInUseError extends CatalogError {
   constructor(message: string) {
     super(message, 'entity-in-use');
     this.name = 'EntityInUseError';
+  }
+}
+
+/**
+ * Thrown when an operation fails because it would create a duplicate of a
+ * value that must be unique, such as a unit number already used by the same
+ * source material (HTTP 409 Conflict).
+ *
+ * Extends {@link CatalogError} with `code = 'duplicate-entity'` so that
+ * consumers can distinguish this from other catalog errors without
+ * inspecting the HTTP status code.
+ */
+export class DuplicateEntityError extends CatalogError {
+  constructor(message: string) {
+    super(message, 'duplicate-entity');
+    this.name = 'DuplicateEntityError';
   }
 }
