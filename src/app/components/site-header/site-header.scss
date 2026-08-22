@@ -1,12 +1,14 @@
 @use '../../../styles/tokens' as *;
+/* Sticky on the host itself: the inner header's parent (:host) would otherwise
+   be exactly as tall as the header, leaving sticky no room to stick. */
 :host {
   display: block;
-}
-
-.site-header {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.site-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
