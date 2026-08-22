@@ -26,7 +26,12 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('Star Wars Timelines');
     expect(compiled.querySelector('a[routerLink="/"]')).toBeTruthy();
-    expect(compiled.querySelector('a[routerLink="/timeline"]')).toBeTruthy();
+
+    const navLabels = Array.from(compiled.querySelectorAll('a.nav-dropdown-toggle')).map((a) =>
+      a.textContent?.trim(),
+    );
+    expect(navLabels).toContain('Timeline');
+    expect(navLabels).toContain('Library');
   });
 
   it('links the user name to account settings when logged in', async () => {
@@ -55,7 +60,10 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('a[routerLink="/catalog"]')).toBeTruthy();
+    const navLabels = Array.from(compiled.querySelectorAll('a.nav-dropdown-toggle')).map((a) =>
+      a.textContent?.trim(),
+    );
+    expect(navLabels).toContain('Catalog');
   });
 
   it('shows the Catalog link for non-admin users', async () => {
@@ -74,6 +82,9 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('a[routerLink="/catalog"]')).toBeTruthy();
+    const navLabels = Array.from(compiled.querySelectorAll('a.nav-dropdown-toggle')).map((a) =>
+      a.textContent?.trim(),
+    );
+    expect(navLabels).toContain('Catalog');
   });
 });

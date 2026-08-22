@@ -1,11 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth/auth.service';
+import {
+  CATALOG_TABS,
+  CatalogTab,
+  NavPreferencesService,
+} from '../../services/nav-preferences/nav-preferences.service';
 import { CharacterAdmin } from '../character-admin/character-admin';
 import { NameCatalogAdmin } from '../name-catalog-admin/name-catalog-admin';
 import { SourceMaterialAdmin } from '../source-material-admin/source-material-admin';
 import { SpeciesAdmin } from '../species-admin/species-admin';
-
-export type CatalogTab = 'characters' | 'vehicles' | 'locations' | 'species' | 'sources';
 
 @Component({
   selector: 'app-catalog-page',
@@ -15,10 +20,14 @@ export type CatalogTab = 'characters' | 'vehicles' | 'locations' | 'species' | '
 })
 export class CatalogPage {
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly navPrefs = inject(NavPreferencesService);
 
   readonly isAdmin = computed(() => this.auth.currentUser()?.role === 'Admin');
 
-  readonly activeTab = signal<CatalogTab>('sources');
+  /** Active tab; starts at the last viewed tab (Source Materials if none). */
+  readonly activeTab = signal<CatalogTab>(this.navPrefs.catalogTab());
 
   readonly tabs: readonly { key: CatalogTab; label: string }[] = [
     { key: 'sources', label: 'Source materials' },
@@ -28,7 +37,48 @@ export class CatalogPage {
     { key: 'species', label: 'Species' },
   ];
 
+  constructor() {
+    // Apply the `tab` query param (deep links) and remember it so the navbar
+    // can restore this tab later.
+    this.applyTabParam(this.route.snapshot.queryParamMap);
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => this.applyTabParam(params));
+  }
+
+  /**
+   * Applies a valid `tab` query param, falling back to the current selection
+   * (last viewed tab) when absent or invalid.
+   *
+   * @param params  The current route query parameters.
+   */
+  private applyTabParam(params: ParamMap): void {
+    const tab = params.get('tab');
+    if (tab !== null && (CATALOG_TABS as readonly string[]).includes(tab)) {
+      this.activeTab.set(tab as CatalogTab);
+      this.navPrefs.setCatalogTab(tab);
+    }
+  }
+
+  /**
+   * Selects a catalog tab, remembers it for the navbar, and mirrors it into
+   * the URL query string.
+   *
+   * @param tab  The catalog tab key to activate.
+   */
   selectTab(tab: CatalogTab): void {
     this.activeTab.set(tab);
+    this.navPrefs.setCatalogTab(tab);
+    this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: { tab },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      })
+      .catch(() => {
+        // Deep-linking is best-effort; the tab is already active.
+      });
   }
 }

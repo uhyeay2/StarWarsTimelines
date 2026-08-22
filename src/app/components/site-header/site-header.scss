@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(9, 10, 15, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffd54a;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+.brand:hover {
+  color: #ffe68a;
+}
+
+.site-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.site-nav {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+}
+
+.site-nav > a {
+  color: #c5c8d3;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding-bottom: 0.25rem;
+}
+
+.site-nav > a:hover {
+  color: #fff;
+}
+
+.site-nav > a.active {
+  color: #ffd54a;
+  border-bottom: 2px solid #ffd54a;
+}
+
+.site-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  padding-left: 1.25rem;
+}
+
+.user-name {
+  color: #e6e8ee;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.user-name:hover {
+  color: #ffd54a;
+}
+
+.login-link {
+  color: #ffd54a;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.login-link:hover {
+  color: #ffe68a;
+}
+
+.logout-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #c5c8d3;
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.logout-button:hover {
+  border-color: #ffd54a;
+  color: #ffd54a;
+}

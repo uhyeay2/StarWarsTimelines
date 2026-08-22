@@ -1,0 +1,41 @@
+<header class="site-header">
+  <a class="brand" routerLink="/">Star Wars Timelines</a>
+  <div class="site-header-right">
+    <nav class="site-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+
+      <app-nav-dropdown
+        class="site-nav-item"
+        label="Timeline"
+        [toggleLink]="'/timeline'"
+        [toggleQueryParams]="{ view: navPrefs.timelineView() }"
+        [options]="timelineOptions" />
+
+      <app-nav-dropdown
+        class="site-nav-item"
+        label="Library"
+        [toggleLink]="'/library'"
+        [options]="libraryOptions"
+        [highlightItems]="true" />
+
+      @if (user()) {
+        <app-nav-dropdown
+          class="site-nav-item"
+          label="Catalog"
+          [toggleLink]="'/catalog'"
+          [toggleQueryParams]="{ tab: navPrefs.catalogTab() }"
+          [options]="catalogOptions" />
+      }
+    </nav>
+    <div class="site-user">
+      @if (user(); as currentUser) {
+        <a class="user-name" routerLink="/settings" title="Account settings">{{
+          currentUser.displayName
+        }}</a>
+        <button type="button" class="logout-button" (click)="logout()">Log out</button>
+      } @else {
+        <a class="login-link" routerLink="/login">Log in</a>
+      }
+    </div>
+  </div>
+</header>

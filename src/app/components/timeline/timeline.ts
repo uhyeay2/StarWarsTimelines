@@ -29,6 +29,7 @@ import {
 } from '../../models/timeline-filters';
 import { CatalogEventService } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
+import { NavPreferencesService } from '../../services/nav-preferences/nav-preferences.service';
 import { LoggerService } from '../../services/logging/logger.service';
 import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
@@ -61,6 +62,9 @@ export class Timeline {
 
   /** Centralized logger for analytics and diagnostics. */
   private readonly logger = inject(LoggerService);
+
+  /** Persists the last viewed canon view so navbar links can restore it. */
+  private readonly navPrefs = inject(NavPreferencesService);
 
   // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -244,6 +248,7 @@ export class Timeline {
     const view = params.get('view');
     if (view && (CANON_VIEWS as readonly string[]).includes(view)) {
       this.filters.update((filters) => ({ ...filters, canonView: view as CanonView }));
+      this.navPrefs.setTimelineView(view);
     }
   }
 
@@ -254,6 +259,7 @@ export class Timeline {
    */
   selectView(view: CanonView): void {
     this.filters.update((filters) => ({ ...filters, canonView: view }));
+    this.navPrefs.setTimelineView(view);
     this.logger.info('[Timeline] View changed', { view });
     this.router.navigate([], {
       relativeTo: this.route,
