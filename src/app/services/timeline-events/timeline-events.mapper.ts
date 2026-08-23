@@ -14,10 +14,11 @@
 
 import { Canon } from '../../models/canon';
 import { mediumFromApiCode } from '../../models/medium';
-import { TimelineEvent } from '../../models/timeline-event';
+import { EventSource, TimelineEvent } from '../../models/timeline-event';
 import { unitTypeFromApiCode } from '../../models/unit-type';
 import {
   EventSourceMaterialDto,
+  EventSourceMaterialLinkDto,
   EventSourceMaterialUnitDto,
   NamedEntityDto,
   TimelineEventDto,
@@ -111,12 +112,30 @@ export function isValidSourceMaterialUnitDto(dto: unknown): dto is EventSourceMa
 }
 
 /**
+ * Type guard that verifies a raw value has the required shape of an
+ * {@link EventSourceMaterialLinkDto}.
+ *
+ * @param dto  The value to validate.
+ * @returns `true` when the value satisfies the `EventSourceMaterialLinkDto` contract.
+ */
+export function isValidSourceMaterialLinkDto(dto: unknown): dto is EventSourceMaterialLinkDto {
+  if (typeof dto !== 'object' || dto === null) {
+    return false;
+  }
+  const d = dto as Record<string, unknown>;
+  return (
+    isValidSourceMaterialDto(d['sourceMaterial']) &&
+    (d['sourceMaterialUnit'] === null || isValidSourceMaterialUnitDto(d['sourceMaterialUnit']))
+  );
+}
+
+/**
  * Type guard that verifies a raw value has the required shape of a
  * {@link TimelineEventDto}.
  *
  * Checks for the presence and correct type of every mandatory field.
- * The `sourceMaterial` nested object is validated via
- * {@link isValidSourceMaterialDto}. `sourceMaterialUnit` may be `null`.
+ * The `sourceMaterials` array must be present; individual links are
+ * validated via {@link isValidSourceMaterialLinkDto} during mapping.
  * Entity arrays are checked for being actual `Array`s; individual entity
  * validation is deferred to {@link isValidNamedEntityDto} during mapping.
  *
@@ -132,11 +151,10 @@ export function isValidTimelineEventDto(dto: unknown): dto is TimelineEventDto {
     typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
     typeof d['title'] === 'string' &&
     typeof d['description'] === 'string' &&
-    typeof d['canonType'] === 'number' &&
-    typeof d['year'] === 'number' &&
-    typeof d['displayDate'] === 'string' &&
-    isValidSourceMaterialDto(d['sourceMaterial']) &&
-    (d['sourceMaterialUnit'] === null || isValidSourceMaterialUnitDto(d['sourceMaterialUnit'])) &&
+    typeof d['yearStart'] === 'number' &&
+    typeof d['yearEnd'] === 'number' &&
+    typeof d['sequence'] === 'number' &&
+    Array.isArray(d['sourceMaterials']) &&
     Array.isArray(d['characters']) &&
     Array.isArray(d['locations']) &&
     Array.isArray(d['vehicles'])
@@ -146,35 +164,70 @@ export function isValidTimelineEventDto(dto: unknown): dto is TimelineEventDto {
 // ─── Mapping functions ──────────────────────────────────────────────────────
 
 /**
+ * Maps a single {@link EventSourceMaterialLinkDto} to a domain-level
+ * {@link EventSource}.
+ *
+ * Numeric `medium`, `unitType`, and `canonType` codes are converted to
+ * string unions; `null` fields are mapped to `undefined`.
+ *
+ * @param link  The validated source material link DTO from the API.
+ * @returns A fully mapped domain-level event source.
+ */
+export function mapEventSource(link: EventSourceMaterialLinkDto): EventSource {
+  const material = link.sourceMaterial;
+  const unit = link.sourceMaterialUnit;
+  return {
+    title: material.title,
+    medium: mediumFromApiCode(material.medium),
+    canon: canonFromApiCode(material.canonType),
+    sourceId: material.id,
+    unit: unit
+      ? {
+          id: unit.id,
+          unitType: unitTypeFromApiCode(unit.unitType),
+          groupNumber: unit.groupNumber ?? undefined,
+          number: unit.number,
+          title: unit.title ?? undefined,
+        }
+      : undefined,
+  };
+}
+
+/**
+ * Unions the canon coverage across multiple event sources while keeping a
+ * stable `Canon` before `Legends` order.
+ *
+ * @param sources  The mapped event sources.
+ * @returns The distinct canon labels covered by any source.
+ */
+function unionCanon(sources: readonly EventSource[]): readonly Canon[] {
+  const canon: Canon[] = [];
+  for (const label of ['Canon', 'Legends'] as const) {
+    if (sources.some((source) => source.canon.includes(label))) {
+      canon.push(label);
+    }
+  }
+  return canon;
+}
+
+/**
  * Maps a single {@link TimelineEventDto} to a domain-level {@link TimelineEvent}.
  *
- * Numeric `canonType`, `medium`, and `unitType` codes are converted to string
- * unions. `null` fields are mapped to `undefined`. Entity arrays are filtered
- * through {@link isValidNamedEntityDto} to discard malformed entries.
+ * Numeric codes are converted to string unions. Source material links are
+ * filtered through {@link isValidSourceMaterialLinkDto} to discard malformed
+ * entries; entity arrays are filtered through {@link isValidNamedEntityDto}.
  *
  * @param dto  The raw timeline event DTO from the API.
  * @returns A fully mapped domain-level timeline event.
  */
 export function mapTimelineEvent(dto: TimelineEventDto): TimelineEvent {
+  const sources = dto.sourceMaterials.filter(isValidSourceMaterialLinkDto).map(mapEventSource);
   return {
     id: dto.id,
-    canon: canonFromApiCode(dto.canonType),
+    canon: unionCanon(sources),
     title: dto.title,
     description: dto.description,
-    source: {
-      title: dto.sourceMaterial.title,
-      medium: mediumFromApiCode(dto.sourceMaterial.medium),
-      sourceId: dto.sourceMaterial.id,
-      unit: dto.sourceMaterialUnit
-        ? {
-            id: dto.sourceMaterialUnit.id,
-            unitType: unitTypeFromApiCode(dto.sourceMaterialUnit.unitType),
-            groupNumber: dto.sourceMaterialUnit.groupNumber ?? undefined,
-            number: dto.sourceMaterialUnit.number,
-            title: dto.sourceMaterialUnit.title ?? undefined,
-          }
-        : undefined,
-    },
+    sources,
     locations: dto.locations
       .filter(isValidNamedEntityDto)
       .map((entity) => entity.name),
@@ -184,8 +237,8 @@ export function mapTimelineEvent(dto: TimelineEventDto): TimelineEvent {
     vehicles: dto.vehicles
       .filter(isValidNamedEntityDto)
       .map((entity) => entity.name),
-    year: dto.year,
-    displayDate: dto.displayDate,
-    displayDateEnd: dto.displayDateEnd ?? undefined,
+    yearStart: dto.yearStart,
+    yearEnd: dto.yearEnd,
+    sequence: dto.sequence,
   };
 }

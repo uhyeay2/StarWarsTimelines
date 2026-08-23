@@ -28,12 +28,15 @@ describe('TimelineEventItem', () => {
       canon: ['Canon', 'Legends'],
       title: 'Test Event',
       description: 'A test event description.',
-      source: { title: 'Test Source', medium: 'Book' },
+      sources: [
+        { title: 'Test Source', medium: 'Book', canon: ['Canon', 'Legends'] },
+      ],
       locations: ['Tatooine'],
       characters: ['Luke Skywalker'],
       vehicles: ['Millennium Falcon'],
-      year: 0,
-      displayDate: '0 BBY',
+      yearStart: 0,
+      yearEnd: 0,
+      sequence: 1,
     });
     fixture.componentRef.setInput('sourceChips', [
       { label: 'Book', values: ['book-leaf'], medium: true },
@@ -252,17 +255,21 @@ describe('TimelineEventItem', () => {
       canon: ['Canon'],
       title: 'Test Event',
       description: 'A test event description.',
-      source: {
-        title: 'Shatterpoint',
-        medium: 'Book',
-        sourceId: 'material-shatterpoint',
-        unit: { unitType: 'Chapter', number: 2 },
-      },
+      sources: [
+        {
+          title: 'Shatterpoint',
+          medium: 'Book',
+          canon: ['Canon'],
+          sourceId: 'material-shatterpoint',
+          unit: { unitType: 'Chapter', number: 2 },
+        },
+      ],
       locations: [],
       characters: [],
       vehicles: [],
-      year: -19,
-      displayDate: '19 BBY',
+      yearStart: -19,
+      yearEnd: -19,
+      sequence: 1,
     });
     fixture.componentRef.setInput('sourceChips', [
       { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-2'] },
@@ -282,22 +289,26 @@ describe('TimelineEventItem', () => {
       canon: ['Canon', 'Legends'],
       title: 'Test Event',
       description: 'A test event description.',
-      source: {
-        title: 'The Clone Wars',
-        medium: 'Animated Show',
-        sourceId: 'material-tcw',
-        unit: {
-          unitType: 'Episode',
-          groupNumber: 7,
-          number: 9,
-          title: 'The Siege of Mandalore',
+      sources: [
+        {
+          title: 'The Clone Wars',
+          medium: 'Animated Show',
+          canon: ['Canon', 'Legends'],
+          sourceId: 'material-tcw',
+          unit: {
+            unitType: 'Episode',
+            groupNumber: 7,
+            number: 9,
+            title: 'The Siege of Mandalore',
+          },
         },
-      },
+      ],
       locations: [],
       characters: [],
       vehicles: [],
-      year: -19,
-      displayDate: '19 BBY',
+      yearStart: -19,
+      yearEnd: -19,
+      sequence: 1,
     });
     fixture.componentRef.setInput('sourceChips', [
       { label: 'The Clone Wars', values: ['material-tcw:7'] },
@@ -310,23 +321,85 @@ describe('TimelineEventItem', () => {
     expect(source.textContent).toContain('Season 7');
   });
 
+  it('renders a date range spanning eras when the years differ', () => {
+    fixture.componentRef.setInput('event', {
+      id: 'range-event',
+      canon: ['Canon'],
+      title: 'Ranged Event',
+      description: '',
+      sources: [{ title: 'Test Source', medium: 'Book', canon: ['Canon'] }],
+      locations: [],
+      characters: [],
+      vehicles: [],
+      yearStart: -1,
+      yearEnd: 5,
+      sequence: 1,
+    });
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.event-date')?.textContent?.trim()).toBe('1 BBY – 5 ABY');
+  });
+
+  it('renders unit details for every depicting source', () => {
+    fixture.componentRef.setInput('event', {
+      id: 'dual-source-event',
+      canon: ['Canon', 'Legends'],
+      title: 'Dual Source Event',
+      description: '',
+      sources: [
+        {
+          title: 'The Clone Wars',
+          medium: 'Animated Show',
+          canon: ['Canon'],
+          sourceId: 'material-tcw',
+          unit: { unitType: 'Episode', groupNumber: 7, number: 9, title: 'The Siege of Mandalore' },
+        },
+        {
+          title: 'Darth Vader (2017)',
+          medium: 'Comic',
+          canon: ['Legends'],
+          sourceId: 'material-dv',
+          unit: { unitType: 'Issue', groupNumber: 1, number: 6 },
+        },
+      ],
+      locations: [],
+      characters: [],
+      vehicles: [],
+      yearStart: -19,
+      yearEnd: -19,
+      sequence: 1,
+    });
+    fixture.detectChanges();
+    const units = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.event-source-unit'),
+    ] as HTMLElement[];
+    expect(units.map((unit) => unit.textContent?.trim())).toEqual([
+      'Episode 9: The Siege of Mandalore',
+      'Issue 6',
+    ]);
+  });
+
   it('omits the unit detail for a chapter unit without a title', () => {
     fixture.componentRef.setInput('event', {
       id: 'test-event',
       canon: ['Canon'],
       title: 'Test Event',
       description: 'A test event description.',
-      source: {
-        title: 'Shatterpoint',
-        medium: 'Book',
-        sourceId: 'material-shatterpoint',
-        unit: { unitType: 'Chapter', number: 1 },
-      },
+      sources: [
+        {
+          title: 'Shatterpoint',
+          medium: 'Book',
+          canon: ['Canon'],
+          sourceId: 'material-shatterpoint',
+          unit: { unitType: 'Chapter', number: 1 },
+        },
+      ],
       locations: [],
       characters: [],
       vehicles: [],
-      year: -19,
-      displayDate: '19 BBY',
+      yearStart: -19,
+      yearEnd: -19,
+      sequence: 1,
     });
     fixture.componentRef.setInput('sourceChips', [
       { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1'] },
@@ -385,17 +458,21 @@ describe('TimelineEventItem tracking dropdown', () => {
       canon: ['Canon'],
       title: 'Test Event',
       description: '',
-      source: {
-        title: 'Test Source',
-        medium: options.medium,
-        sourceId: 'mat-1',
-        ...(options.unit !== undefined && { unit: options.unit }),
-      },
+      sources: [
+        {
+          title: 'Test Source',
+          medium: options.medium,
+          canon: ['Canon'],
+          sourceId: 'mat-1',
+          ...(options.unit !== undefined && { unit: options.unit }),
+        },
+      ],
       locations: [],
       characters: [],
       vehicles: [],
-      year: 0,
-      displayDate: '0 BBY',
+      yearStart: 0,
+      yearEnd: 0,
+      sequence: 1,
     });
     fixture.detectChanges();
 

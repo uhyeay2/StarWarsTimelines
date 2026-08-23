@@ -55,7 +55,7 @@ import {
 } from './timeline-events.mapper';
 
 /** Base URL for the timeline events API. */
-const BASE = `${environment.apiBaseUrl}/api/source-material-events`;
+const BASE = `${environment.apiBaseUrl}/api/timeline-events`;
 
 /** Maximum number of automatic retries for transient server errors. */
 const MAX_RETRIES = 3;
@@ -71,9 +71,10 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
  *
  * This is a root-scoped singleton (`providedIn: 'root'`).
  *
- * **Enum mapping:** The server returns numeric codes for `canonType`,
- * `medium`, and `unitType`. This service maps them to domain-level string
- * unions using the helpers in the corresponding model files.
+ * **Enum mapping:** The server returns numeric codes for the per-source
+ * `canonType`, plus each material's `medium` and any pinned unit's
+ * `unitType`. This service maps them to domain-level string unions using
+ * the helpers in the corresponding model files.
  *
  * **Signal-based state:** The service exposes `events`, `loading`, and
  * `error` signals backed by a {@link SignalCache}. Call `getEvents()` to

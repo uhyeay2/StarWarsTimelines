@@ -18,36 +18,41 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     canon: ['Canon'],
     title: 'Canon Only',
     description: '',
-    source: { title: 'Source A', medium: 'Movie', sourceId: 'material-a' },
+    sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
     locations: ['Naboo'],
     characters: ['Padme Amidala'],
     vehicles: [],
-    year: 1,
-    displayDate: '1 ABY',
+    yearStart: 1,
+    yearEnd: 1,
+    sequence: 1,
   },
   {
     id: 'legends-event',
     canon: ['Legends'],
     title: 'Legends Only',
     description: '',
-    source: { title: 'Source B', medium: 'Book', sourceId: 'material-b' },
+    sources: [{ title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 'material-b' }],
     locations: ['Coruscant'],
     characters: ['Darth Maul'],
     vehicles: ['Sith Infiltrator'],
-    year: 2,
-    displayDate: '2 ABY',
+    yearStart: 2,
+    yearEnd: 2,
+    sequence: 1,
   },
   {
     id: 'shared-event',
     canon: ['Canon', 'Legends'],
     title: 'Both',
     description: '',
-    source: { title: 'Source C', medium: 'Movie', sourceId: 'material-c' },
+    sources: [
+      { title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 'material-c' },
+    ],
     locations: ['Naboo', 'Coruscant'],
     characters: ['Padme Amidala', 'Darth Maul'],
     vehicles: ['Sith Infiltrator'],
-    year: 0,
-    displayDate: '0 BBY',
+    yearStart: 0,
+    yearEnd: 0,
+    sequence: 1,
   },
 ];
 
@@ -181,34 +186,42 @@ describe('Timeline', () => {
         canon: ['Canon'],
         title: 'Heroes on Both Sides',
         description: '',
-        source: {
-          title: 'The Clone Wars',
-          medium: 'Animated Show',
-          sourceId: 'material-tcw',
-          unit: { unitType: 'Episode', groupNumber: 2, number: 3 },
-        },
+        sources: [
+          {
+            title: 'The Clone Wars',
+            medium: 'Animated Show',
+            canon: ['Canon'],
+            sourceId: 'material-tcw',
+            unit: { unitType: 'Episode', groupNumber: 2, number: 3 },
+          },
+        ],
         locations: [],
         characters: [],
         vehicles: [],
-        year: -21,
-        displayDate: '21 BBY',
+        yearStart: -21,
+        yearEnd: -21,
+        sequence: 1,
       },
       {
         id: 's7e9',
         canon: ['Canon'],
         title: 'The Siege of Mandalore',
         description: '',
-        source: {
-          title: 'The Clone Wars',
-          medium: 'Animated Show',
-          sourceId: 'material-tcw',
-          unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
-        },
+        sources: [
+          {
+            title: 'The Clone Wars',
+            medium: 'Animated Show',
+            canon: ['Canon'],
+            sourceId: 'material-tcw',
+            unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+          },
+        ],
         locations: [],
         characters: [],
         vehicles: [],
-        year: -19,
-        displayDate: '19 BBY',
+        yearStart: -19,
+        yearEnd: -19,
+        sequence: 1,
       },
     ];
     await setupTimeline([
@@ -624,12 +637,13 @@ describe('Timeline', () => {
       canon: ['Canon'],
       title: 'New Event',
       description: '',
-      source: { title: 'Source D', medium: 'Book', sourceId: 'material-d' },
+      sources: [{ title: 'Source D', medium: 'Book', canon: ['Canon'], sourceId: 'material-d' }],
       locations: [],
       characters: [],
       vehicles: [],
-      year: 3,
-      displayDate: '3 ABY',
+      yearStart: 3,
+      yearEnd: 3,
+      sequence: 1,
     };
     const invalidateMock = vi.fn(() => {
       eventsSig.set([...FIXTURE_EVENTS, newEvent]);
@@ -692,12 +706,13 @@ describe('Timeline', () => {
         canon: ['Canon'],
         title: 'No Source ID',
         description: '',
-        source: { title: 'Unknown', medium: 'Book' },
+        sources: [{ title: 'Unknown', medium: 'Book', canon: ['Canon'] }],
         locations: [],
         characters: [],
         vehicles: [],
-        year: 5,
-        displayDate: '5 ABY',
+        yearStart: 5,
+        yearEnd: 5,
+        sequence: 1,
       };
       await setupTimeline([
         { provide: TimelineEventsService, useValue: eventsServiceMock([...FIXTURE_EVENTS, eventNoId]) },
@@ -749,6 +764,109 @@ describe('Timeline', () => {
       fixture.detectChanges();
       const titles = eventTitles();
       expect(titles).toEqual(['Both', 'Canon Only']);
+    });
+
+    it('breaks year ties using the event sequence, then title', async () => {
+      const tiedEvents: readonly TimelineEvent[] = [
+        {
+          ...FIXTURE_EVENTS[0],
+          id: 'tied-b',
+          title: 'Beta Event',
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          yearStart: 0,
+          yearEnd: 0,
+          sequence: 5,
+        },
+        {
+          ...FIXTURE_EVENTS[0],
+          id: 'tied-a',
+          title: 'Alpha Event',
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          yearStart: 0,
+          yearEnd: 0,
+          sequence: 2,
+        },
+        {
+          ...FIXTURE_EVENTS[0],
+          id: 'tied-c',
+          title: 'Alpha Event',
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          yearStart: 0,
+          yearEnd: 0,
+          sequence: 1,
+        },
+        {
+          ...FIXTURE_EVENTS[0],
+          id: 'tied-d',
+          title: 'Gamma Event',
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          yearStart: 0,
+          yearEnd: 1,
+          sequence: 1,
+        },
+      ];
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: eventsServiceMock(tiedEvents) },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      // Sequence orders within the exact-year span (0..0): the two
+      // sequence-1 events tie on (year, sequence) and fall back to title
+      // comparison, placing 'Alpha Event' before 'Gamma Event'; the
+      // spanning event (0..1) shares start year 0 and sequence 1, so its
+      // position also comes down to its title.
+      expect(eventTitles()).toEqual([
+        'Alpha Event',
+        'Gamma Event',
+        'Alpha Event',
+        'Beta Event',
+      ]);
+    });
+
+    it('matches a multi-source event when any of its sources is selected', async () => {
+      const dualEvent: TimelineEvent = {
+        ...FIXTURE_EVENTS[0],
+        id: 'dual-event',
+        title: 'Dual Source',
+        sources: [
+          { title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' },
+          { title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 'material-b' },
+        ],
+        canon: ['Canon', 'Legends'],
+      };
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: eventsServiceMock([...FIXTURE_EVENTS, dualEvent]) },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      await fixture.whenStable();
+      fixture.componentRef.setInput('sourceIds', ['material-b']);
+      fixture.detectChanges();
+      expect(eventTitles()).toEqual(['Dual Source']);
     });
 
     it('applies character AND semantics', () => {

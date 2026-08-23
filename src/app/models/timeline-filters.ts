@@ -1,7 +1,7 @@
 import { matchesCanonView, CanonView } from './canon';
 import { MEDIA, Medium } from './medium';
 import { sourceGroupName } from './source-material';
-import { TimelineEvent } from './timeline-event';
+import { EventSource, TimelineEvent } from './timeline-event';
 
 /** Facet category keys for timeline event filtering. */
 export type FacetKey = 'sources' | 'locations' | 'characters' | 'vehicles';
@@ -93,43 +93,84 @@ export interface SourceFilterChip {
 }
 
 /**
- * Builds the source filter chips for a single timeline event.
+ * Generates the unique facet key for one of an event's source materials.
  *
- * Constructs a hierarchy of chips: medium-level chip, material chip,
- * and optional group-level chips (season, volume, chapter).
+ * The key format depends on the unit structure:
+ * - No unit: `sourceId` or `title`
+ * - Season/episode: `sourceId:groupNumber`
+ * - Volume/issue: `sourceId:groupNumber:number`
+ * - Chapter: `sourceId:chapter-number`
  *
- * @param event    The timeline event to build chips for.
- * @param sources  The source filter tree nodes.
- * @returns An array of source filter chips.
+ * @param source  One of the event's source materials.
+ * @returns The unique source facet key string.
  */
-export function sourceChipsForEvent(
-  event: TimelineEvent,
+export function sourceFacetKey(source: EventSource): string {
+  if (source.sourceId === undefined) {
+    return source.title;
+  }
+  const unit = source.unit;
+  if (unit === undefined) {
+    return source.sourceId;
+  }
+  if (unit.groupNumber !== undefined) {
+    if (unit.unitType === 'Issue') {
+      return `${source.sourceId}:${unit.groupNumber}:${unit.number}`;
+    }
+    return `${source.sourceId}:${unit.groupNumber}`;
+  }
+  if (unit.unitType === 'Chapter') {
+    return `${source.sourceId}:chapter-${unit.number}`;
+  }
+  return source.sourceId;
+}
+
+/**
+ * Generates every source facet key for an event (one per depicting source).
+ *
+ * @param event  The timeline event.
+ * @returns The unique source facet key strings.
+ */
+export function eventSourceFacetKeys(event: TimelineEvent): readonly string[] {
+  return event.sources.map(sourceFacetKey);
+}
+
+/**
+ * Builds the source filter chips for a single source material of an event:
+ * the material chip plus optional group-level chips (season, volume,
+ * chapter). Medium-level chips are handled once per distinct medium by
+ * {@link sourceChipsForEvent}.
+ *
+ * @param source   The event source to build chips for.
+ * @param sources  The source filter tree nodes.
+ * @returns An array of source filter chips for this material.
+ */
+function materialChipsForSource(
+  source: EventSource,
   sources: readonly FilterTreeNode[],
 ): readonly SourceFilterChip[] {
-  const mediumNode = sources.find((node) => node.label === event.source.medium);
+  const mediumNode = sources.find((node) => node.label === source.medium);
   const materialNode = mediumNode?.children?.find(
-    (node) => node.value === (event.source.sourceId ?? event.source.title),
+    (node) => node.value === (source.sourceId ?? source.title),
   );
   if (mediumNode === undefined || materialNode === undefined) {
-    return [{ label: event.source.title, values: [sourceFacetKey(event)] }];
+    return [{ label: source.title, values: [sourceFacetKey(source)] }];
   }
 
   const chips: SourceFilterChip[] = [
-    { label: mediumNode.label, values: collectTreeLeaves(mediumNode), medium: true },
     { label: materialNode.label, values: collectTreeLeaves(materialNode) },
   ];
 
-  const unit = event.source.unit;
-  if (unit !== undefined && event.source.sourceId !== undefined) {
+  const unit = source.unit;
+  if (unit !== undefined && source.sourceId !== undefined) {
     if (unit.groupNumber !== undefined) {
       const groupNode = materialNode.children?.find(
-        (node) => node.value === `${event.source.sourceId}:${unit.groupNumber}`,
+        (node) => node.value === `${source.sourceId}:${unit.groupNumber}`,
       );
       if (groupNode !== undefined) {
         chips.push({ label: groupNode.label, values: collectTreeLeaves(groupNode) });
       }
     } else if (unit.unitType === 'Chapter') {
-      const chapterValue = `${event.source.sourceId}:chapter-${unit.number}`;
+      const chapterValue = `${source.sourceId}:chapter-${unit.number}`;
       if (materialNode.children?.some((node) => node.value === chapterValue)) {
         chips.push({ label: `Chapter ${unit.number}`, values: [chapterValue] });
       }
@@ -140,35 +181,49 @@ export function sourceChipsForEvent(
 }
 
 /**
- * Generates the unique facet key for an event's source material.
+ * Builds the source filter chips for a single timeline event.
  *
- * The key format depends on the unit structure:
- * - No unit: `sourceId` or `title`
- * - Season/episode: `sourceId:groupNumber`
- * - Volume/issue: `sourceId:groupNumber:number`
- * - Chapter: `sourceId:chapter-number`
+ * Constructs a hierarchy of chips across every source depicting the event:
+ * one chip per distinct medium, then per material, and optional group-level
+ * chips (season, volume, chapter). Duplicate chips (same values) are
+ * collapsed so two sources sharing a medium produce one medium chip.
  *
- * @param event  The timeline event.
- * @returns The unique source facet key string.
+ * @param event    The timeline event to build chips for.
+ * @param sources  The source filter tree nodes.
+ * @returns An array of source filter chips.
  */
-export function sourceFacetKey(event: TimelineEvent): string {
-  if (event.source.sourceId === undefined) {
-    return event.source.title;
-  }
-  const unit = event.source.unit;
-  if (unit === undefined) {
-    return event.source.sourceId;
-  }
-  if (unit.groupNumber !== undefined) {
-    if (unit.unitType === 'Issue') {
-      return `${event.source.sourceId}:${unit.groupNumber}:${unit.number}`;
+export function sourceChipsForEvent(
+  event: TimelineEvent,
+  sources: readonly FilterTreeNode[],
+): readonly SourceFilterChip[] {
+  const chips: SourceFilterChip[] = [];
+  const seen = new Set<string>();
+  const push = (chip: SourceFilterChip): void => {
+    const key = `${chip.medium === true ? 'm' : 's'}:${chip.values.join('|')}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      chips.push(chip);
     }
-    return `${event.source.sourceId}:${unit.groupNumber}`;
+  };
+
+  for (const medium of new Set(event.sources.map((source) => source.medium))) {
+    const mediumNode = sources.find((node) => node.label === medium);
+    if (mediumNode !== undefined) {
+      push({
+        label: mediumNode.label,
+        values: collectTreeLeaves(mediumNode),
+        medium: true,
+      });
+    }
   }
-  if (unit.unitType === 'Chapter') {
-    return `${event.source.sourceId}:chapter-${unit.number}`;
+
+  for (const source of event.sources) {
+    for (const chip of materialChipsForSource(source, sources)) {
+      push(chip);
+    }
   }
-  return event.source.sourceId;
+
+  return chips;
 }
 
 /** Internal state for a material's facet data during collection. */
@@ -217,11 +272,73 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
 }
 
 /**
+ * Accumulates a single source into its material's facet data.
+ *
+ * Mirrors the old single-source logic per source: whole-material entries,
+ * volume/issue nesting, season/episode grouping, and standalone chapters.
+ *
+ * @param source        The event source to accumulate.
+ * @param materialsByMedium  Mutable facet maps keyed by medium and material key.
+ */
+function accumulateMaterialFacet(
+  source: EventSource,
+  materialsByMedium: Map<Medium, Map<string, MaterialFacet>>,
+): void {
+  let byMedium = materialsByMedium.get(source.medium);
+  if (byMedium === undefined) {
+    byMedium = new Map();
+    materialsByMedium.set(source.medium, byMedium);
+  }
+  const materialKey = source.sourceId ?? source.title;
+  let facet = byMedium.get(materialKey);
+  if (facet === undefined) {
+    facet = {
+      title: source.title,
+      sourceId: source.sourceId,
+      whole: undefined,
+      groups: new Map(),
+      volumes: new Map(),
+      chapters: new Map(),
+    };
+    byMedium.set(materialKey, facet);
+  }
+
+  const unit = source.unit;
+  if (
+    source.sourceId === undefined ||
+    unit === undefined ||
+    (unit.groupNumber === undefined && unit.unitType !== 'Chapter')
+  ) {
+    facet.whole = { value: source.sourceId ?? source.title, label: source.title };
+  } else if (unit.groupNumber !== undefined && unit.unitType === 'Issue') {
+    let issues = facet.volumes.get(unit.groupNumber);
+    if (issues === undefined) {
+      issues = new Map();
+      facet.volumes.set(unit.groupNumber, issues);
+    }
+    if (!issues.has(unit.number)) {
+      issues.set(unit.number, `Issue ${unit.number}`);
+    }
+  } else if (unit.groupNumber !== undefined) {
+    if (!facet.groups.has(unit.groupNumber)) {
+      const groupName = sourceGroupName(unit.unitType);
+      facet.groups.set(
+        unit.groupNumber,
+        groupName === undefined ? `Group ${unit.groupNumber}` : `${groupName} ${unit.groupNumber}`,
+      );
+    }
+  } else if (!facet.chapters.has(unit.number)) {
+    facet.chapters.set(unit.number, `Chapter ${unit.number}`);
+  }
+}
+
+/**
  * Collects facet options from a set of timeline events.
  *
  * Builds a hierarchical source tree grouped by medium and material,
- * and flat lists of locations, characters, and vehicles. Source tree
- * nodes include group/volume/chapter nesting for multi-unit materials.
+ * and flat lists of locations, characters, and vehicles. Every source
+ * depicting an event contributes to the facets; source tree nodes include
+ * group/volume/chapter nesting for multi-unit materials.
  *
  * @param events  The timeline events to collect facet data from.
  * @returns A complete set of {@link TimelineFacetOptions}.
@@ -233,54 +350,9 @@ export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineF
   const vehicles = new Set<string>();
 
   for (const event of events) {
-    const source = event.source;
-    let byMedium = materialsByMedium.get(source.medium);
-    if (byMedium === undefined) {
-      byMedium = new Map();
-      materialsByMedium.set(source.medium, byMedium);
+    for (const source of event.sources) {
+      accumulateMaterialFacet(source, materialsByMedium);
     }
-    const materialKey = source.sourceId ?? source.title;
-    let facet = byMedium.get(materialKey);
-    if (facet === undefined) {
-      facet = {
-        title: source.title,
-        sourceId: source.sourceId,
-        whole: undefined,
-        groups: new Map(),
-        volumes: new Map(),
-        chapters: new Map(),
-      };
-      byMedium.set(materialKey, facet);
-    }
-
-    const unit = source.unit;
-    if (
-      source.sourceId === undefined ||
-      unit === undefined ||
-      (unit.groupNumber === undefined && unit.unitType !== 'Chapter')
-    ) {
-      facet.whole = { value: source.sourceId ?? source.title, label: source.title };
-    } else if (unit.groupNumber !== undefined && unit.unitType === 'Issue') {
-      let issues = facet.volumes.get(unit.groupNumber);
-      if (issues === undefined) {
-        issues = new Map();
-        facet.volumes.set(unit.groupNumber, issues);
-      }
-      if (!issues.has(unit.number)) {
-        issues.set(unit.number, `Issue ${unit.number}`);
-      }
-    } else if (unit.groupNumber !== undefined) {
-      if (!facet.groups.has(unit.groupNumber)) {
-        const groupName = sourceGroupName(unit.unitType);
-        facet.groups.set(
-          unit.groupNumber,
-          groupName === undefined ? `Group ${unit.groupNumber}` : `${groupName} ${unit.groupNumber}`,
-        );
-      }
-    } else if (!facet.chapters.has(unit.number)) {
-      facet.chapters.set(unit.number, `Chapter ${unit.number}`);
-    }
-
     for (const location of event.locations) locations.add(location);
     for (const character of event.characters) characters.add(character);
     for (const vehicle of event.vehicles) vehicles.add(vehicle);
@@ -321,14 +393,17 @@ export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineF
  *
  * Uses AND semantics for locations, characters, and vehicles — all
  * selected values in a category must be present on the event. Sources
- * use exact key matching.
+ * match when ANY facet key of ANY depicting source is selected.
  *
  * @param event    The timeline event to test.
  * @param filters  The current filter state.
  * @returns `true` if the event matches all active facet filters.
  */
 export function matchesFacetFilters(event: TimelineEvent, filters: TimelineFilters): boolean {
-  if (filters.sources.length > 0 && !filters.sources.includes(sourceFacetKey(event))) {
+  if (
+    filters.sources.length > 0 &&
+    !eventSourceFacetKeys(event).some((key) => filters.sources.includes(key))
+  ) {
     return false;
   }
   if (filters.locations.length > 0 && !filters.locations.every((l) => event.locations.includes(l))) {

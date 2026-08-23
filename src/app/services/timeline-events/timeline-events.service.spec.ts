@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
 import { TimelineError, TimelineErrorCode } from '../../models/timeline/timeline-error';
 import { TimelineEventsService } from './timeline-events.service';
 
-const EVENTS_URL = `${environment.apiBaseUrl}/api/source-material-events`;
+const EVENTS_URL = `${environment.apiBaseUrl}/api/timeline-events`;
 const EPISODE_ONE = '00000000-0000-0000-0000-000000000001';
 
 const EVENT_DTO = [
@@ -20,23 +20,26 @@ const EVENT_DTO = [
     id: 'the-invasion-of-naboo',
     title: 'The Invasion of Naboo',
     description: 'The Trade Federation blockades and invades Naboo.',
-    canonType: 2,
-    year: -32,
-    displayDate: '32 BBY',
-    displayDateEnd: null,
-    sourceMaterial: {
-      id: EPISODE_ONE,
-      title: 'Star Wars: Episode I - The Phantom Menace',
-      medium: 0,
-      canonType: 2,
-    },
-    sourceMaterialUnit: {
-      id: 'unit-1',
-      unitType: 0,
-      groupNumber: 1,
-      number: 1,
-      title: 'The Phantom Menace',
-    },
+    yearStart: -32,
+    yearEnd: -32,
+    sequence: 3,
+    sourceMaterials: [
+      {
+        sourceMaterial: {
+          id: EPISODE_ONE,
+          title: 'Star Wars: Episode I - The Phantom Menace',
+          medium: 0,
+          canonType: 2,
+        },
+        sourceMaterialUnit: {
+          id: 'unit-1',
+          unitType: 0,
+          groupNumber: 1,
+          number: 1,
+          title: 'The Phantom Menace',
+        },
+      },
+    ],
     characters: [{ id: 'c-1', name: 'Darth Maul' }, { id: 'c-2', name: 'Qui-Gon Jinn' }],
     locations: [{ id: 'l-1', name: 'Naboo' }],
     vehicles: [{ id: 'v-1', name: 'Sith Infiltrator' }],
@@ -75,42 +78,73 @@ describe('TimelineEventsService', () => {
           canon: ['Canon', 'Legends'],
           title: 'The Invasion of Naboo',
           description: 'The Trade Federation blockades and invades Naboo.',
-          source: {
-            title: 'Star Wars: Episode I - The Phantom Menace',
-            medium: 'Movie',
-            sourceId: EPISODE_ONE,
-            unit: {
-              id: 'unit-1',
-              unitType: 'Episode',
-              groupNumber: 1,
-              number: 1,
-              title: 'The Phantom Menace',
+          sources: [
+            {
+              title: 'Star Wars: Episode I - The Phantom Menace',
+              medium: 'Movie',
+              sourceId: EPISODE_ONE,
+              canon: ['Canon', 'Legends'],
+              unit: {
+                id: 'unit-1',
+                unitType: 'Episode',
+                groupNumber: 1,
+                number: 1,
+                title: 'The Phantom Menace',
+              },
             },
-          },
+          ],
           locations: ['Naboo'],
           characters: ['Darth Maul', 'Qui-Gon Jinn'],
           vehicles: ['Sith Infiltrator'],
-          year: -32,
-          displayDate: '32 BBY',
+          yearStart: -32,
+          yearEnd: -32,
+          sequence: 3,
         },
       ]);
     });
 
-    it('maps the display end date when present', async () => {
+    it('unions canon coverage when multiple sources depict the event', async () => {
       const promise = firstValueFrom(service.getEvents$());
       httpMock.expectOne(EVENTS_URL).flush([
         {
           ...EVENT_DTO[0],
-          canonType: 0,
-          displayDateEnd: '32 BBY',
-          sourceMaterialUnit: null,
+          sourceMaterials: [
+            ...EVENT_DTO[0].sourceMaterials,
+            {
+              sourceMaterial: {
+                id: '00000000-0000-0000-0000-000000000002',
+                title: 'Heir to the Empire',
+                medium: 1,
+                canonType: 1,
+              },
+              sourceMaterialUnit: null,
+            },
+          ],
         },
       ]);
 
       const events = await promise;
-      expect(events[0].canon).toEqual(['Canon']);
-      expect(events[0].displayDateEnd).toBe('32 BBY');
-      expect(events[0].source.unit).toBeUndefined();
+      expect(events[0].canon).toEqual(['Canon', 'Legends']);
+      expect(events[0].sources).toHaveLength(2);
+    });
+
+    it('maps the exact-year span and drops the unit when absent', async () => {
+      const promise = firstValueFrom(service.getEvents$());
+      httpMock.expectOne(EVENTS_URL).flush([
+        {
+          ...EVENT_DTO[0],
+          sourceMaterials: EVENT_DTO[0].sourceMaterials.map((link) => ({
+            ...link,
+            sourceMaterialUnit: null,
+          })),
+        },
+      ]);
+
+      const events = await promise;
+      expect(events[0].yearStart).toBe(-32);
+      expect(events[0].yearEnd).toBe(-32);
+      expect(events[0].sequence).toBe(3);
+      expect(events[0].sources[0].unit).toBeUndefined();
     });
 
     it('populates the signal cache on success', async () => {

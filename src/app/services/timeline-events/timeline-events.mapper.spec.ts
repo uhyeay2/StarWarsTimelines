@@ -3,8 +3,10 @@ import {
   canonFromApiCode,
   isValidNamedEntityDto,
   isValidSourceMaterialDto,
+  isValidSourceMaterialLinkDto,
   isValidSourceMaterialUnitDto,
   isValidTimelineEventDto,
+  mapEventSource,
   mapTimelineEvent,
 } from './timeline-events.mapper';
 
@@ -17,12 +19,15 @@ function eventDto(partial: Partial<TimelineEventDto> = {}): TimelineEventDto {
     id: 'ev-1',
     title: 'Battle of Yavin',
     description: 'The Death Star is destroyed.',
-    canonType: 0,
-    year: 0,
-    displayDate: '35:3',
-    displayDateEnd: null,
-    sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
-    sourceMaterialUnit: null,
+    yearStart: 0,
+    yearEnd: 0,
+    sequence: 1,
+    sourceMaterials: [
+      {
+        sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+        sourceMaterialUnit: null,
+      },
+    ],
     characters: [],
     locations: [],
     vehicles: [],
@@ -66,36 +71,57 @@ describe('type guards', () => {
     expect(isValidSourceMaterialUnitDto({ id: '', unitType: 0, number: 1 })).toBe(false);
   });
 
-  it('accepts a null unit but rejects missing entity arrays', () => {
+  it('validates source material links and their optional units', () => {
+    const material = { id: 'm', title: 'T', medium: 0, canonType: 0 };
+    expect(
+      isValidSourceMaterialLinkDto({ sourceMaterial: material, sourceMaterialUnit: null }),
+    ).toBe(true);
+    expect(
+      isValidSourceMaterialLinkDto({
+        sourceMaterial: material,
+        sourceMaterialUnit: { id: 'u', unitType: 0, groupNumber: null, number: 1, title: null },
+      }),
+    ).toBe(true);
+    expect(
+      isValidSourceMaterialLinkDto({
+        sourceMaterial: material,
+        sourceMaterialUnit: { id: '', unitType: 0, number: 1 },
+      }),
+    ).toBe(false);
+    expect(isValidSourceMaterialLinkDto({ sourceMaterial: null, sourceMaterialUnit: null })).toBe(
+      false,
+    );
+  });
+
+  it('accepts empty source arrays but rejects missing arrays or fields', () => {
     expect(isValidTimelineEventDto(eventDto())).toBe(true);
     expect(isValidTimelineEventDto(eventDto({ characters: undefined as never }))).toBe(false);
     expect(isValidTimelineEventDto(eventDto({ locations: {} as never }))).toBe(false);
     expect(isValidTimelineEventDto(eventDto({ vehicles: undefined as never }))).toBe(false);
+    expect(isValidTimelineEventDto(eventDto({ sourceMaterials: undefined as never }))).toBe(false);
+    expect(isValidTimelineEventDto(eventDto({ yearStart: undefined as never }))).toBe(false);
+    expect(isValidTimelineEventDto(eventDto({ sequence: undefined as never }))).toBe(false);
   });
 });
 
-describe('mapTimelineEvent', () => {
-  it('maps codes and nested sources into the domain shape', () => {
-    const mapped = mapTimelineEvent(
-      eventDto({
-        canonType: 2,
-        sourceMaterial: { id: 'mat-9', title: 'Heir to the Empire', medium: 1, canonType: 1 },
-        sourceMaterialUnit: {
-          id: 'u5',
-          unitType: 4,
-          groupNumber: 2,
-          number: 7,
-          title: 'Crazy Like a Wookiee',
-        },
-      }),
-    );
-
-    expect(mapped.canon).toEqual(['Canon', 'Legends']);
-    expect(mapped.source).toMatchObject({
-      title: 'Heir to the Empire',
-      sourceId: 'mat-9',
+describe('mapEventSource', () => {
+  it('maps codes and nested material/unit into the domain shape', () => {
+    const source = mapEventSource({
+      sourceMaterial: { id: 'mat-9', title: 'Heir to the Empire', medium: 1, canonType: 1 },
+      sourceMaterialUnit: {
+        id: 'u5',
+        unitType: 4,
+        groupNumber: 2,
+        number: 7,
+        title: 'Crazy Like a Wookiee',
+      },
     });
-    expect(mapped.source.unit).toEqual({
+
+    expect(source.canon).toEqual(['Legends']);
+    expect(source.title).toBe('Heir to the Empire');
+    expect(source.medium).toBe('Book');
+    expect(source.sourceId).toBe('mat-9');
+    expect(source.unit).toEqual({
       id: 'u5',
       unitType: 'Volume',
       groupNumber: 2,
@@ -104,11 +130,92 @@ describe('mapTimelineEvent', () => {
     });
   });
 
-  it('omits the unit when the event has no source material unit', () => {
+  it('omits the unit when the link has none', () => {
+    const source = mapEventSource({
+      sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+      sourceMaterialUnit: null,
+    });
+
+    expect(source.unit).toBeUndefined();
+  });
+});
+
+describe('mapTimelineEvent', () => {
+  it('maps the single-source case into the domain shape', () => {
     const mapped = mapTimelineEvent(eventDto());
 
-    expect(mapped.source.unit).toBeUndefined();
-    expect(mapped.displayDateEnd).toBeUndefined();
+    expect(mapped.yearStart).toBe(0);
+    expect(mapped.yearEnd).toBe(0);
+    expect(mapped.sequence).toBe(1);
+    expect(mapped.canon).toEqual(['Canon']);
+    expect(mapped.sources).toHaveLength(1);
+    expect(mapped.sources[0]).toMatchObject({
+      title: 'A New Hope',
+      medium: 'Movie',
+      sourceId: 'mat-1',
+      canon: ['Canon'],
+    });
+    expect(mapped.sources[0].unit).toBeUndefined();
+  });
+
+  it('unions canon coverage across multiple source materials', () => {
+    const mapped = mapTimelineEvent(
+      eventDto({
+        sourceMaterials: [
+          {
+            sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+            sourceMaterialUnit: null,
+          },
+          {
+            sourceMaterial: { id: 'mat-2', title: 'Heir to the Empire', medium: 1, canonType: 1 },
+            sourceMaterialUnit: null,
+          },
+        ],
+      }),
+    );
+
+    expect(mapped.sources.map((source) => source.sourceId)).toEqual(['mat-1', 'mat-2']);
+    expect(mapped.canon).toEqual(['Canon', 'Legends']);
+  });
+
+  it('keeps per-source pinned units distinct', () => {
+    const mapped = mapTimelineEvent(
+      eventDto({
+        sourceMaterials: [
+          {
+            sourceMaterial: { id: 'mat-3', title: 'Darth Vader (2017)', medium: 2, canonType: 1 },
+            sourceMaterialUnit: {
+              id: 'u1',
+              unitType: 3,
+              groupNumber: 1,
+              number: 1,
+              title: 'Force Storm, Part 1',
+            },
+          },
+          {
+            sourceMaterial: { id: 'mat-4', title: 'A New Hope', medium: 0, canonType: 0 },
+            sourceMaterialUnit: null,
+          },
+        ],
+      }),
+    );
+
+    expect(mapped.sources[0].unit?.title).toBe('Force Storm, Part 1');
+    expect(mapped.sources[1].unit).toBeUndefined();
+  });
+
+  it('discards malformed source links while keeping valid ones', () => {
+    const mapped = mapTimelineEvent({
+      ...eventDto(),
+      sourceMaterials: [
+        { sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 }, sourceMaterialUnit: null },
+        { broken: true },
+        null,
+      ],
+    } as unknown as TimelineEventDto);
+
+    expect(mapped.sources).toHaveLength(1);
+    expect(mapped.sources[0].sourceId).toBe('mat-1');
   });
 
   it('discards malformed entities while mapping names', () => {

@@ -113,15 +113,15 @@ export class Timeline {
    *
    * Returns all events only when `sourceIds` is null (unrestricted mode);
    * an empty array restricts the timeline to nothing, otherwise filters
-   * to only events from matching source materials.
+   * to events depicted by at least one matching source material.
    */
   protected readonly sourceFilteredEvents = computed(() => {
     const ids = this.sourceIds();
     if (ids === null) {
       return this.events();
     }
-    return this.events().filter(
-      (event) => event.source.sourceId !== undefined && ids.includes(event.source.sourceId),
+    return this.events().filter((event) =>
+      event.sources.some((source) => source.sourceId !== undefined && ids.includes(source.sourceId)),
     );
   });
 
@@ -189,12 +189,19 @@ export class Timeline {
    * Final filtered and sorted event list.
    *
    * Applies source filtering, canon view, and all facet filters, then
-   * sorts chronologically by in-universe year.
+   * sorts chronologically: by earliest year, then by the server-assigned
+   * sequence within the same year span, then by title as a stable
+   * tiebreaker.
    */
   protected readonly filteredEvents = computed(() =>
     this.sourceFilteredEvents()
       .filter((event) => matchesFilters(event, this.filters()))
-      .sort((a, b) => a.year - b.year),
+      .sort(
+        (a, b) =>
+          a.yearStart - b.yearStart ||
+          a.sequence - b.sequence ||
+          a.title.localeCompare(b.title),
+      ),
   );
 
   /** Whether any facet filter is currently active. */

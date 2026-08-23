@@ -12,7 +12,7 @@
     <!-- ─── Event Meta (date, canons, details toggle) ────────────────── -->
     <header class="event-meta">
       <time class="event-date">
-        {{ item.displayDate }}@if (item.displayDateEnd) { – {{ item.displayDateEnd }} }
+        {{ formatDate(item.yearStart, item.yearEnd) }}
       </time>
       <div class="event-meta-actions">
         <!-- ─── Canon Badges ─────────────────────────────────────────── -->
@@ -67,32 +67,34 @@
       }
       <!-- ─── End Source Chips ────────────────────────────────────────── -->
 
-      @if (sourceUnitDetail(item.source.unit); as detail) {
-        <span class="event-source-unit">{{ detail }}</span>
-      }
+      @for (source of item.sources; track trackSource(source)) {
+        @if (sourceUnitDetail(source.unit); as detail) {
+          <span class="event-source-unit">{{ detail }}</span>
+        }
 
-      <!-- ─── Tracking Status Dropdown ──────────────────────────────────── -->
-      @if (showTracking()) {
-        <select
-          class="track-select event-track-select"
-          [attr.aria-label]="'Track ' + item.source.title"
-          (change)="onTrackChange($event)">
-          <option
-            value=""
-            disabled
-            [selected]="currentStatus() === null"
-            hidden>Track…</option>
-          @for (status of trackingOptions(); track status) {
+        <!-- ─── Tracking Status Dropdown ──────────────────────────────────── -->
+        @if (showTracking(source)) {
+          <select
+            class="track-select event-track-select"
+            [attr.aria-label]="'Track ' + source.title"
+            (change)="onTrackChange($event, source)">
             <option
-              [value]="status"
-              [selected]="currentStatus() === status"
-              [class.remove-option]="status === 'remove'">
-              {{ status === 'remove' ? 'Remove From Library' : status }}
-            </option>
-          }
-        </select>
+              value=""
+              disabled
+              [selected]="currentStatus(source) === null"
+              hidden>Track…</option>
+            @for (status of trackingOptions(source); track status) {
+              <option
+                [value]="status"
+                [selected]="currentStatus(source) === status"
+                [class.remove-option]="status === 'remove'">
+                {{ status === 'remove' ? 'Remove From Library' : status }}
+              </option>
+            }
+          </select>
+        }
+        <!-- ─── End Tracking Status Dropdown ─────────────────────────────── -->
       }
-      <!-- ─── End Tracking Status Dropdown ─────────────────────────────── -->
 
     </p>
     <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->

@@ -55,10 +55,22 @@ export interface EventSourceMaterialUnitDto {
 }
 
 /**
+ * Association between a timeline event and one source material depicting it,
+ * with an optional pinned sub-unit of that material.
+ */
+export interface EventSourceMaterialLinkDto {
+  /** The source material that depicts the event. */
+  readonly sourceMaterial: EventSourceMaterialDto;
+  /** The specific unit depicting the event, or `null` for whole-material coverage. */
+  readonly sourceMaterialUnit: EventSourceMaterialUnitDto | null;
+}
+
+/**
  * Raw timeline event response body from the API.
  *
- * All enum-typed fields (`canonType`, `medium`, `unitType`) are numeric
- * indices that must be mapped to domain string unions before use.
+ * All enum-typed fields (`medium`, `unitType`, `canonType`) are numeric
+ * indices that must be mapped to domain string unions before use. Canon
+ * coverage is per source material; an event has no canon of its own.
  */
 export interface TimelineEventDto {
   /** Server-assigned unique identifier. */
@@ -67,18 +79,14 @@ export interface TimelineEventDto {
   readonly title: string;
   /** Narrative description of the event. */
   readonly description: string;
-  /** Numeric index into the server-side `CanonType` enum. */
-  readonly canonType: number;
-  /** In-universe year (negative for BBY). */
-  readonly year: number;
-  /** Human-readable display date (e.g. "32 BBY"). */
-  readonly displayDate: string;
-  /** Optional end display date for multi-day/era events. */
-  readonly displayDateEnd: string | null;
-  /** The source material this event is derived from. */
-  readonly sourceMaterial: EventSourceMaterialDto;
-  /** Optional source material unit (episode, chapter, etc.). */
-  readonly sourceMaterialUnit: EventSourceMaterialUnitDto | null;
+  /** Earliest in-universe year the event could have occurred (negative BBY). */
+  readonly yearStart: number;
+  /** Latest in-universe year; equal to `yearStart` when known exactly. */
+  readonly yearEnd: number;
+  /** Ordering value for events sharing the same year span. */
+  readonly sequence: number;
+  /** Every source material (with optional pinned unit) depicting the event. */
+  readonly sourceMaterials: readonly EventSourceMaterialLinkDto[];
   /** Characters involved in this event. */
   readonly characters: readonly NamedEntityDto[];
   /** Locations where this event takes place. */

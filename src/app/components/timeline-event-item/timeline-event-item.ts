@@ -2,13 +2,14 @@
  * @fileoverview Individual timeline event card component.
  *
  * Renders a single timeline event as a card within the timeline list.
- * Displays the event date, title, source material chips, canon badges,
- * and optional details (description, locations, characters, vehicles).
+ * Displays the event's galactic date (or range), title, source material
+ * chips, canon badges, and optional details (description, locations,
+ * characters, vehicles).
  *
  * Supports interactive filtering via clickable chips.
  *
  * For signed-in users, each card also shows a tracking status dropdown
- * that mirrors the catalog page's behavior:
+ * per depicting source material that mirrors the catalog page's behavior:
  *
  * - Movies, Short Films, Books, and Video Games are tracked at the
  *   material level (units like chapters / levels are informational).
@@ -31,6 +32,7 @@ import {
   signal,
 } from '@angular/core';
 import { FacetKey, SourceFilterChip } from '../../models/timeline-filters';
+import { formatGalacticYears, EventSource } from '../../models/timeline-event';
 import { sourceUnitDetail, sourceUnitLabel } from '../../models/source-material';
 import { TimelineEvent } from '../../models/timeline-event';
 import { LibraryItem } from '../../models/library-item';
@@ -86,6 +88,9 @@ export class TimelineEventItem implements OnInit {
   /** Function to generate a detail string for a source unit. */
   readonly sourceUnitDetail = sourceUnitDetail;
 
+  /** Function to format the event's galactic date or range. */
+  readonly formatDate = formatGalacticYears;
+
   // ─── Outputs ───────────────────────────────────────────────────────────
 
   /** Emitted when a facet chip is toggled. */
@@ -105,29 +110,38 @@ export class TimelineEventItem implements OnInit {
   /** The signed-in user, or `null` when anonymous (dropdown hidden). */
   readonly currentUser = this.authService.currentUser;
 
-  /** Whether this event's medium tracks at season/volume group level. */
-  readonly isGroupedMedium = computed(() => {
-    const medium = this.event().source.medium;
-    return medium === 'Comic' || medium === 'Live Action Show' || medium === 'Animated Show';
-  });
+  /**
+   * Stable key for tracking an `@for` loop over an event's sources.
+   *
+   * @param source  The event source.
+   * @returns The material ID when known, otherwise the material title.
+   */
+  trackSource(source: EventSource): string {
+    return source.sourceId ?? source.title;
+  }
 
-  /** The tracked library item for this event's source material, or null. */
-  readonly trackedItem = computed(() => {
-    const sourceId = this.event().source.sourceId;
-    return sourceId === undefined ? null : findTrackedItem(this.libraryService.items(), sourceId);
-  });
+  /** Whether this source's medium tracks at season/volume group level. */
+  isGroupedMedium(source: EventSource): boolean {
+    return (
+      source.medium === 'Comic' || source.medium === 'Live Action Show' || source.medium === 'Animated Show'
+    );
+  }
+
+  /** The tracked library item for this source material, or null. */
+  trackedItem(source: EventSource): LibraryItem | null {
+    return source.sourceId === undefined ? null : findTrackedItem(this.libraryService.items(), source.sourceId);
+  }
 
   /**
    * The Season/Volume container unit ID governing tracking for grouped-media
-   * events, resolved from the catalog's unit cache. `null` for flat mediums,
+   * sources, resolved from the catalog's unit cache. `null` for flat mediums,
    * whole-material events on grouped mediums, or when no explicit container
    * unit exists (mirroring the catalog page, which hides the dropdown then).
    */
-  readonly containerUnitId = computed(() => {
-    if (!this.isGroupedMedium()) {
+  containerUnitId(source: EventSource): string | null {
+    if (!this.isGroupedMedium(source)) {
       return null;
     }
-    const source = this.event().source;
     const unit = source.unit;
     if (source.sourceId === undefined || unit === undefined) {
       return null;
@@ -140,37 +154,37 @@ export class TimelineEventItem implements OnInit {
         (u.number === targetGroup || u.groupNumber === targetGroup),
     );
     return container?.id ?? null;
-  });
+  }
 
-  /** Whether the tracking dropdown should be rendered for this event. */
-  readonly showTracking = computed(() => {
+  /** Whether the tracking dropdown should be rendered for this source. */
+  showTracking(source: EventSource): boolean {
     if (this.currentUser() === null) {
       return false;
     }
-    if (this.isGroupedMedium()) {
-      return this.containerUnitId() !== null;
+    if (this.isGroupedMedium(source)) {
+      return this.containerUnitId(source) !== null;
     }
-    return this.event().source.sourceId !== undefined;
-  });
+    return source.sourceId !== undefined;
+  }
 
   /** Select options: statuses, plus 'Remove From Library' once tracked. */
-  readonly trackingOptions = computed((): readonly TrackSelectOption[] => {
-    if (this.isGroupedMedium()) {
-      const unitId = this.containerUnitId();
-      const item = this.trackedItem();
+  trackingOptions(source: EventSource): readonly TrackSelectOption[] {
+    if (this.isGroupedMedium(source)) {
+      const unitId = this.containerUnitId(source);
+      const item = this.trackedItem(source);
       return trackSelectOptions(unitId !== null && groupUnitIsTracked(item, unitId));
     }
-    return trackSelectOptions(this.trackedItem() !== null);
-  });
+    return trackSelectOptions(this.trackedItem(source) !== null);
+  }
 
   /** The currently selected tracking status, or `null` (shows "Track…"). */
-  readonly currentStatus = computed((): TrackingStatus | null => {
-    if (this.isGroupedMedium()) {
-      const unitId = this.containerUnitId();
-      return unitId === null ? null : groupTrackingStatus(this.trackedItem(), unitId);
+  currentStatus(source: EventSource): TrackingStatus | null {
+    if (this.isGroupedMedium(source)) {
+      const unitId = this.containerUnitId(source);
+      return unitId === null ? null : groupTrackingStatus(this.trackedItem(source), unitId);
     }
-    return materialTrackingStatus(this.trackedItem());
-  });
+    return materialTrackingStatus(this.trackedItem(source));
+  }
 
   ngOnInit(): void {
     const user = this.currentUser();
@@ -178,10 +192,9 @@ export class TimelineEventItem implements OnInit {
       return;
     }
     this.libraryService.ensureTracked(user.id);
-    if (this.isGroupedMedium()) {
-      const sourceId = this.event().source.sourceId;
-      if (sourceId !== undefined) {
-        this.catalogService.getUnitCache(sourceId).fetch();
+    for (const source of this.event().sources) {
+      if (this.isGroupedMedium(source) && source.sourceId !== undefined) {
+        this.catalogService.getUnitCache(source.sourceId).fetch();
       }
     }
   }
@@ -214,18 +227,19 @@ export class TimelineEventItem implements OnInit {
   }
 
   /**
-   * Handles a tracking status change from the dropdown, applying it at the
-   * scope implied by the medium (material level, or Season/Volume level).
+   * Handles a tracking status change from one source's dropdown, applying it
+   * at the scope implied by the medium (material level, or Season/Volume
+   * level).
    *
    * @param changeEvent  The select's change event.
+   * @param source       The event source whose dropdown changed.
    */
-  onTrackChange(changeEvent: Event): void {
+  onTrackChange(changeEvent: Event, source: EventSource): void {
     const status = (changeEvent.target as HTMLSelectElement).value as
       | TrackingStatus
       | 'remove'
       | '';
     const user = this.currentUser();
-    const source = this.event().source;
     if (!user || !status || source.sourceId === undefined) {
       return;
     }
@@ -236,8 +250,8 @@ export class TimelineEventItem implements OnInit {
       medium: source.medium,
     };
 
-    if (this.isGroupedMedium()) {
-      const unitId = this.containerUnitId();
+    if (this.isGroupedMedium(source)) {
+      const unitId = this.containerUnitId(source);
       if (unitId === null) {
         return;
       }
@@ -245,7 +259,7 @@ export class TimelineEventItem implements OnInit {
         this.libraryService.clearUnitProgress(userId, material.id, unitId).subscribe();
         return;
       }
-      if (!this.trackedItem()) {
+      if (!this.trackedItem(source)) {
         this.libraryService
           .addTracked(userId, material, status)
           .pipe(switchMap(() => this.libraryService.setStatus(userId, material.id, status, unitId)))
@@ -260,7 +274,7 @@ export class TimelineEventItem implements OnInit {
       this.libraryService.removeTracked(userId, material.id).subscribe();
       return;
     }
-    if (this.trackedItem()) {
+    if (this.trackedItem(source)) {
       this.libraryService.setStatus(userId, material.id, status).subscribe();
       return;
     }
