@@ -94,7 +94,7 @@ export class Timeline {
   /**
    * When provided, only events whose source ID is in this list are shown.
    * Used by {@link KnownTimelinePage} to display a per-source timeline.
-   * `null` or empty means show all events.
+   * `null` means show all events; an empty array means show none.
    */
   readonly sourceIds = input<readonly string[] | null>(null);
 
@@ -111,12 +111,13 @@ export class Timeline {
   /**
    * Events filtered by source IDs (when in Known Timeline mode).
    *
-   * Returns all events when `sourceIds` is null/empty, otherwise
-   * filters to only events from matching source materials.
+   * Returns all events only when `sourceIds` is null (unrestricted mode);
+   * an empty array restricts the timeline to nothing, otherwise filters
+   * to only events from matching source materials.
    */
   protected readonly sourceFilteredEvents = computed(() => {
     const ids = this.sourceIds();
-    if (ids === null || ids.length === 0) {
+    if (ids === null) {
       return this.events();
     }
     return this.events().filter(

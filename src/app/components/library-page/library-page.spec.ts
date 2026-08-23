@@ -33,13 +33,15 @@ describe('LibraryPage', () => {
     expect(fixture.nativeElement.querySelectorAll('.hub-card').length).toBe(0);
   });
 
-  it('shows hub links for the tracked events and known timeline', async () => {
+  it('shows hub links for tracked events, wish list, and known timeline', async () => {
     const fixture = await setup(USER);
     const cards = fixture.nativeElement.querySelectorAll('.hub-card');
-    expect(cards.length).toBe(2);
+    expect(cards.length).toBe(3);
     expect(fixture.nativeElement.textContent).toContain('My Tracked Events');
+    expect(fixture.nativeElement.textContent).toContain('My Wish List');
     expect(fixture.nativeElement.textContent).toContain('Known Timeline');
     expect((cards[0] as HTMLAnchorElement).getAttribute('href')).toBe('/library/tracked');
-    expect((cards[1] as HTMLAnchorElement).getAttribute('href')).toBe('/library/timeline');
+    expect((cards[1] as HTMLAnchorElement).getAttribute('href')).toBe('/library/wish-list');
+    expect((cards[2] as HTMLAnchorElement).getAttribute('href')).toBe('/library/timeline');
   });
 });

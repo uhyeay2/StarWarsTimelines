@@ -6,12 +6,14 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { LibraryItem } from '../../models/library-item';
+import { TrackingStatus } from '../../models/tracking-status';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
 import { CatalogEventService, CatalogEvent } from '../../services/catalog-event.service';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
+import { StatusFilter } from '../status-filter/status-filter';
 import { Timeline } from '../timeline/timeline';
 import { KnownTimelinePage } from './known-timeline-page';
 
@@ -92,10 +94,17 @@ function timelineSourceIds(fixture: ComponentFixture<KnownTimelinePage>): readon
   return debugElement?.componentInstance.sourceIds() ?? null;
 }
 
-function toggleButton(fixture: ComponentFixture<KnownTimelinePage>, label: string): HTMLElement {
-  return [...fixture.nativeElement.querySelectorAll('.status-toggle')].find(
+function filterTab(fixture: ComponentFixture<KnownTimelinePage>, label: string): HTMLElement {
+  return [...fixture.nativeElement.querySelectorAll('.filter-tab')].find(
     (el) => (el as HTMLElement).textContent?.trim() === label,
   ) as HTMLElement;
+}
+
+function clickTabs(fixture: ComponentFixture<KnownTimelinePage>, ...labels: string[]): void {
+  for (const label of labels) {
+    filterTab(fixture, label).click();
+    fixture.detectChanges();
+  }
 }
 
 describe('KnownTimelinePage', () => {
@@ -105,43 +114,64 @@ describe('KnownTimelinePage', () => {
     expect(fixture.debugElement.query(By.directive(Timeline))).toBeNull();
   });
 
-  it('includes only Completed by default and passes the ids to the timeline', async () => {
+  it('includes all tracked statuses by default and passes the ids to the timeline', async () => {
     const { fixture, component } = await setup(USER);
-    expect(component.includeCompleted()).toBe(true);
-    expect(component.includeInProgress()).toBe(false);
-    expect(component.includeWishListed()).toBe(false);
+    expect(component.statusSelection()).toEqual([]);
+    expect(component.consumedIds()).toEqual([
+      'material-episode-i',
+      'material-episode-ii',
+      'material-episode-ix',
+    ]);
+    expect(timelineSourceIds(fixture)).toEqual([
+      'material-episode-i',
+      'material-episode-ii',
+      'material-episode-ix',
+    ]);
+  });
+
+  it('shows only Completed items when that status is selected', async () => {
+    const { fixture, component } = await setup(USER);
+    clickTabs(fixture, 'Completed');
+
+    expect(component.statusSelection()).toEqual<TrackingStatus[]>(['Completed']);
     expect(component.consumedIds()).toEqual(['material-episode-i']);
-    expect(timelineSourceIds(fixture)).toEqual(['material-episode-i']);
   });
 
-  it('adds In Progress items when that toggle is activated', async () => {
+  it('shows only In Progress items when that status is selected', async () => {
     const { fixture, component } = await setup(USER);
-    toggleButton(fixture, 'In Progress').click();
-    fixture.detectChanges();
+    clickTabs(fixture, 'In progress');
 
-    expect(component.consumedIds()).toEqual(['material-episode-i', 'material-episode-ii']);
-    expect(timelineSourceIds(fixture)).toEqual(['material-episode-i', 'material-episode-ii']);
+    expect(component.statusSelection()).toEqual<TrackingStatus[]>(['In progress']);
+    expect(component.consumedIds()).toEqual(['material-episode-ii']);
+    expect(timelineSourceIds(fixture)).toEqual(['material-episode-ii']);
   });
 
-  it('adds Wish Listed items when that toggle is activated', async () => {
+  it('supports combining statuses such as In Progress and Wish Listed', async () => {
     const { fixture, component } = await setup(USER);
-    toggleButton(fixture, 'Wish Listed').click();
-    fixture.detectChanges();
+    clickTabs(fixture, 'In progress', 'Wish Listed');
 
-    expect(component.consumedIds()).toEqual(['material-episode-i', 'material-episode-ix']);
+    expect(component.statusSelection()).toEqual<TrackingStatus[]>(['In progress', 'Wish Listed']);
+    expect(component.consumedIds()).toEqual(['material-episode-ii', 'material-episode-ix']);
+    expect(timelineSourceIds(fixture)).toEqual(['material-episode-ii', 'material-episode-ix']);
   });
 
-  it('removes Completed items when the default toggle is deactivated', async () => {
+  it('returns to All when the last selected status is deselected', async () => {
     const { fixture, component } = await setup(USER);
-    toggleButton(fixture, 'Completed').click();
-    fixture.detectChanges();
+    clickTabs(fixture, 'Completed');
+    clickTabs(fixture, 'Completed');
 
-    expect(component.consumedIds()).toEqual([]);
+    expect(component.statusSelection()).toEqual([]);
+    expect(component.consumedIds().length).toBe(3);
   });
 
-  it('marks active status toggles with the active class', async () => {
+  it('marks active status filters with the active class', async () => {
     const { fixture } = await setup(USER);
-    expect(toggleButton(fixture, 'Completed').classList.contains('status-toggle--active')).toBe(true);
-    expect(toggleButton(fixture, 'In Progress').classList.contains('status-toggle--active')).toBe(false);
+    expect(filterTab(fixture, 'All').classList.contains('filter-tab--active')).toBe(true);
+    expect(filterTab(fixture, 'Completed').classList.contains('filter-tab--active')).toBe(false);
+
+    clickTabs(fixture, 'Completed');
+
+    expect(filterTab(fixture, 'All').classList.contains('filter-tab--active')).toBe(false);
+    expect(filterTab(fixture, 'Completed').classList.contains('filter-tab--active')).toBe(true);
   });
 });

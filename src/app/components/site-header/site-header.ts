@@ -60,6 +60,7 @@ export class SiteHeader {
   /** Library section options for the Library dropdown. */
   protected readonly libraryOptions: readonly NavDropdownOption[] = [
     { label: 'My Tracked Events', routerLink: '/library/tracked' },
+    { label: 'My Wish List', routerLink: '/library/wish-list' },
     { label: 'Known Timeline', routerLink: '/library/timeline' },
   ];
 

@@ -168,9 +168,8 @@ describe('Timeline', () => {
     expect(eventTitles()).toEqual(['Canon Only']);
   });
 
-  it('shows all events when no source ids are provided', () => {
+  it('shows all events when sourceIds is null', () => {
     fixture.componentRef.setInput('sourceIds', null);
-    fixture.componentRef.setInput('sourceIds', []);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
@@ -674,10 +673,10 @@ describe('Timeline', () => {
       expect(eventTitles()).toEqual(['Both', 'Canon Only']);
     });
 
-    it('returns all events when sourceIds is empty', () => {
+    it('returns no events when sourceIds is empty', () => {
       fixture.componentRef.setInput('sourceIds', []);
       fixture.detectChanges();
-      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
+      expect(eventTitles()).toEqual([]);
     });
 
     it('filters events to only those with matching source IDs', () => {

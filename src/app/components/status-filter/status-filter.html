@@ -1,0 +1,15 @@
+<!-- ─── Status Filter Tabs ─────────────────────────────────────────────── -->
+<div class="filter-tabs" role="group" [attr.aria-label]="label()">
+  @for (option of options; track option) {
+    <button
+      type="button"
+      role="switch"
+      class="filter-tab"
+      [class.filter-tab--active]="isSelected(option)"
+      [attr.aria-pressed]="isSelected(option)"
+      (click)="toggle(option)">
+      {{ option }}
+    </button>
+  }
+</div>
+<!-- ─── End Status Filter Tabs ─────────────────────────────────────────── -->

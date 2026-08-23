@@ -3,27 +3,30 @@
  *
  * Displays a filtered subset of the galactic timeline showing only events
  * from source materials the user has tracked in their library. The user
- * can toggle which tracking statuses (Completed, In Progress, Wish Listed)
- * to include via pill-style toggle buttons.
+ * can select which tracking statuses (All, Completed, In Progress, Wish
+ * Listed) to include via the shared {@link StatusFilter} multi-select tabs.
  *
  * Wraps the shared {@link Timeline} component with a `sourceIds` input
  * to restrict the visible events.
  *
  * @see {@link Timeline} for the underlying timeline rendering component.
  * @see {@link TrackedEventsPage} for managing tracked items.
+ * @see {@link StatusFilter} for the shared filter control.
  */
 
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { LibraryItem } from '../../models/library-item';
+import { TrackingStatus } from '../../models/tracking-status';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LoggerService } from '../../services/logging/logger.service';
+import { StatusFilter } from '../status-filter/status-filter';
 import { Timeline } from '../timeline/timeline';
 import { LoginPrompt } from '../login-prompt/login-prompt';
 
 @Component({
   selector: 'app-known-timeline-page',
-  imports: [Timeline, LoginPrompt],
+  imports: [StatusFilter, Timeline, LoginPrompt],
   templateUrl: './known-timeline-page.html',
   styleUrl: './known-timeline-page.scss',
 })
@@ -50,33 +53,27 @@ export class KnownTimelinePage {
   /** The user's tracked library items. */
   readonly tracked = signal<readonly LibraryItem[]>([]);
 
-  // ─── Status filter toggles ──────────────────────────────────────────────
+  // ─── Status filter ──────────────────────────────────────────────────────
 
-  /** Whether "Completed" items are included in the known timeline. */
-  readonly includeCompleted = signal(true);
-
-  /** Whether "In Progress" items are included in the known timeline. */
-  readonly includeInProgress = signal(false);
-
-  /** Whether "Wish Listed" items are included in the known timeline. */
-  readonly includeWishListed = signal(false);
+  /**
+   * Selected tracking statuses from the {@link StatusFilter} tabs.
+   * Empty means "All" statuses are included.
+   */
+  readonly statusSelection = signal<readonly TrackingStatus[]>([]);
 
   // ─── Computed state ─────────────────────────────────────────────────────
 
   /**
-   * IDs of tracked items whose status matches an active toggle.
+   * IDs of tracked items whose status matches the active selection.
    *
    * Passed to the {@link Timeline} component's `sourceIds` input to
    * restrict which events are displayed.
    */
   readonly consumedIds = computed(() => {
+    const selected = this.statusSelection();
     const ids = new Set<string>();
     for (const item of this.tracked()) {
-      const included =
-        (item.status === 'Completed' && this.includeCompleted()) ||
-        (item.status === 'In progress' && this.includeInProgress()) ||
-        (item.status === 'Wish Listed' && this.includeWishListed());
-      if (included) {
+      if (selected.length === 0 || selected.includes(item.status)) {
         ids.add(item.id);
       }
     }
@@ -99,23 +96,5 @@ export class KnownTimelinePage {
         .subscribe((items) => this.tracked.set(items));
       onCleanup(() => subscription.unsubscribe());
     });
-  }
-
-  // ─── Public methods ─────────────────────────────────────────────────────
-
-  /**
-   * Toggles a status filter on or off.
-   *
-   * @param key  The status toggle to flip.
-   */
-  toggleStatus(key: 'completed' | 'inProgress' | 'wishListed'): void {
-    this.logger.debug('[KnownTimelinePage] Status toggle', { key });
-    if (key === 'completed') {
-      this.includeCompleted.update((value) => !value);
-    } else if (key === 'inProgress') {
-      this.includeInProgress.update((value) => !value);
-    } else {
-      this.includeWishListed.update((value) => !value);
-    }
   }
 }

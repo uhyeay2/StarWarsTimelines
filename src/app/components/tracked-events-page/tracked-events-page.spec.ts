@@ -1,11 +1,13 @@
 import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
+import { StatusFilter } from '../status-filter/status-filter';
 import { TrackedEventsPage } from './tracked-events-page';
 
 const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
@@ -143,6 +145,17 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
   return { fixture, component, mocks: { libraryMock } };
 }
 
+function filterTab(fixture: ComponentFixture<TrackedEventsPage>, label: string): HTMLElement {
+  const debugElement = fixture.debugElement.query(By.directive(StatusFilter));
+  return [...debugElement.nativeElement.querySelectorAll('.filter-tab')].find(
+    (el) => (el as HTMLElement).textContent?.trim() === label,
+  ) as HTMLElement;
+}
+
+function mediumHeaders(fixture: ComponentFixture<TrackedEventsPage>): HTMLElement[] {
+  return [...fixture.nativeElement.querySelectorAll('.medium-header .medium-label')] as HTMLElement[];
+}
+
 describe('TrackedEventsPage', () => {
   it('shows a login prompt when logged out', async () => {
     const { fixture, mocks } = await setup(null);
@@ -183,16 +196,78 @@ describe('TrackedEventsPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Star Wars: Episode I - The Phantom Menace');
   });
 
-  it('filters items by status tab', async () => {
-    const { fixture, component } = await setup(USER);
-    const tab = [...fixture.nativeElement.querySelectorAll('.filter-tab')].find(
-      (el) => (el as HTMLElement).textContent?.trim() === 'Wish Listed',
-    ) as HTMLElement;
-    tab.click();
-    fixture.detectChanges();
+  describe('status filter', () => {
+    it('shows all items by default (All selected)', async () => {
+      const { component } = await setup(USER);
+      expect(component.statusSelection()).toEqual([]);
+      expect(component.filteredItems().length).toBe(4);
+    });
 
-    expect(component.filter()).toBe('Wish Listed');
-    expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(2);
+    it('filters items when a single status tab is selected', async () => {
+      const { fixture, component } = await setup(USER);
+      filterTab(fixture, 'Wish Listed').click();
+      fixture.detectChanges();
+
+      expect(component.statusSelection()).toEqual(['Wish Listed']);
+      expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(2);
+    });
+
+    it('supports combining multiple status selections', async () => {
+      const { fixture, component } = await setup(USER);
+      filterTab(fixture, 'In progress').click();
+      fixture.detectChanges();
+      filterTab(fixture, 'Completed').click();
+      fixture.detectChanges();
+
+      expect(component.statusSelection()).toEqual(['In progress', 'Completed']);
+      expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(2);
+    });
+
+    it('returns to All when the last selected status is deselected', async () => {
+      const { fixture, component } = await setup(USER);
+      filterTab(fixture, 'Completed').click();
+      fixture.detectChanges();
+
+      filterTab(fixture, 'Completed').click();
+      fixture.detectChanges();
+
+      expect(component.statusSelection()).toEqual([]);
+      expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(4);
+    });
+  });
+
+  describe('medium grouping', () => {
+    it('groups visible items by medium in canonical order with counts', async () => {
+      const { fixture } = await setup(USER);
+      const labels = mediumHeaders(fixture).map((el) => el.textContent?.trim());
+      expect(labels).toEqual(['Movie', 'Book']);
+
+      const counts = [...fixture.nativeElement.querySelectorAll('.medium-count')].map(
+        (el) => (el as HTMLElement).textContent?.trim(),
+      );
+      expect(counts).toEqual(['3 items', '1 item']);
+    });
+
+    it('omits media without visible items when filtering', async () => {
+      const { fixture } = await setup(USER);
+      filterTab(fixture, 'Completed').click();
+      fixture.detectChanges();
+
+      const labels = mediumHeaders(fixture).map((el) => el.textContent?.trim());
+      expect(labels).toEqual(['Movie']);
+    });
+
+    it('collapses a medium group to hide its rows', async () => {
+      const { fixture } = await setup(USER);
+      const movieHeader = fixture.nativeElement.querySelector('.medium-header') as HTMLElement;
+      movieHeader.click();
+      fixture.detectChanges();
+
+      const titles = fixture.nativeElement.textContent;
+      expect(titles).not.toContain('Star Wars: Episode I - The Phantom Menace');
+      expect(titles).toContain('Darth Plagueis');
+      expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(1);
+    });
   });
 
   it('updates an item status when the select changes', async () => {
@@ -255,53 +330,10 @@ describe('TrackedEventsPage', () => {
     expect(mocks.libraryMock.removeTracked).not.toHaveBeenCalled();
   });
 
-  it('hides reorder controls outside the Wish Listed view', async () => {
+  it('never shows reorder controls or hints on this page', async () => {
     const { fixture } = await setup(USER);
     expect(fixture.nativeElement.querySelectorAll('.move-button').length).toBe(0);
     expect(fixture.nativeElement.querySelector('.reorder-hint')).toBeNull();
-  });
-
-  it('shows reorder controls in the Wish Listed view and moves items', async () => {
-    const { fixture, mocks } = await setup(USER);
-    const tab = [...fixture.nativeElement.querySelectorAll('.filter-tab')].find(
-      (el) => (el as HTMLElement).textContent?.trim() === 'Wish Listed',
-    ) as HTMLElement;
-    tab.click();
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelectorAll('.move-button').length).toBe(4);
-    expect(fixture.nativeElement.querySelector('.reorder-hint')).toBeTruthy();
-
-    const rows = fixture.nativeElement.querySelectorAll('app-tracked-item-row');
-    const downButton = rows[0].querySelector('.move-button:nth-of-type(2)') as HTMLElement;
-    downButton.click();
-
-    expect(mocks.libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      'material-episode-i',
-      'material-episode-ii',
-      'material-darth-plagueis',
-      'material-episode-ix',
-    ]);
-  });
-
-  it('reorders the wish list by dragging one item onto another', async () => {
-    const { fixture, mocks } = await setup(USER);
-    const tab = [...fixture.nativeElement.querySelectorAll('.filter-tab')].find(
-      (el) => (el as HTMLElement).textContent?.trim() === 'Wish Listed',
-    ) as HTMLElement;
-    tab.click();
-    fixture.detectChanges();
-
-    const rows = fixture.nativeElement.querySelectorAll('.tracked-item-row');
-    rows[1].dispatchEvent(new Event('dragstart', { bubbles: true }));
-    rows[0].dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-    rows[0].dispatchEvent(new Event('drop', { bubbles: true }));
-
-    expect(mocks.libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      'material-episode-i',
-      'material-episode-ii',
-      'material-darth-plagueis',
-      'material-episode-ix',
-    ]);
+    expect(fixture.nativeElement.querySelectorAll('[draggable="true"]').length).toBe(0);
   });
 });

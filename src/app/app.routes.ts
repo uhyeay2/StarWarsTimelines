@@ -42,6 +42,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'wish-list',
+        loadComponent: () =>
+          import('./components/wish-list-page/wish-list-page').then((m) => m.WishListPage),
+      },
+      {
         path: 'timeline',
         loadComponent: () =>
           import('./components/known-timeline-page/known-timeline-page').then(
