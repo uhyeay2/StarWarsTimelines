@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LibraryItem } from '../../models/library-item';
+import { TrackingStatus } from '../../models/tracking-status';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
@@ -27,9 +28,9 @@ const TRACKED: LibraryItem[] = [
     status: 'In progress',
     favorite: false,
     units: [
-      { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false },
-      { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: false },
-      { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: true },
+      { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', status: null },
+      { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', parentUnitId: 'season-1', status: null },
+      { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', parentUnitId: 'season-1', status: 'Completed' },
     ],
   },
   {
@@ -105,7 +106,7 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
     of(TRACKED.filter((item) => item.id !== materialId)),
   );
   libraryMock.setUnitProgress.mockImplementation(
-    (userId: string, materialId: string, unitId: string, isCompleted: boolean) => {
+    (userId: string, materialId: string, unitId: string, status: TrackingStatus) => {
       void userId;
       void unitId;
       return of(
@@ -114,7 +115,7 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
             ? {
                 ...item,
                 units: (item.units ?? []).map((unit) =>
-                  unit.id === unitId ? { ...unit, isCompleted } : unit,
+                  unit.id === unitId ? { ...unit, status } : unit,
                 ),
               }
             : item,

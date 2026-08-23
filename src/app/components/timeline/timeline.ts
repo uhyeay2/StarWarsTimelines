@@ -33,6 +33,7 @@ import { NavPreferencesService } from '../../services/nav-preferences/nav-prefer
 import { LoggerService } from '../../services/logging/logger.service';
 import { TimelineEventsService } from '../../services/timeline-events/timeline-events.service';
 import { TimelineEvent } from '../../models/timeline-event';
+import { TrackedScopeMap, depictionIsTracked } from '../../models/tracking-selection';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../filter-group/filter-group';
 import { ErrorState } from '../error-state/error-state';
@@ -98,6 +99,17 @@ export class Timeline {
    */
   readonly sourceIds = input<readonly string[] | null>(null);
 
+  /**
+   * Unit-level tracked scope per material ID (see {@link buildTrackedScope}).
+   * When provided alongside `sourceIds`, a unit-pinned depiction only counts
+   * when its pinned unit falls inside the material's tracked scope — so a
+   * user tracking Season 1 of a show does not see events pinned to Season 2.
+   * Unpinned depictions count whenever the material itself is in scope, and
+   * material-level scopes cover every depiction. `null` disables this
+   * unit-scoping (plain material-ID filtering only).
+   */
+  readonly trackedUnitScope = input<TrackedScopeMap | null>(null);
+
   /** Page heading displayed above the timeline. */
   readonly heading = input('Galactic Timeline');
 
@@ -113,15 +125,24 @@ export class Timeline {
    *
    * Returns all events only when `sourceIds` is null (unrestricted mode);
    * an empty array restricts the timeline to nothing, otherwise filters
-   * to events depicted by at least one matching source material.
+   * to events depicted by at least one matching source material. When a
+   * {@link trackedUnitScope} is provided, unit-pinned depictions must also
+   * fall inside their material's tracked scope (a depiction pinned to
+   * Season 2 stays hidden while only Season 1 is tracked).
    */
   protected readonly sourceFilteredEvents = computed(() => {
     const ids = this.sourceIds();
     if (ids === null) {
       return this.events();
     }
+    const scope = this.trackedUnitScope();
     return this.events().filter((event) =>
-      event.sources.some((source) => source.sourceId !== undefined && ids.includes(source.sourceId)),
+      event.sources.some(
+        (source) =>
+          source.sourceId !== undefined &&
+          ids.includes(source.sourceId) &&
+          (scope === null || depictionIsTracked(scope, source.sourceId, source.unit?.id)),
+      ),
     );
   });
 

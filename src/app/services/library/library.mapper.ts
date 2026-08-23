@@ -25,8 +25,8 @@ import { LibraryItemDto, LibraryUnitDto } from './library.dto';
  * {@link LibraryUnitDto}.
  *
  * Checks for the presence and correct type of every mandatory field.
- * `null`-able fields (`groupNumber`, `title`) are not validated beyond
- * type since `null` is a valid value for them.
+ * `null`-able fields (`groupNumber`, `title`, `status`, `parentUnitId`) are
+ * not validated beyond type since `null` is a valid value for them.
  *
  * @param dto  The value to validate.
  * @returns `true` when the value satisfies the `LibraryUnitDto` contract.
@@ -40,7 +40,7 @@ export function isValidUnitDto(dto: unknown): dto is LibraryUnitDto {
     typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
     typeof d['unitType'] === 'number' &&
     typeof d['number'] === 'number' &&
-    typeof d['isCompleted'] === 'boolean'
+    (d['status'] === null || typeof d['status'] === 'number')
   );
 }
 
@@ -48,9 +48,11 @@ export function isValidUnitDto(dto: unknown): dto is LibraryUnitDto {
  * Type guard that verifies a raw value has the required shape of a
  * {@link LibraryItemDto}.
  *
- * Checks for the presence and correct type of every mandatory field.
- * The `units` array is checked for being an actual `Array`; individual
- * unit validation is deferred to {@link isValidUnitDto} during mapping.
+ * Checks for the presence and correct type of every mandatory field. The
+ * `status` field may be `null` (materials tracking through nested container
+ * units report no material-level status). The `units` array is checked for
+ * being an actual `Array`; individual unit validation is deferred to
+ * {@link isValidUnitDto} during mapping.
  *
  * @param dto  The value to validate.
  * @returns `true` when the value satisfies the `LibraryItemDto` contract.
@@ -65,7 +67,7 @@ export function isValidItemDto(dto: unknown): dto is LibraryItemDto {
     typeof d['title'] === 'string' &&
     typeof d['medium'] === 'number' &&
     typeof d['canonType'] === 'number' &&
-    typeof d['status'] === 'number' &&
+    (d['status'] === null || typeof d['status'] === 'number') &&
     typeof d['isFavorite'] === 'boolean' &&
     Array.isArray(d['units'])
   );
@@ -76,8 +78,11 @@ export function isValidItemDto(dto: unknown): dto is LibraryItemDto {
 /**
  * Maps a single {@link LibraryUnitDto} to a domain-level {@link LibraryUnit}.
  *
- * Numeric `unitType` codes are converted to string unions. `null` fields for
- * `groupNumber` and `title` are mapped to `undefined`.
+ * Numeric `unitType` and `status` codes are converted to string unions.
+ * `null` fields for `groupNumber`, `title`, and `parentUnitId` are mapped to
+ * `undefined`; a `null` `status` maps to `null` (untracked). Nested children
+ * (`dto.units`) are intentionally ignored here — use {@link mapUnitTree} when
+ * the wire format nests children beneath their container.
  *
  * @param dto  The raw unit DTO with numeric enum codes.
  * @returns The mapped unit with string-union `unitType`.
@@ -89,18 +94,41 @@ export function mapLibraryUnit(dto: LibraryUnitDto): LibraryUnit {
     groupNumber: dto.groupNumber ?? undefined,
     number: dto.number,
     title: dto.title ?? undefined,
-    isCompleted: dto.isCompleted,
-    isTracked: dto.isTracked,
+    parentUnitId: dto.parentUnitId ?? undefined,
+    status: dto.status === null ? null : statusFromApiCode(dto.status),
   };
+}
+
+/**
+ * Flattens one node of the wire format's pruned unit hierarchy into domain
+ * units in depth-first order (the node itself, then each nested branch).
+ *
+ * Each child carries its own `parentUnitId` on the wire, so the flattened
+ * list preserves the container links the components resolve groups with.
+ * Malformed entries — including anywhere inside a nested branch — are
+ * silently dropped rather than causing runtime errors.
+ *
+ * @param dto  The raw unit DTO whose nested `units` are flattened too.
+ * @returns The mapped subtree as a flat list in depth-first display order.
+ */
+function mapUnitTree(dto: LibraryUnitDto): LibraryUnit[] {
+  if (!isValidUnitDto(dto)) {
+    return [];
+  }
+
+  const children = dto.units ?? [];
+
+  return [mapLibraryUnit(dto), ...children.flatMap(mapUnitTree)];
 }
 
 /**
  * Maps a {@link LibraryItemDto} to a domain-level {@link LibraryItem}.
  *
- * Numeric enum codes for `medium` and `status` are converted to string unions.
- * The `units` array is filtered through {@link isValidUnitDto} before mapping
- * so that malformed unit entries are silently dropped rather than causing
- * runtime errors.
+ * Numeric enum codes for `medium` and `status` are converted to string unions;
+ * a `null` item status (container-based materials) maps to `null`. The wire
+ * format's pruned unit hierarchy is flattened into the domain model's flat
+ * depth-first units list via {@link mapUnitTree}, so consumers keep working
+ * with `parentUnitId` links instead of nested arrays.
  *
  * @param dto  The raw DTO with numeric enum codes.
  * @returns The mapped library item with string-union enums and a readonly units array.
@@ -110,10 +138,8 @@ export function mapLibraryItem(dto: LibraryItemDto): LibraryItem {
     id: dto.sourceMaterialId,
     title: dto.title,
     medium: mediumFromApiCode(dto.medium),
-    status: statusFromApiCode(dto.status),
+    status: dto.status === null ? null : statusFromApiCode(dto.status),
     favorite: dto.isFavorite,
-    units: dto.units
-      .filter(isValidUnitDto)
-      .map(mapLibraryUnit) as readonly LibraryUnit[],
+    units: dto.units.flatMap(mapUnitTree) as readonly LibraryUnit[],
   };
 }

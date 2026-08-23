@@ -43,6 +43,15 @@ export function sourceUnitLabel(unit: SourceMaterialUnit): string {
     case 'Level':
       base = `Level ${unit.number}`;
       break;
+    case 'Collection':
+      base = `Collection ${unit.number}`;
+      break;
+    case 'Book':
+      base =
+        unit.groupNumber === undefined
+          ? `Book ${unit.number}`
+          : `Collection ${unit.groupNumber} · Book ${unit.number}`;
+      break;
   }
   return unit.title ? `${base}: ${unit.title}` : base;
 }
@@ -78,5 +87,9 @@ export function sourceUnitDetail(unit: SourceMaterialUnit | undefined): string |
       return `Volume ${unit.number}`;
     case 'Level':
       return `Level ${unit.number}`;
+    case 'Collection':
+      return `Collection ${unit.number}`;
+    case 'Book':
+      return unit.title ? `Book ${unit.number}: ${unit.title}` : `Book ${unit.number}`;
   }
 }

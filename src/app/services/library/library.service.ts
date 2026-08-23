@@ -511,38 +511,40 @@ export class LibraryService {
   }
 
   /**
-   * Updates the completion status of a unit within a library item.
+   * Updates the tracking status of a unit within a library item.
    *
-   * Performs a targeted partial reload of the affected material.
+   * Only in-progress and completed statuses are stored per unit; wish-listing
+   * a unit removes its progress row server-side. Performs a targeted partial
+   * reload of the affected material.
    *
-   * @param userId      The ID of the user.
-   * @param materialId  The source material ID.
-   * @param unitId      The unit ID to update.
-   * @param isCompleted Whether the unit should be marked as completed.
+   * @param userId     The ID of the user.
+   * @param materialId The source material ID.
+   * @param unitId     The unit ID to update.
+   * @param status     The new tracking status for the unit.
    * @returns An observable of the refreshed library after the update.
    */
   setUnitProgress(
     userId: string,
     materialId: string,
     unitId: string,
-    isCompleted: boolean,
+    status: TrackingStatus,
   ): Observable<readonly LibraryItem[]> {
-    const body: UpdateUnitProgressRequest = { isCompleted };
+    const body: UpdateUnitProgressRequest = { status: statusToApiCode(status) };
     return this.mutateAndReload(
       this.http.put<void>(this.urlForUnit(userId, materialId, unitId), body),
       userId,
       materialId,
       'Unable to update unit progress.',
       'setUnitProgress',
-      { unitId, isCompleted },
+      { unitId, status },
     );
   }
 
   /**
-   * Clears the tracking progress of a unit within a library item, including
-   * any child units (e.g. a season's episodes).
+   * Clears the tracking progress of a single unit within a library item.
    *
-   * Performs a full-library reload since clearing the last tracked unit of a
+   * Only that unit's own row is removed; child units keep their progress.
+   * Triggers a full-library reload since clearing the last tracked unit of a
    * material removes the library entry entirely.
    *
    * @param userId     The ID of the user.

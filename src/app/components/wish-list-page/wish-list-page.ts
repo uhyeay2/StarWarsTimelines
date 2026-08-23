@@ -147,16 +147,16 @@ export class WishListPage {
   /**
    * Updates unit progress for a wish listed item.
    *
-   * @param materialId   The source material ID.
-   * @param unitId       The unit ID to update.
-   * @param isCompleted  Whether the unit is completed.
+   * @param materialId  The source material ID.
+   * @param unitId      The unit ID to update.
+   * @param status      The new tracking status for the unit.
    */
-  setUnitProgress(materialId: string, unitId: string, isCompleted: boolean): void {
+  setUnitProgress(materialId: string, unitId: string, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
     }
-    this.libraryService.setUnitProgress(userId, materialId, unitId, isCompleted).subscribe();
+    this.libraryService.setUnitProgress(userId, materialId, unitId, status).subscribe();
   }
 
   // ─── Reorder methods ────────────────────────────────────────────────────

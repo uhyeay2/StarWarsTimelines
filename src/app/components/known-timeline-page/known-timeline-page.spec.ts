@@ -43,7 +43,7 @@ const TRACKED: LibraryItem[] = [
   },
 ];
 
-async function setup(currentUser: User | null): Promise<{
+async function setup(currentUser: User | null, tracked: LibraryItem[] = TRACKED): Promise<{
   fixture: ComponentFixture<KnownTimelinePage>;
   component: KnownTimelinePage;
 }> {
@@ -53,7 +53,7 @@ async function setup(currentUser: User | null): Promise<{
     providers: [
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
-      { provide: LibraryService, useValue: { getTracked: () => of(TRACKED) } },
+      { provide: LibraryService, useValue: { getTracked: () => of(tracked) } },
       { provide: TimelineEventsService, useValue: { getEvents$: () => of([]), loading: signal(false), error: signal(null), events: signal([]), getEvents: vi.fn(), invalidate: vi.fn() } },
       {
         provide: CatalogService,
@@ -162,6 +162,39 @@ describe('KnownTimelinePage', () => {
 
     expect(component.statusSelection()).toEqual([]);
     expect(component.consumedIds().length).toBe(3);
+  });
+
+  it('scopes unit-tracked materials to their tracked units on the timeline', async () => {
+    const { fixture, component } = await setup(USER, [
+      ...TRACKED,
+      {
+        id: 'material-tcw',
+        title: 'Star Wars: The Clone Wars',
+        medium: 'Animated Show',
+        status: null,
+        favorite: false,
+        units: [
+          { id: 'season-1', unitType: 'Season', number: 1, status: 'Completed' },
+          {
+            id: 'ep-1',
+            unitType: 'Episode',
+            groupNumber: 1,
+            number: 1,
+            status: null,
+            parentUnitId: 'season-1',
+          },
+        ],
+      },
+    ]);
+
+    // The show is in scope, but only through its tracked units.
+    expect(component.consumedIds()).toContain('material-tcw');
+    expect(component.trackedUnitScope().get('material-tcw')).toEqual(
+      new Set(['season-1', 'ep-1']),
+    );
+
+    const timeline = fixture.debugElement.query(By.directive(Timeline)).componentInstance;
+    expect(timeline.trackedUnitScope().get('material-tcw')).toEqual(new Set(['season-1', 'ep-1']));
   });
 
   it('marks active status filters with the active class', async () => {

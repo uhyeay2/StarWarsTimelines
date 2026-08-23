@@ -307,7 +307,7 @@ describe('SourceMaterialCatalog', () => {
     loadMaterials([{ id: 'material-1', title: 'The Mandalorian', medium: 4, canonType: 0 }]);
 
     component.expandedMaterialId.set('material-1');
-    component.unitsByMaterial.set({ 'material-1': [{ id: 'unit-1', sourceMaterialId: 'material-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1: The Mandalorian' }] });
+    component.unitsByMaterial.set({ 'material-1': [{ id: 'unit-1', sourceMaterialId: 'material-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1: The Mandalorian', parentUnitId: null }] });
     component.expandedSeasonKeys.update((s) => new Set([...s, 'material-1:1']));
     fixture.detectChanges();
 
@@ -318,6 +318,7 @@ describe('SourceMaterialCatalog', () => {
       groupNumber: 1,
       number: 1,
       title: 'Chapter 1: The Mandalorian',
+      parentUnitId: null,
     };
     component.requestUnitDelete('material-1', unit);
     component.confirmUnitDelete();
@@ -788,14 +789,14 @@ describe('SourceMaterialCatalog', () => {
 
       // Set units with Season unitType to trigger group tracking
       (component as any).unitsByMaterial.set({ 'm-1': [
-        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1' },
-        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2' },
+        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', parentUnitId: null },
+        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', parentUnitId: null },
       ] });
 
       // Pre-track the material with Season 1 tracked
       mockLibraryService.items.set([
-        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: 'In progress', favorite: false, units: [
-          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
+        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
+          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', status: 'In progress' },
         ] },
       ]);
       fixture.detectChanges();
@@ -812,14 +813,14 @@ describe('SourceMaterialCatalog', () => {
 
       // Set units with Season unitType to trigger group tracking
       (component as any).unitsByMaterial.set({ 'm-1': [
-        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1' },
-        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2' },
+        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', parentUnitId: null },
+        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', parentUnitId: null },
       ] });
 
       // Season 1 is tracked and completed; Season 2 is untracked.
       mockLibraryService.items.set([
-        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: 'In progress', favorite: false, units: [
-          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', isCompleted: true, isTracked: true },
+        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
+          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', status: 'Completed' },
         ] },
       ]);
       fixture.detectChanges();
@@ -843,14 +844,14 @@ describe('SourceMaterialCatalog', () => {
 
       // Set units with Season unitType to trigger group tracking
       (component as any).unitsByMaterial.set({ 'm-1': [
-        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1' },
-        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2' },
+        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', parentUnitId: null },
+        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', parentUnitId: null },
       ] });
 
       // Pre-track the material with Season 1 tracked
       mockLibraryService.items.set([
-        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: 'In progress', favorite: false, units: [
-          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
+        { id: 'm-1', title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
+          { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', status: 'In progress' },
         ] },
       ]);
       fixture.detectChanges();
@@ -871,9 +872,9 @@ describe('SourceMaterialCatalog', () => {
 
       // Set units with Season unitType to trigger group tracking
       (component as any).unitsByMaterial.set({ 'm-1': [
-        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1' },
-        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2' },
-        { id: 's3', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 3, title: 'Season 3' },
+        { id: 's1', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', parentUnitId: null },
+        { id: 's2', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', parentUnitId: null },
+        { id: 's3', sourceMaterialId: 'm-1', unitType: 'Season' as const, groupNumber: 1, number: 3, title: 'Season 3', parentUnitId: null },
       ] });
 
       // Mirrors the reported bug scenario: Season 1 has completed episodes only,
@@ -884,17 +885,17 @@ describe('SourceMaterialCatalog', () => {
           id: 'm-1',
           title: 'The Clone Wars',
           medium: 'Live Action Show',
-          status: 'In progress',
+          status: null,
           favorite: false,
           units: [
-            { id: 's1e1', unitType: 'Episode' as const, groupNumber: 1, number: 1, isCompleted: true, isTracked: true },
-            { id: 's1e2', unitType: 'Episode' as const, groupNumber: 1, number: 2, isCompleted: true, isTracked: true },
-            { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', isCompleted: false, isTracked: false },
-            { id: 's2', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', isCompleted: false, isTracked: true },
-            { id: 's2e1', unitType: 'Episode' as const, groupNumber: 2, number: 1, isCompleted: false, isTracked: true },
-            { id: 's2e2', unitType: 'Episode' as const, groupNumber: 2, number: 2, isCompleted: false, isTracked: true },
-            { id: 's3', unitType: 'Season' as const, groupNumber: 1, number: 3, title: 'Season 3', isCompleted: false, isTracked: false },
-            { id: 's3e1', unitType: 'Episode' as const, groupNumber: 3, number: 1, isCompleted: false, isTracked: false },
+            { id: 's1e1', unitType: 'Episode' as const, groupNumber: 1, number: 1, parentUnitId: 's1', status: 'Completed' },
+            { id: 's1e2', unitType: 'Episode' as const, groupNumber: 1, number: 2, parentUnitId: 's1', status: 'Completed' },
+            { id: 's1', unitType: 'Season' as const, groupNumber: 1, number: 1, title: 'Season 1', status: null },
+            { id: 's2', unitType: 'Season' as const, groupNumber: 1, number: 2, title: 'Season 2', status: 'In progress' },
+            { id: 's2e1', unitType: 'Episode' as const, groupNumber: 2, number: 1, parentUnitId: 's2', status: 'In progress' },
+            { id: 's2e2', unitType: 'Episode' as const, groupNumber: 2, number: 2, parentUnitId: 's2', status: 'In progress' },
+            { id: 's3', unitType: 'Season' as const, groupNumber: 1, number: 3, title: 'Season 3', status: null },
+            { id: 's3e1', unitType: 'Episode' as const, groupNumber: 3, number: 1, parentUnitId: 's3', status: null },
           ],
         },
       ]);

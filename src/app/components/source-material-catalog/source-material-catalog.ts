@@ -29,11 +29,16 @@ interface UnitKey {
   unitId: string;
 }
 
-/** A season/volume group rendered in the non-admin expanded view. */
+/** Returns true for container unit types that act as group headers. */
+function isContainerType(unitType: UnitType): boolean {
+  return unitType === 'Season' || unitType === 'Volume' || unitType === 'Book';
+}
+
+/** A season/volume/book group rendered in the non-admin expanded view. */
 interface MaterialDisplayGroup {
   /** Stable key used for expand/collapse state. */
   expandKey: string;
-  /** The Season/Volume container unit id, or null when synthesized from group numbers. */
+  /** The Season/Volume/Book container unit id, or null when synthesized from group numbers. */
   containerId: string | null;
   /** Header label for the group. */
   label: string;
@@ -542,27 +547,24 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   readonly groupUnitLabel = (unit: ApiSourceMaterialUnit): string => {
-    if (unit.unitType === 'Season') {
-      return unit.title ?? `Season ${unit.number}`;
-    }
-    if (unit.unitType === 'Volume') {
-      return unit.title ?? `Volume ${unit.number}`;
-    }
-    return `${unit.unitType} ${unit.number}`;
+    return unit.title ?? `${unit.unitType} ${unit.number}`;
   };
 
   /**
-   * Builds the season/volume groups shown in the non-admin expanded view.
+   * Builds the season/volume/book groups shown in the non-admin expanded view.
    *
-   * Uses explicit Season/Volume units as group headers when present, matching
-   * child units by the container's number or group number. Otherwise,
-   * synthesizes groups from the child units' own group numbers (e.g. episodes
-   * tagged with a season number but no explicit Season unit).
+   * Uses explicit container units (Season/Volume/Book) as group headers when
+   * present, matching child units by `parentUnitId` first and falling back to
+   * the container's number or group number. Otherwise, synthesizes groups
+   * from the child units' own group numbers (e.g. episodes tagged with a
+   * season number but no explicit Season unit).
    */
   getDisplayGroups(materialId: string): readonly MaterialDisplayGroup[] {
     const units = this.unitsByMaterial()[materialId] ?? [];
-    const containers = units.filter((u) => u.unitType === 'Season' || u.unitType === 'Volume');
-    const details = units.filter((u) => u.unitType !== 'Season' && u.unitType !== 'Volume');
+    const containers = units.filter((u) => isContainerType(u.unitType));
+    const details = units.filter(
+      (u) => !isContainerType(u.unitType) && u.unitType !== 'Collection',
+    );
 
     if (containers.length > 0) {
       return containers.map((container) => ({
@@ -571,8 +573,10 @@ export class SourceMaterialCatalog implements OnInit {
         label: this.groupUnitLabel(container),
         units: details.filter(
           (u) =>
-            (container.number !== null && u.groupNumber === container.number) ||
-            (container.groupNumber !== null && u.groupNumber === container.groupNumber),
+            (u.parentUnitId
+              ? u.parentUnitId === container.id
+              : (container.number !== null && u.groupNumber === container.number) ||
+                (container.groupNumber !== null && u.groupNumber === container.groupNumber)),
         ),
       }));
     }
@@ -621,9 +625,9 @@ export class SourceMaterialCatalog implements OnInit {
     return ids;
   });
 
-  /** Returns true if the material's units render as season/volume groups. */
+  /** Returns true if the material's units render as season/volume/book groups. */
   private hasDisplayGroups(materialId: string, units: readonly ApiSourceMaterialUnit[]): boolean {
-    if (units.some((u) => u.unitType === 'Season' || u.unitType === 'Volume')) {
+    if (units.some((u) => isContainerType(u.unitType))) {
       return true;
     }
     if (!this.isGroupedMedium(materialId)) {
@@ -631,7 +635,7 @@ export class SourceMaterialCatalog implements OnInit {
     }
     const groupNumbers = new Set(
       units
-        .filter((u) => u.unitType !== 'Season' && u.unitType !== 'Volume')
+        .filter((u) => !isContainerType(u.unitType))
         .map((u) => u.groupNumber)
         .filter((g): g is number => g !== null),
     );
@@ -644,6 +648,22 @@ export class SourceMaterialCatalog implements OnInit {
       material?.medium === 'Comic' ||
       material?.medium === 'Live Action Show' ||
       material?.medium === 'Animated Show'
+    );
+  }
+
+  /**
+   * Returns true when the material's units nest inside container units
+   * (e.g. chapters inside books), meaning tracking happens per container
+   * rather than at the title level.
+   */
+  materialTracksViaContainers(materialId: string): boolean {
+    const units = this.catalogService.getUnitCache(materialId).data() ?? [];
+    if (units.length === 0) {
+      return false;
+    }
+    const ids = new Set(units.map((u) => u.id));
+    return units.some(
+      (u) => u.parentUnitId != null && u.parentUnitId !== '' && ids.has(u.parentUnitId),
     );
   }
 

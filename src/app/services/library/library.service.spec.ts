@@ -28,7 +28,8 @@ const UNIT_DTO_A: LibraryUnitDto = {
   groupNumber: null,
   number: 1,
   title: 'Chapter 1',
-  isCompleted: false,
+  status: 0,
+  parentUnitId: null,
 };
 
 const UNIT_DTO_B: LibraryUnitDto = {
@@ -37,7 +38,8 @@ const UNIT_DTO_B: LibraryUnitDto = {
   groupNumber: 2,
   number: 3,
   title: null,
-  isCompleted: true,
+  status: 1,
+  parentUnitId: null,
 };
 
 const ITEM_DTO_A: LibraryItemDto = {
@@ -66,7 +68,7 @@ const UNIT_A: LibraryUnit = {
   groupNumber: undefined,
   number: 1,
   title: 'Chapter 1',
-  isCompleted: false,
+  status: 'In progress',
 };
 
 const UNIT_B: LibraryUnit = {
@@ -75,7 +77,7 @@ const UNIT_B: LibraryUnit = {
   groupNumber: 2,
   number: 3,
   title: undefined,
-  isCompleted: true,
+  status: 'Completed',
 };
 
 const UNIT_C: LibraryUnit = {
@@ -84,7 +86,7 @@ const UNIT_C: LibraryUnit = {
   groupNumber: undefined,
   number: 1,
   title: 'Season 1',
-  isCompleted: false,
+  status: 'In progress',
 };
 
 const UNIT_DTO_C: LibraryUnitDto = {
@@ -93,7 +95,8 @@ const UNIT_DTO_C: LibraryUnitDto = {
   groupNumber: null,
   number: 1,
   title: 'Season 1',
-  isCompleted: false,
+  status: 0,
+  parentUnitId: null,
 };
 
 const ITEM_A: LibraryItem = {
@@ -172,8 +175,12 @@ describe('isValidUnitDto', () => {
     expect(isValidUnitDto({ ...UNIT_DTO_A, unitType: 'abc' })).toBe(false);
   });
 
-  it('returns false when isCompleted is not boolean', () => {
-    expect(isValidUnitDto({ ...UNIT_DTO_A, isCompleted: 1 })).toBe(false);
+  it('returns false when status is not a number or null', () => {
+    expect(isValidUnitDto({ ...UNIT_DTO_A, status: 'done' as unknown as number })).toBe(false);
+  });
+
+  it('accepts a null status', () => {
+    expect(isValidUnitDto({ ...UNIT_DTO_A, status: null })).toBe(true);
   });
 
   it('accepts null groupNumber and title', () => {
@@ -241,9 +248,9 @@ describe('mapLibraryUnit', () => {
     expect(mapLibraryUnit(UNIT_DTO_A).title).toBe('Chapter 1');
   });
 
-  it('preserves isCompleted', () => {
-    expect(mapLibraryUnit(UNIT_DTO_A).isCompleted).toBe(false);
-    expect(mapLibraryUnit(UNIT_DTO_B).isCompleted).toBe(true);
+  it('preserves the mapped unit status', () => {
+    expect(mapLibraryUnit(UNIT_DTO_A).status).toBe('In progress');
+    expect(mapLibraryUnit(UNIT_DTO_B).status).toBe('Completed');
   });
 
   it('preserves id and number', () => {
@@ -294,7 +301,7 @@ describe('mapLibraryItem', () => {
   it('drops invalid unit entries gracefully', () => {
     const dtoWithBadUnit: LibraryItemDto = {
       ...ITEM_DTO_A,
-      units: [UNIT_DTO_A, { id: '', unitType: 0, groupNumber: null, number: 1, title: null, isCompleted: false } as LibraryUnitDto],
+      units: [UNIT_DTO_A, { id: '', unitType: 0, groupNumber: null, number: 1, title: null, status: 0 } as LibraryUnitDto],
     };
     const result = mapLibraryItem(dtoWithBadUnit);
     expect(result.units).toHaveLength(1);
@@ -624,10 +631,10 @@ describe('LibraryService', () => {
       flushGetRequest().flush(makeItemList());
       await setupPromise;
 
-      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', true));
+      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', 'Completed'));
       const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u1`);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ isCompleted: true });
+      expect(req.request.body).toEqual({ status: 1 });
       req.flush({}, { status: 200, statusText: 'OK' });
 
       const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
@@ -639,7 +646,7 @@ describe('LibraryService', () => {
     });
 
     it('throws LibraryError with ValidationError code on 400', async () => {
-      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', false));
+      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', 'In progress'));
       httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u1`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
     });

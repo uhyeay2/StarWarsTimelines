@@ -7,4 +7,5 @@ export interface ApiSourceMaterialUnit {
   groupNumber: number | null;
   number: number;
   title: string | null;
+  parentUnitId: string | null;
 }

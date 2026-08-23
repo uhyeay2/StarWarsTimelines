@@ -15,12 +15,12 @@ const UNIT_ITEM: LibraryItem = {
   id: 'material-episode-ii',
   title: 'Star Wars: Episode II - Attack of the Clones',
   medium: 'Movie',
-  status: 'In progress',
+  status: null,
   favorite: false,
   units: [
-    { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
-    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: true },
-    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: false },
+    { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', parentUnitId: 'season-1', status: 'Completed' },
+    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', parentUnitId: 'season-1', status: null },
   ],
 };
 
@@ -31,8 +31,8 @@ const UNIT_ITEM_WITHOUT_SEASONS: LibraryItem = {
   status: 'In progress',
   favorite: false,
   units: [
-    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', isCompleted: true },
-    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', isCompleted: false },
+    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', status: 'Completed' },
+    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', status: null },
   ],
 };
 
@@ -40,15 +40,15 @@ const UNIT_ITEM_MULTI_SEASON: LibraryItem = {
   id: 'material-rebels',
   title: 'Star Wars: Rebels',
   medium: 'Live Action Show',
-  status: 'In progress',
+  status: null,
   favorite: false,
   units: [
-    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false, isTracked: true },
-    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', isCompleted: false, isTracked: false },
-    { id: 's3-container', unitType: 'Season', number: 3, title: 'Season 3', isCompleted: true, isTracked: true },
-    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Pilot', isCompleted: true },
-    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'The Disappeared', isCompleted: false },
-    { id: 'e3', unitType: 'Episode', groupNumber: 3, number: 1, title: 'Future Heroes', isCompleted: true },
+    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', status: null },
+    { id: 's3-container', unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
+    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Pilot', parentUnitId: 's1-container', status: 'Completed' },
+    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'The Disappeared', parentUnitId: 's2-container', status: null },
+    { id: 'e3', unitType: 'Episode', groupNumber: 3, number: 1, title: 'Future Heroes', parentUnitId: 's3-container', status: 'Completed' },
   ],
 };
 
@@ -59,10 +59,10 @@ const UNIT_ITEM_NO_TRACKED_SEASONS: LibraryItem = {
   status: 'Wish Listed',
   favorite: false,
   units: [
-    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', isCompleted: false },
-    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', isCompleted: false },
-    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1', isCompleted: false },
-    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'Chapter 2', isCompleted: false },
+    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', status: null },
+    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', status: null },
+    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1', parentUnitId: 's1-container', status: null },
+    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'Chapter 2', parentUnitId: 's2-container', status: null },
   ],
 };
 
@@ -227,7 +227,7 @@ describe('TrackedItemRow', () => {
       medium: 'Book',
       status: 'In progress',
       favorite: false,
-      units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', isCompleted: false }],
+      units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', status: null }],
     });
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;

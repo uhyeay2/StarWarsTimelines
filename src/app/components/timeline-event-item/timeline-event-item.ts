@@ -16,6 +16,12 @@
  * - Comics are tracked per Volume (the volume containing the event's issue).
  * - Shows (live action / animated) are tracked per Season (the season
  *   containing the event's episode).
+ * - Book collections are tracked per Book (the book containing the
+ *   event's chapter or depicting the event directly).
+ *
+ * Materials whose units nest inside containers but whose events resolve no
+ * container (e.g. a whole-collection event) hide the dropdown, mirroring
+ * the catalog page.
  *
  * @see {@link Timeline} for the parent component that renders a list of these.
  * @see {@link ToggleFacetEvent} for the chip toggle output shape.
@@ -120,28 +126,30 @@ export class TimelineEventItem implements OnInit {
     return source.sourceId ?? source.title;
   }
 
-  /** Whether this source's medium tracks at season/volume group level. */
-  isGroupedMedium(source: EventSource): boolean {
-    return (
-      source.medium === 'Comic' || source.medium === 'Live Action Show' || source.medium === 'Animated Show'
-    );
-  }
-
   /** The tracked library item for this source material, or null. */
   trackedItem(source: EventSource): LibraryItem | null {
     return source.sourceId === undefined ? null : findTrackedItem(this.libraryService.items(), source.sourceId);
   }
 
-  /**
-   * The Season/Volume container unit ID governing tracking for grouped-media
-   * sources, resolved from the catalog's unit cache. `null` for flat mediums,
-   * whole-material events on grouped mediums, or when no explicit container
-   * unit exists (mirroring the catalog page, which hides the dropdown then).
-   */
-  containerUnitId(source: EventSource): string | null {
-    if (!this.isGroupedMedium(source)) {
-      return null;
+  /** Whether this source's medium tracks at season/volume/book group level. */
+  isGroupedMedium(source: EventSource): boolean {
+    if (
+      source.medium === 'Comic' ||
+      source.medium === 'Live Action Show' ||
+      source.medium === 'Animated Show'
+    ) {
+      return true;
     }
+    // Books whose pinned unit resolves to an explicit container (book
+    // collections) track at the book level like shows/comics.
+    return source.medium === 'Book' && this.resolveContainerUnit(source) !== null;
+  }
+
+  /**
+   * Resolves the Season/Volume/Book container unit for the source's pinned
+   * unit from the catalog's unit cache, or `null` when none matches.
+   */
+  private resolveContainerUnit(source: EventSource): string | null {
     const unit = source.unit;
     if (source.sourceId === undefined || unit === undefined) {
       return null;
@@ -150,10 +158,23 @@ export class TimelineEventItem implements OnInit {
     const units = this.catalogService.getUnitCache(source.sourceId).data() ?? [];
     const container = units.find(
       (u) =>
-        (u.unitType === 'Season' || u.unitType === 'Volume') &&
+        (u.unitType === 'Season' || u.unitType === 'Volume' || u.unitType === 'Book') &&
         (u.number === targetGroup || u.groupNumber === targetGroup),
     );
     return container?.id ?? null;
+  }
+
+  /**
+   * The Season/Volume/Book container unit ID governing tracking for grouped
+   * sources, resolved from the catalog's unit cache. `null` for flat mediums,
+   * whole-material events on grouped mediums, or when no explicit container
+   * unit exists (mirroring the catalog page, which hides the dropdown then).
+   */
+  containerUnitId(source: EventSource): string | null {
+    if (!this.isGroupedMedium(source)) {
+      return null;
+    }
+    return this.resolveContainerUnit(source);
   }
 
   /** Whether the tracking dropdown should be rendered for this source. */
@@ -161,27 +182,48 @@ export class TimelineEventItem implements OnInit {
     if (this.currentUser() === null) {
       return false;
     }
-    if (this.isGroupedMedium(source)) {
-      return this.containerUnitId(source) !== null;
+    if (this.containerUnitId(source) !== null) {
+      return true;
     }
-    return source.sourceId !== undefined;
+    if (this.isGroupedMedium(source)) {
+      return false;
+    }
+    return !this.materialTracksViaContainers(source);
+  }
+
+  /**
+   * Whether the material's units nest inside container units (e.g. chapters
+   * inside books). Such materials track per container; without a resolvable
+   * container there is no meaningful dropdown scope, so it is hidden.
+   */
+  private materialTracksViaContainers(source: EventSource): boolean {
+    if (source.sourceId === undefined) {
+      return false;
+    }
+    const units = this.catalogService.getUnitCache(source.sourceId).data() ?? [];
+    if (units.length === 0) {
+      return false;
+    }
+    const ids = new Set(units.map((u) => u.id));
+    return units.some(
+      (u) => u.parentUnitId != null && u.parentUnitId !== '' && ids.has(u.parentUnitId),
+    );
   }
 
   /** Select options: statuses, plus 'Remove From Library' once tracked. */
   trackingOptions(source: EventSource): readonly TrackSelectOption[] {
-    if (this.isGroupedMedium(source)) {
-      const unitId = this.containerUnitId(source);
-      const item = this.trackedItem(source);
-      return trackSelectOptions(unitId !== null && groupUnitIsTracked(item, unitId));
+    const unitId = this.containerUnitId(source);
+    if (unitId !== null) {
+      return trackSelectOptions(groupUnitIsTracked(this.trackedItem(source), unitId));
     }
     return trackSelectOptions(this.trackedItem(source) !== null);
   }
 
   /** The currently selected tracking status, or `null` (shows "Track…"). */
   currentStatus(source: EventSource): TrackingStatus | null {
-    if (this.isGroupedMedium(source)) {
-      const unitId = this.containerUnitId(source);
-      return unitId === null ? null : groupTrackingStatus(this.trackedItem(source), unitId);
+    const unitId = this.containerUnitId(source);
+    if (unitId !== null) {
+      return groupTrackingStatus(this.trackedItem(source), unitId);
     }
     return materialTrackingStatus(this.trackedItem(source));
   }
@@ -193,7 +235,9 @@ export class TimelineEventItem implements OnInit {
     }
     this.libraryService.ensureTracked(user.id);
     for (const source of this.event().sources) {
-      if (this.isGroupedMedium(source) && source.sourceId !== undefined) {
+      if (source.sourceId !== undefined) {
+        // Fetching every depicted material's unit cache lets container
+        // resolution (and container-material detection) work everywhere.
         this.catalogService.getUnitCache(source.sourceId).fetch();
       }
     }
@@ -228,8 +272,8 @@ export class TimelineEventItem implements OnInit {
 
   /**
    * Handles a tracking status change from one source's dropdown, applying it
-   * at the scope implied by the medium (material level, or Season/Volume
-   * level).
+   * at the scope implied by the source (material level, or Season/Volume/
+   * Book container level).
    *
    * @param changeEvent  The select's change event.
    * @param source       The event source whose dropdown changed.
@@ -250,11 +294,8 @@ export class TimelineEventItem implements OnInit {
       medium: source.medium,
     };
 
-    if (this.isGroupedMedium(source)) {
-      const unitId = this.containerUnitId(source);
-      if (unitId === null) {
-        return;
-      }
+    const unitId = this.containerUnitId(source);
+    if (unitId !== null) {
       if (status === 'remove') {
         this.libraryService.clearUnitProgress(userId, material.id, unitId).subscribe();
         return;
@@ -267,6 +308,12 @@ export class TimelineEventItem implements OnInit {
         return;
       }
       this.libraryService.setStatus(userId, material.id, status, unitId).subscribe();
+      return;
+    }
+
+    // Grouped mediums and container-based materials without a resolvable
+    // container have no meaningful material-level tracking scope.
+    if (this.isGroupedMedium(source) || this.materialTracksViaContainers(source)) {
       return;
     }
 

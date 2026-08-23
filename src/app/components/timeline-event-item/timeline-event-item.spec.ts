@@ -479,9 +479,10 @@ describe('TimelineEventItem tracking dropdown', () => {
     httpMock
       .expectOne(`${API_BASE}/users/user-1/source-materials`)
       .flush(options.library ?? []);
-    if (options.catalogUnits !== undefined) {
-      httpMock.expectOne(`${API_BASE}/source-materials/mat-1/units`).flush(options.catalogUnits);
-    }
+    // Signed-in cards fetch every depicted material's unit cache.
+    httpMock
+      .expectOne(`${API_BASE}/source-materials/mat-1/units`)
+      .flush(options.catalogUnits ?? []);
     fixture.detectChanges();
   }
 
@@ -607,9 +608,9 @@ describe('TimelineEventItem tracking dropdown', () => {
           status: 0,
           isFavorite: false,
           units: [
-            { id: 'unit-s7', unitType: 3, groupNumber: null, number: 7, title: null, isCompleted: false, isTracked: false },
-            { id: 'unit-ep9', unitType: 0, groupNumber: 7, number: 9, title: null, isCompleted: true, isTracked: true },
-            { id: 'unit-ep10', unitType: 0, groupNumber: 7, number: 10, title: null, isCompleted: false, isTracked: false },
+            { id: 'unit-s7', unitType: 3, groupNumber: null, number: 7, title: null, status: null },
+            { id: 'unit-ep9', unitType: 0, groupNumber: 7, number: 9, title: null, status: 1, parentUnitId: 'unit-s7' },
+            { id: 'unit-ep10', unitType: 0, groupNumber: 7, number: 10, title: null, status: null, parentUnitId: 'unit-s7' },
           ],
         },
       ],

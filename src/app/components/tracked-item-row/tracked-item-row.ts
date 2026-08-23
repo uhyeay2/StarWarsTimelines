@@ -1,6 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { LibraryItem, LibraryUnit } from '../../models/library-item';
 import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
+import { isContainerUnit } from '../../models/tracking-selection';
 import { UnitType } from '../../models/unit-type';
 
 interface UnitGroup {
@@ -38,7 +39,7 @@ export class TrackedItemRow {
 
   readonly hasGroupUnits = computed(() => {
     const units = this.item().units ?? [];
-    return units.some((u) => u.unitType === 'Season' || u.unitType === 'Volume');
+    return units.some((u) => isContainerUnit(u.unitType));
   });
 
   readonly groupUnits = computed(() => {
@@ -47,23 +48,23 @@ export class TrackedItemRow {
       return [];
     }
 
-    const seasonUnits = units.filter((u) => u.unitType === 'Season');
-    const volumeUnits = units.filter((u) => u.unitType === 'Volume');
+    const containerUnits = units.filter((u) => isContainerUnit(u.unitType));
 
-    const groupContainerUnits: readonly LibraryUnit[] = [...seasonUnits, ...volumeUnits];
     const detailUnits = units.filter(
-      (u) => u.unitType !== 'Season' && u.unitType !== 'Volume',
+      (u) => !isContainerUnit(u.unitType) && u.unitType !== 'Collection',
     );
 
-    const trackedContainers = groupContainerUnits.filter((u) => u.isTracked === true);
-    const containersToDisplay = trackedContainers.length > 0 ? trackedContainers : groupContainerUnits;
+    const trackedContainers = containerUnits.filter((u) => u.status !== null);
+    const containersToDisplay = trackedContainers.length > 0 ? trackedContainers : containerUnits;
 
     return containersToDisplay.map((container): UnitGroup => {
       const children = detailUnits.filter(
-        (u) => u.groupNumber === container.number,
+        (u) =>
+          (u.parentUnitId
+            ? u.parentUnitId === container.id
+            : u.groupNumber === container.number),
       );
-      const label = container.title ??
-        (container.unitType === 'Season' ? `Season ${container.number}` : `Volume ${container.number}`);
+      const label = container.title ?? `${container.unitType} ${container.number}`;
       return {
         groupNumber: container.number,
         groupTitle: label,
@@ -77,27 +78,28 @@ export class TrackedItemRow {
   getGroupStatus(group: UnitGroup): TrackingStatus | null {
     const units = this.item().units ?? [];
     const container = units.find(
-      (u) => u.id === group.containerId && (u.unitType === 'Season' || u.unitType === 'Volume'),
+      (u) => u.id === group.containerId && isContainerUnit(u.unitType),
     );
     if (!container) {
       return this.deriveGroupStatus(group.units);
     }
-    if (container.isTracked === true) {
-      // The container has its own progress record: an explicit non-completed
-      // season means the user started it, so report 'In progress'.
-      return container.isCompleted ? 'Completed' : 'In progress';
+    if (container.status !== null) {
+      // The container has its own progress record; report it directly.
+      return container.status;
     }
-    if (!group.units.some((u) => u.isTracked === true)) {
+    if (!group.units.some((u) => u.status !== null)) {
       return null;
     }
     return this.deriveGroupStatus(group.units);
   }
 
   private deriveGroupStatus(units: readonly LibraryUnit[]): TrackingStatus {
-    if (units.length === 0) return 'Wish Listed';
-    const completed = units.filter((u) => u.isCompleted);
-    if (completed.length === units.length) return 'Completed';
-    if (completed.length === 0) return 'Wish Listed';
+    if (units.length === 0 || units.every((u) => u.status === null)) {
+      return 'Wish Listed';
+    }
+    if (units.every((u) => u.status === 'Completed')) {
+      return 'Completed';
+    }
     return 'In progress';
   }
 

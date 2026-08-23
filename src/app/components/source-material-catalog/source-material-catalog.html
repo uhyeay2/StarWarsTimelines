@@ -135,7 +135,7 @@
                           Delete
                         </button>
                       </div>
-                    } @else if (group.medium === 'Movie' || group.medium === 'Book' || group.medium === 'Video Game') {
+                    } @else if (group.medium === 'Movie' || group.medium === 'Video Game' || (group.medium === 'Book' && !materialTracksViaContainers(material.id))) {
                       <!-- ═══════════════════════════════════════════════════════════════
                            NON-ADMIN: title-level tracking dropdown
                            Movies, Books, Games → track at title level
@@ -214,20 +214,8 @@
                         @if (!isAdmin()) {
                           <!-- ─── Movies: no units to display ─── -->
                           @if (group.medium === 'Movie') {
-                          } @else if (group.medium === 'Book' || group.medium === 'Video Game') {
-                            <!-- ─── Books/Games: units listed flat (no per-unit tracking) ─── -->
-                            <ul class="unit-list">
-                              @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
-                                <li class="unit-item">
-                                  <span class="unit-label">
-                                    <span class="unit-type">{{ unit.unitType }}</span>
-                                    {{ unitLabel(unit) }}
-                                  </span>
-                                </li>
-                              }
-                            </ul>
-                          } @else if (group.medium === 'Comic' || group.medium === 'Live Action Show' || group.medium === 'Animated Show') {
-                            <!-- ─── Comics & Shows: season/volume groups with tracking + episodes ─── -->
+                          } @else if (group.medium === 'Comic' || group.medium === 'Live Action Show' || group.medium === 'Animated Show' || (group.medium === 'Book' && materialTracksViaContainers(material.id))) {
+                            <!-- Comics/Shows/Book collections: season/volume/book groups with tracking -->
                             @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
                               <div class="group-track-section">
                                 <div class="track-group-row">
@@ -262,6 +250,18 @@
                                 }
                               </div>
                             }
+                          } @else if (group.medium === 'Book' || group.medium === 'Video Game') {
+                            <!-- Books/Games: units listed flat (no per-unit tracking) -->
+                            <ul class="unit-list">
+                              @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                                <li class="unit-item">
+                                  <span class="unit-label">
+                                    <span class="unit-type">{{ unit.unitType }}</span>
+                                    {{ unitLabel(unit) }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
                           }
                         }
 

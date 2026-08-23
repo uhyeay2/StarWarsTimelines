@@ -738,6 +738,151 @@ describe('Timeline', () => {
       fixture.detectChanges();
       expect(eventTitles()).toEqual([]);
     });
+
+    it('hides unit-pinned events outside the tracked unit scope', async () => {
+      const seasonEvents: readonly TimelineEvent[] = [
+        {
+          id: 's1-event',
+          canon: ['Canon'],
+          title: 'Season One Event',
+          description: '',
+          sources: [
+            {
+              title: 'The Clone Wars',
+              medium: 'Animated Show',
+              canon: ['Canon'],
+              sourceId: 'material-tcw',
+              unit: { id: 'season-1-unit', unitType: 'Season', groupNumber: 1, number: 1 },
+            },
+          ],
+          locations: [],
+          characters: [],
+          vehicles: [],
+          yearStart: -22,
+          yearEnd: -22,
+          sequence: 1,
+        },
+        {
+          id: 's7-event',
+          canon: ['Canon'],
+          title: 'Season Seven Event',
+          description: '',
+          sources: [
+            {
+              title: 'The Clone Wars',
+              medium: 'Animated Show',
+              canon: ['Canon'],
+              sourceId: 'material-tcw',
+              unit: { id: 'season-7-unit', unitType: 'Season', groupNumber: 7, number: 7 },
+            },
+          ],
+          locations: [],
+          characters: [],
+          vehicles: [],
+          yearStart: -19,
+          yearEnd: -19,
+          sequence: 1,
+        },
+        {
+          id: 'unpinned-event',
+          canon: ['Canon'],
+          title: 'Whole Show Event',
+          description: '',
+          sources: [
+            {
+              title: 'The Clone Wars',
+              medium: 'Animated Show',
+              canon: ['Canon'],
+              sourceId: 'material-tcw',
+            },
+          ],
+          locations: [],
+          characters: [],
+          vehicles: [],
+          yearStart: -21,
+          yearEnd: -21,
+          sequence: 1,
+        },
+      ];
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: eventsServiceMock(seasonEvents) },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentRef.setInput('sourceIds', ['material-tcw']);
+      fixture.componentRef.setInput(
+        'trackedUnitScope',
+        new Map([['material-tcw', new Set(['season-1-unit'])]]),
+      );
+      fixture.detectChanges();
+
+      // Only the tracked season (and unpinned depictions of the show) is known.
+      expect(eventTitles()).toEqual(['Season One Event', 'Whole Show Event']);
+    });
+
+    it('shows every pinned event when the material tracks at the material level', async () => {
+      const bookEvents: readonly TimelineEvent[] = [
+        {
+          id: 'book-event',
+          canon: ['Canon'],
+          title: 'Chapter Pinned Event',
+          description: '',
+          sources: [
+            {
+              title: 'A Novel',
+              medium: 'Book',
+              canon: ['Canon'],
+              sourceId: 'material-novel',
+              unit: { id: 'chapter-3', unitType: 'Chapter', groupNumber: 1, number: 3 },
+            },
+          ],
+          locations: [],
+          characters: [],
+          vehicles: [],
+          yearStart: -2,
+          yearEnd: -2,
+          sequence: 1,
+        },
+      ];
+      await setupTimeline([
+        { provide: TimelineEventsService, useValue: eventsServiceMock(bookEvents) },
+        { provide: CatalogService, useValue: catalogMock() },
+        { provide: CatalogEventService, useValue: catalogEventMock() },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({}) },
+            queryParamMap: routeQueryParams,
+          },
+        },
+        { provide: Router, useValue: routerMock },
+      ]);
+
+      fixture = TestBed.createComponent(Timeline);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentRef.setInput('sourceIds', ['material-novel']);
+      fixture.componentRef.setInput('trackedUnitScope', new Map([['material-novel', 'all']]));
+      fixture.detectChanges();
+
+      expect(eventTitles()).toEqual(['Chapter Pinned Event']);
+    });
   });
 
   describe('continuityEvents', () => {

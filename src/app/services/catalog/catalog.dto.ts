@@ -25,6 +25,8 @@ export interface SourceMaterialDto {
  * Response body of the source-material-unit endpoints.
  *
  * The `unitType` field is a numeric index into the server-side enum.
+ * `parentUnitId` points at the container unit this unit nests inside,
+ * or is `null` for top-level units.
  */
 export interface SourceMaterialUnitDto {
   id: string;
@@ -33,4 +35,5 @@ export interface SourceMaterialUnitDto {
   groupNumber: number | null;
   number: number;
   title: string | null;
+  parentUnitId: string | null;
 }

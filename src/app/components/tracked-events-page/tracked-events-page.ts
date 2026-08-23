@@ -88,7 +88,9 @@ export class TrackedEventsPage {
     if (selected.length === 0) {
       return this.tracked();
     }
-    return this.tracked().filter((item) => selected.includes(item.status));
+    return this.tracked().filter(
+      (item) => item.status !== null && selected.includes(item.status),
+    );
   });
 
   /** Whether specific statuses are selected (as opposed to "All"). */
@@ -236,17 +238,17 @@ export class TrackedEventsPage {
   /**
    * Updates unit progress for a tracked item.
    *
-   * @param materialId   The source material ID.
-   * @param unitId       The unit ID to update.
-   * @param isCompleted  Whether the unit is completed.
+   * @param materialId  The source material ID.
+   * @param unitId      The unit ID to update.
+   * @param status      The new tracking status for the unit.
    */
-  setUnitProgress(materialId: string, unitId: string, isCompleted: boolean): void {
+  setUnitProgress(materialId: string, unitId: string, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
     }
     this.libraryService
-      .setUnitProgress(userId, materialId, unitId, isCompleted)
+      .setUnitProgress(userId, materialId, unitId, status)
       .subscribe();
   }
 }

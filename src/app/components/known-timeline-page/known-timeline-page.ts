@@ -2,12 +2,17 @@
  * @fileoverview Known Timeline page component.
  *
  * Displays a filtered subset of the galactic timeline showing only events
- * from source materials the user has tracked in their library. The user
- * can select which tracking statuses (All, Completed, In Progress, Wish
- * Listed) to include via the shared {@link StatusFilter} multi-select tabs.
+ * the user actually knows from their tracked library content. Filtering is
+ * two-level: a material must be tracked at all (coarse `sourceIds`), and a
+ * unit-pinned event must additionally fall inside that material's tracked
+ * scope (`trackedUnitScope`) — tracking Season 1 of a show hides events
+ * pinned to other seasons, and tracking one book of a collection hides
+ * events tied to its untracked sequels. The user can select which tracking
+ * statuses (All, Completed, In Progress, Wish Listed) to include via the
+ * shared {@link StatusFilter} multi-select tabs.
  *
- * Wraps the shared {@link Timeline} component with a `sourceIds` input
- * to restrict the visible events.
+ * Wraps the shared {@link Timeline} component with the `sourceIds` and
+ * `trackedUnitScope` inputs to restrict the visible events.
  *
  * @see {@link Timeline} for the underlying timeline rendering component.
  * @see {@link TrackedEventsPage} for managing tracked items.
@@ -17,6 +22,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { LibraryItem } from '../../models/library-item';
 import { TrackingStatus } from '../../models/tracking-status';
+import { buildTrackedScope } from '../../models/tracking-selection';
 import { AuthService } from '../../services/auth/auth.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LoggerService } from '../../services/logging/logger.service';
@@ -64,21 +70,27 @@ export class KnownTimelinePage {
   // ─── Computed state ─────────────────────────────────────────────────────
 
   /**
-   * IDs of tracked items whose status matches the active selection.
+   * Unit-level tracked scope per tracked material, honoring the active
+   * status selection (see {@link buildTrackedScope}).
    *
-   * Passed to the {@link Timeline} component's `sourceIds` input to
-   * restrict which events are displayed.
+   * Passed to the {@link Timeline} component's `trackedUnitScope` input so a
+   * unit-pinned event only shows when its pinned unit is actually part of
+   * the user's tracked content: tracking Season 1 of a show hides events
+   * pinned to other seasons, and tracking book one of a collection hides
+   * events tied to its untracked sequels.
    */
-  readonly consumedIds = computed(() => {
-    const selected = this.statusSelection();
-    const ids = new Set<string>();
-    for (const item of this.tracked()) {
-      if (selected.length === 0 || selected.includes(item.status)) {
-        ids.add(item.id);
-      }
-    }
-    return [...ids];
-  });
+  readonly trackedUnitScope = computed(() =>
+    buildTrackedScope(this.tracked(), this.statusSelection()),
+  );
+
+  /**
+   * IDs of tracked items within the active status selection.
+   *
+   * Passed to the {@link Timeline} component's `sourceIds` input as the
+   * coarse material-level restriction; {@link trackedUnitScope} refines it
+   * down to individual units.
+   */
+  readonly consumedIds = computed(() => [...this.trackedUnitScope().keys()]);
 
   // ─── Constructor ────────────────────────────────────────────────────────
 

@@ -785,6 +785,7 @@ export class CatalogService {
       groupNumber: item.groupNumber,
       number: item.number,
       title: item.title,
+      parentUnitId: item.parentUnitId,
     };
   }
 }
