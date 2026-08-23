@@ -383,6 +383,20 @@ export class LibraryService {
   }
 
   /**
+   * Clears the cached library state.
+   *
+   * Call when the user logs out (or switches accounts) so stale items are
+   * never shown for a different user; the next `ensureTracked` refetches.
+   */
+  clearCache(): void {
+    this.activeUserId = null;
+    this.loadedUserId = null;
+    this.items.set([]);
+    this.loading.set(false);
+    this.error.set(null);
+  }
+
+  /**
    * Triggers a debounced full-library reload.
    *
    * Safe to call rapidly (e.g. from SSE invalidation handlers); rapid calls

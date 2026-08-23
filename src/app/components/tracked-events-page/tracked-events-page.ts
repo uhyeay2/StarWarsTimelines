@@ -47,8 +47,17 @@ export class TrackedEventsPage {
   /** The current user's ID, or `null`. */
   readonly userId = computed(() => this.user()?.id ?? null);
 
-  /** The user's tracked library items. */
-  readonly tracked = signal<readonly LibraryItem[]>([]);
+  /**
+   * The user's tracked library items, read from {@link LibraryService}'s
+   * shared signal cache (survives route navigation; no refetch on revisit).
+   */
+  readonly tracked = computed(() => this.libraryService.items());
+
+  /** Whether a library fetch is currently in flight. */
+  readonly isLoading = computed(() => this.libraryService.loading());
+
+  /** The last library load error message, or `null`. */
+  readonly error = computed(() => this.libraryService.error());
 
   // ─── Catalog data ───────────────────────────────────────────────────────
 
@@ -85,18 +94,16 @@ export class TrackedEventsPage {
   // ─── Constructor ────────────────────────────────────────────────────────
 
   constructor() {
-    // Subscribe to tracked library items for the current user.
-    // Uses the effect's onCleanup callback for automatic cleanup.
-    effect((onCleanup) => {
+    // Load the library through the service's shared cache: `ensureTracked`
+    // fetches only when the data is not already cached for this user, so
+    // navigating away and back renders instantly without a refetch.
+    effect(() => {
       const userId = this.userId();
       if (!userId) {
-        this.tracked.set([]);
+        this.libraryService.clearCache();
         return;
       }
-      const subscription = this.libraryService
-        .getTracked(userId)
-        .subscribe((items) => this.tracked.set(items));
-      onCleanup(() => subscription.unsubscribe());
+      this.libraryService.ensureTracked(userId);
     });
   }
 
@@ -127,7 +134,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .setStatus(userId, itemId, status)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
   /**
@@ -142,7 +149,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .setFavorite(userId, item.id, !item.favorite)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
   /**
@@ -157,7 +164,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .removeTracked(userId, itemId)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
 /**
@@ -174,7 +181,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .setStatus(userId, materialId, status, unitId)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
   /**
@@ -192,7 +199,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .clearUnitProgress(userId, materialId, unitId)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
   /**
@@ -209,7 +216,7 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .setUnitProgress(userId, materialId, unitId, isCompleted)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 
   // ─── Reorder methods ────────────────────────────────────────────────────
@@ -308,6 +315,6 @@ export class TrackedEventsPage {
     }
     this.libraryService
       .reorderTrackedItem(userId, orderedSourceMaterialIds)
-      .subscribe((items) => this.tracked.set(items));
+      .subscribe();
   }
 }

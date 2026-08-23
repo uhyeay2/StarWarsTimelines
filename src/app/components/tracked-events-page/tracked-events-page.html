@@ -38,11 +38,7 @@
       <!-- ─── End Reorder Hint ───────────────────────────────────────── -->
 
       <!-- ─── Tracked Items List ─────────────────────────────────────── -->
-      @if (filteredItems().length === 0) {
-        <p class="empty-state">
-          {{ filter() === 'All' ? 'No tracked items yet — track materials from the catalog page.' : 'No ' + filter() + ' items yet.' }}
-        </p>
-      } @else {
+      @if (filteredItems().length > 0) {
         <ol class="item-list" [class.item-list--numbered]="showReorder()">
           @for (item of filteredItems(); track item.id) {
             <li>
@@ -65,6 +61,14 @@
             </li>
           }
         </ol>
+      } @else if (isLoading()) {
+        <p class="form-status" role="status">Loading your tracked items…</p>
+      } @else if (error()) {
+        <p class="form-status">{{ error() }}</p>
+      } @else {
+        <p class="empty-state">
+          {{ filter() === 'All' ? 'No tracked items yet — track materials from the catalog page.' : 'No ' + filter() + ' items yet.' }}
+        </p>
       }
       <!-- ─── End Tracked Items List ─────────────────────────────────── -->
     </div>

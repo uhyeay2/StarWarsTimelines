@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -46,24 +46,41 @@ const TRACKED: LibraryItem[] = [
   },
 ];
 
-interface Mocks {
-  libraryMock: {
-    getTracked: ReturnType<typeof vi.fn>;
-    setStatus: ReturnType<typeof vi.fn>;
-    setFavorite: ReturnType<typeof vi.fn>;
-    removeTracked: ReturnType<typeof vi.fn>;
-    setUnitProgress: ReturnType<typeof vi.fn>;
-    clearUnitProgress: ReturnType<typeof vi.fn>;
-    reorderTrackedItem: ReturnType<typeof vi.fn>;
-  };
+interface LibraryMock {
+  items: WritableSignal<readonly LibraryItem[]>;
+  loading: WritableSignal<boolean>;
+  error: WritableSignal<string | null>;
+  ensureTracked: ReturnType<typeof vi.fn>;
+  clearCache: ReturnType<typeof vi.fn>;
+  getTracked: ReturnType<typeof vi.fn>;
+  setStatus: ReturnType<typeof vi.fn>;
+  setFavorite: ReturnType<typeof vi.fn>;
+  removeTracked: ReturnType<typeof vi.fn>;
+  setUnitProgress: ReturnType<typeof vi.fn>;
+  clearUnitProgress: ReturnType<typeof vi.fn>;
+  reorderTrackedItem: ReturnType<typeof vi.fn>;
 }
 
-async function setup(currentUser: User | null): Promise<{
+interface Mocks {
+  libraryMock: LibraryMock;
+}
+
+interface SetupOptions {
+  items?: readonly LibraryItem[];
+  loading?: boolean;
+}
+
+async function setup(currentUser: User | null, options: SetupOptions = {}): Promise<{
   fixture: ComponentFixture<TrackedEventsPage>;
   component: TrackedEventsPage;
   mocks: Mocks;
 }> {
-  const libraryMock = {
+  const libraryMock: LibraryMock = {
+    items: signal(options.items ?? TRACKED),
+    loading: signal(options.loading ?? false),
+    error: signal(null),
+    ensureTracked: vi.fn(),
+    clearCache: vi.fn(),
     getTracked: vi.fn(),
     setStatus: vi.fn(),
     setFavorite: vi.fn(),
@@ -72,6 +89,7 @@ async function setup(currentUser: User | null): Promise<{
     clearUnitProgress: vi.fn(),
     reorderTrackedItem: vi.fn(),
   };
+  libraryMock.ensureTracked.mockImplementation(() => undefined);
   libraryMock.getTracked.mockReturnValue(of(TRACKED));
   libraryMock.setStatus.mockImplementation(
     (_userId: string, materialId: string, status: string) =>
@@ -127,9 +145,36 @@ async function setup(currentUser: User | null): Promise<{
 
 describe('TrackedEventsPage', () => {
   it('shows a login prompt when logged out', async () => {
-    const { fixture } = await setup(null);
+    const { fixture, mocks } = await setup(null);
     expect(fixture.nativeElement.querySelector('.login-prompt')).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(0);
+    expect(mocks.libraryMock.clearCache).toHaveBeenCalled();
+    expect(mocks.libraryMock.ensureTracked).not.toHaveBeenCalled();
+  });
+
+  it('renders cached library data without refetching on revisit', async () => {
+    const { fixture, mocks } = await setup(USER);
+    expect(mocks.libraryMock.ensureTracked).toHaveBeenCalledWith('user-padme');
+    expect(mocks.libraryMock.getTracked).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(4);
+    expect(fixture.nativeElement.textContent).toContain('Star Wars: Episode I - The Phantom Menace');
+  });
+
+  it('shows a loading message instead of the empty state while the library loads', async () => {
+    const { fixture, mocks } = await setup(USER, { items: [], loading: true });
+    expect(fixture.nativeElement.textContent).toContain('Loading your tracked items');
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+
+    mocks.libraryMock.items.set(TRACKED);
+    mocks.libraryMock.loading.set(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(4);
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+  });
+
+  it('shows the empty state only after loading finishes with no items', async () => {
+    const { fixture } = await setup(USER, { items: [], loading: false });
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeTruthy();
   });
 
   it('loads and renders the tracked items for the signed-in user', async () => {
