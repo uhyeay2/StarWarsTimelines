@@ -4,13 +4,14 @@ import { CatalogService } from '../../services/catalog/catalog.service';
 import { ApiSpecies } from '../../models/api-species';
 import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
+import { SpeciesAddDialog } from '../species-add-dialog/species-add-dialog';
 
 /** Sentinel select value representing "no home planet selected"; catalog ids start at 1. */
 const NO_PLANET = 0;
 
 @Component({
   selector: 'app-species-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, SpeciesAddDialog],
   templateUrl: './species-catalog.html',
   styleUrl: './species-catalog.scss',
 })
@@ -41,6 +42,9 @@ export class SpeciesCatalog implements OnInit {
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
+  /** Whether the add dialog is open. */
+  readonly addOpen = signal(false);
+
   readonly editId = signal<number | null>(null);
   readonly editName = signal('');
   readonly editHomePlanetId = signal(NO_PLANET);
@@ -55,7 +59,19 @@ export class SpeciesCatalog implements OnInit {
     this.catalogService.fetchLocations();
   }
 
-  add(): void {
+  /** Opens the add dialog with a blank name. */
+  openAdd(): void {
+    this.addError.set(null);
+    this.newName.set('');
+    this.newHomePlanetId.set(NO_PLANET);
+    this.addOpen.set(true);
+  }
+
+  cancelAdd(): void {
+    this.addOpen.set(false);
+  }
+
+  submitAdd(): void {
     if (this.adding()) {
       return;
     }
@@ -76,6 +92,7 @@ export class SpeciesCatalog implements OnInit {
         if (item) {
           this.newName.set('');
           this.newHomePlanetId.set(NO_PLANET);
+          this.addOpen.set(false);
         }
       },
     });

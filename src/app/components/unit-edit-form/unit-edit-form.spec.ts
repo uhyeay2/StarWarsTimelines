@@ -5,7 +5,6 @@ import { UnitEditForm } from './unit-edit-form';
 describe('UnitEditForm', () => {
   function create(): ComponentFixture<UnitEditForm> {
     const fixture = TestBed.createComponent(UnitEditForm);
-    fixture.componentRef.setInput('unitType', 'Episode');
     fixture.componentRef.setInput('number', 4);
     fixture.componentRef.setInput('title', 'A New Hope');
     return fixture;
@@ -17,15 +16,14 @@ describe('UnitEditForm', () => {
     }).compileComponents();
   });
 
-  it('renders the editable fields with bound values', async () => {
+  it('renders the editable fields with bound values and no type/parent selects', async () => {
     const fixture = create();
     fixture.detectChanges();
     await fixture.whenStable();
 
     const el = fixture.nativeElement;
-    expect((el.querySelector('[name="unitEditType"]') as HTMLSelectElement).value).toBe('Episode');
-    const parentSelect = el.querySelector('[name="unitEditParent"]') as HTMLSelectElement;
-    expect(parentSelect.selectedOptions[0]?.textContent?.trim()).toBe('Top level');
+    expect(el.querySelector('[name="unitEditType"]')).toBeNull();
+    expect(el.querySelector('[name="unitEditParent"]')).toBeNull();
     expect((el.querySelector('[name="unitEditNumber"]') as HTMLInputElement).value).toBe('4');
     expect((el.querySelector('[name="unitEditTitle"]') as HTMLInputElement).value).toBe(
       'A New Hope',

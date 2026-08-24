@@ -1,29 +1,16 @@
 <section class="name-catalog">
-  <h2>{{ title() }}</h2>
+  <div class="catalog-header">
+    <h2>{{ title() }}</h2>
+    @if (isAdmin()) {
+      <button class="btn btn-sm catalog-add-button" type="button" (click)="openAdd()">+ Add</button>
+    }
+  </div>
 
   @if (loading()) {
     <p class="form-status" role="status">Loading…</p>
   } @else if (loadError()) {
     <p class="form-error" role="alert">{{ loadError() }}</p>
   } @else {
-    @if (isAdmin()) {
-      <form class="name-catalog-add" (ngSubmit)="add()">
-        <label class="name-catalog-field">
-          <span class="sr-only">New {{ noun() }} name</span>
-          <input
-            name="newName"
-            [(ngModel)]="newName"
-            [placeholder]="'Add a new ' + noun() + '…'" />
-        </label>
-        <button class="btn btn-primary" type="submit" [disabled]="adding()">
-          {{ adding() ? 'Adding…' : 'Add' }}
-        </button>
-      </form>
-      @if (addError()) {
-        <p class="form-error" role="alert">{{ addError() }}</p>
-      }
-    }
-
     <label class="name-catalog-search">
       <span class="sr-only">Search {{ title() }}</span>
       <input
@@ -84,5 +71,15 @@
     @if (actionError()) {
       <p class="form-error" role="alert">{{ actionError() }}</p>
     }
+  }
+
+  @if (isAdmin() && addOpen()) {
+    <app-name-add-dialog
+      [heading]="addHeading()"
+      [(name)]="newName"
+      [error]="addError()"
+      [saving]="adding()"
+      (save)="submitAdd()"
+      (cancel)="cancelAdd()" />
   }
 </section>

@@ -1,12 +1,13 @@
 import { Component, computed, inject, input, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { switchMap } from 'rxjs';
+import { concat, Observable, switchMap } from 'rxjs';
+import { last } from 'rxjs/operators';
 import { ApiSourceMaterial } from '../../models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { CANON_TYPES, CanonType } from '../../models/canon-type';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { MEDIA, Medium } from '../../models/medium';
-import { UNIT_TYPES, UnitType, isContainerOrCollectionUnit } from '../../models/unit-type';
+import { UnitType } from '../../models/unit-type';
 import { TrackingStatus } from '../../models/tracking-status';
 import {
   findTrackedItem,
@@ -20,13 +21,31 @@ import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LibraryItem } from '../../models/library-item';
 import { TrackSelect } from '../track-select/track-select';
-import { UnitEditForm, ParentUnitOption } from '../unit-edit-form/unit-edit-form';
+import { UnitEditForm } from '../unit-edit-form/unit-edit-form';
+import { MaterialAddDialog } from '../material-add-dialog/material-add-dialog';
+import { UnitAddDialog } from '../unit-add-dialog/unit-add-dialog';
+import { BookChoiceDialog } from '../book-choice-dialog/book-choice-dialog';
+import { ConvertCollectionDialog } from '../convert-collection-dialog/convert-collection-dialog';
+import {
+  StartCollectionDialog,
+  StartCollectionPayload,
+} from '../start-collection-dialog/start-collection-dialog';
 import { runOperation } from '../../utils/async-operation';
 import { addedTo, removedFrom, removedWithPrefix, toggledIn } from '../../utils/set-operations';
 
 interface UnitKey {
   materialId: number;
   unitId: number;
+}
+
+/** Context describing which unit the add-unit popup creates. */
+interface UnitAddContext {
+  /** The material the unit belongs to. */
+  materialId: number;
+  /** The container unit to nest inside, or null for a top-level unit. */
+  parentUnitId: number | null;
+  /** The inferred unit type; the user never picks it manually. */
+  childType: UnitType;
 }
 
 /** Returns true for container unit types that act as group headers. */
@@ -40,6 +59,8 @@ interface MaterialDisplayGroup {
   expandKey: string;
   /** The Season/Volume/Book container unit id, or null for ungrouped leftovers. */
   containerId: number | null;
+  /** The container's unit type, or null for ungrouped leftovers. */
+  containerType: UnitType | null;
   /** Header label for the group. */
   label: string;
   /** Child units (episodes/issues/chapters) belonging to the group. */
@@ -48,7 +69,16 @@ interface MaterialDisplayGroup {
 
 @Component({
   selector: 'app-source-material-catalog',
-  imports: [FormsModule, TrackSelect, UnitEditForm],
+  imports: [
+    FormsModule,
+    TrackSelect,
+    UnitEditForm,
+    MaterialAddDialog,
+    UnitAddDialog,
+    BookChoiceDialog,
+    ConvertCollectionDialog,
+    StartCollectionDialog,
+  ],
   templateUrl: './source-material-catalog.html',
   styleUrl: './source-material-catalog.scss',
 })
@@ -61,7 +91,6 @@ export class SourceMaterialCatalog implements OnInit {
 
   readonly media = MEDIA;
   readonly canonTypes = CANON_TYPES;
-  readonly unitTypes = UNIT_TYPES;
 
   readonly searchTerm = signal('');
 
@@ -95,8 +124,9 @@ export class SourceMaterialCatalog implements OnInit {
       .map((medium) => ({ medium, materials: map.get(medium)! }));
   });
 
+  /** Medium of the add-material popup, or null when the popup is closed. */
+  readonly addMaterialMedium = signal<Medium | null>(null);
   readonly newTitle = signal('');
-  readonly newMedium = signal<Medium>('Movie');
   readonly newCanonType = signal<CanonType>('Canon');
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
@@ -131,9 +161,9 @@ export class SourceMaterialCatalog implements OnInit {
   });
 
   readonly displayStrategy = computed(() => {
-    const result: Record<number, 'grouped-season' | 'grouped-volume' | 'flat'> = {};
+    const result: Record<number, 'grouped-season' | 'grouped-volume' | 'grouped-book' | 'flat'> = {};
     for (const material of this.materials()) {
-      result[material.id] = this.getDisplayStrategy(material.medium);
+      result[material.id] = this.getDisplayStrategy(material);
     }
     return result;
   });
@@ -187,12 +217,25 @@ export class SourceMaterialCatalog implements OnInit {
     return groupTrackingStatus(this.getTrackedItem(materialId), unitId);
   }
 
-  readonly newUnitType = signal<UnitType>('Episode');
-  readonly newUnitParent = signal<number | null>(null);
-  readonly newUnitNumber = signal<number | null>(null);
-  readonly newUnitTitle = signal('');
+  /** Context of the add-unit popup, or null when the popup is closed. */
+  readonly unitPopupContext = signal<UnitAddContext | null>(null);
+  readonly popupNumber = signal<number | null>(null);
+  readonly popupTitle = signal('');
   readonly addingUnitFor = signal<number | null>(null);
   readonly unitAddError = signal<string | null>(null);
+
+  /** Material whose empty-book choice popup is open, or null when closed. */
+  readonly bookChoiceMaterialId = signal<number | null>(null);
+
+  /** Material whose convert-to-collection popup is open, or null when closed. */
+  readonly convertPopupMaterialId = signal<number | null>(null);
+  readonly convertTitle = signal('');
+  readonly convertingId = signal<number | null>(null);
+
+  /** Material whose start-collection popup is open, or null when closed. */
+  readonly startCollectionMaterialId = signal<number | null>(null);
+  readonly startCollectionName = signal('');
+  readonly startingCollectionFor = signal<number | null>(null);
 
   readonly unitEditKey = signal<UnitKey | null>(null);
   readonly unitEditType = signal<UnitType>('Episode');
@@ -276,8 +319,32 @@ export class SourceMaterialCatalog implements OnInit {
     }, 50);
   }
 
-  add(): void {
-    if (this.adding()) {
+  /** Closes every admin popup so at most one is visible at a time. */
+  private closeAllPopups(): void {
+    this.addMaterialMedium.set(null);
+    this.unitPopupContext.set(null);
+    this.bookChoiceMaterialId.set(null);
+    this.convertPopupMaterialId.set(null);
+    this.startCollectionMaterialId.set(null);
+  }
+
+  openAddMaterial(medium: Medium): void {
+    this.actionError.set(null);
+    this.closeAllPopups();
+    this.addMaterialMedium.set(medium);
+    this.newTitle.set('');
+    this.newCanonType.set('Canon');
+    this.addError.set(null);
+  }
+
+  cancelAddMaterial(): void {
+    this.addMaterialMedium.set(null);
+    this.addError.set(null);
+  }
+
+  submitAddMaterial(): void {
+    const medium = this.addMaterialMedium();
+    if (!medium || this.adding()) {
       return;
     }
     const title = this.newTitle().trim();
@@ -294,12 +361,13 @@ export class SourceMaterialCatalog implements OnInit {
       error: this.addError,
       operation: this.catalogService.createSourceMaterial({
         title,
-        medium: this.newMedium(),
+        medium,
         canonType: this.newCanonType(),
       }),
       onSuccess: (created) => {
         if (created) {
           this.newTitle.set('');
+          this.cancelAddMaterial();
         }
       },
     });
@@ -406,15 +474,229 @@ export class SourceMaterialCatalog implements OnInit {
     this.expandedSeasonKeys.update(removedWithPrefix(`${materialId}:`));
   }
 
-  addUnit(materialId: number): void {
-    if (this.addingUnitFor()) {
+  // ─── Admin add-unit popups ────────────────────────────────────────────────
+
+  /** Units known for a material (empty when not loaded or empty). */
+  unitsFor(materialId: number): readonly ApiSourceMaterialUnit[] {
+    return this.unitsByMaterial()[materialId] ?? [];
+  }
+
+  /** Returns true when any Book container unit exists for the material. */
+  hasBookUnits(materialId: number): boolean {
+    return this.unitsFor(materialId).some((u) => u.unitType === 'Book');
+  }
+
+  /** Returns the top-level units of a material. */
+  topLevelUnits(materialId: number): readonly ApiSourceMaterialUnit[] {
+    return this.unitsFor(materialId).filter((u) => u.parentUnitId === null);
+  }
+
+  /**
+   * A standalone book is a Book material whose units are loaded, that has at
+   * least one top-level chapter, and no Book containers yet — the shape the
+   * convert-to-collection action applies to.
+   */
+  isConvertibleStandaloneBook(material: ApiSourceMaterial): boolean {
+    return (
+      material.medium === 'Book' &&
+      this.materialsWithUnits().has(material.id) &&
+      !this.hasBookUnits(material.id) &&
+      this.topLevelUnits(material.id).length > 0
+    );
+  }
+
+  /**
+   * Whether the material row shows a unit Add button: every medium except
+   * movies and short films carries sub-units to add. (New materials of any
+   * medium are created via the medium-header Add button instead.)
+   */
+  hasMaterialAdd(medium: Medium): boolean {
+    return medium !== 'Movie' && medium !== 'Short Film';
+  }
+
+  /** The unit type created at a material's top level, inferred from the medium. */
+  private topLevelChildType(medium: Medium): UnitType {
+    switch (medium) {
+      case 'Animated Show':
+      case 'Live Action Show':
+        return 'Season';
+      case 'Comic':
+        return 'Volume';
+      case 'Video Game':
+        return 'Level';
+      default:
+        return 'Chapter';
+    }
+  }
+
+  /** The child type nested inside a container unit, inferred from its type. */
+  private nestedChildType(containerType: UnitType): UnitType {
+    switch (containerType) {
+      case 'Season':
+        return 'Episode';
+      case 'Volume':
+        return 'Issue';
+      default:
+        return 'Chapter';
+    }
+  }
+
+  /** Template helper: child type for a display group's container (chapters when ungrouped). */
+  nestedChildTypeFor(containerType: UnitType | null): UnitType {
+    return containerType === null ? 'Chapter' : this.nestedChildType(containerType);
+  }
+
+  /** Routes a material-row Add click based on medium and current unit shape. */
+  onMaterialAddClick(medium: Medium, material: ApiSourceMaterial): void {
+    if (medium === 'Book') {
+      const known = this.materialsWithUnits().has(material.id);
+      if (!known || this.unitsFor(material.id).length === 0) {
+        this.openBookChoice(material.id);
+        return;
+      }
+      if (this.hasBookUnits(material.id)) {
+        this.openAddUnitPopup({ materialId: material.id, parentUnitId: null, childType: 'Book' });
+        return;
+      }
+      this.openAddUnitPopup({ materialId: material.id, parentUnitId: null, childType: 'Chapter' });
+      return;
+    }
+
+    this.openAddUnitPopup({
+      materialId: material.id,
+      parentUnitId: null,
+      childType: this.topLevelChildType(medium),
+    });
+  }
+
+  openBookChoice(materialId: number): void {
+    this.actionError.set(null);
+    this.closeAllPopups();
+    this.bookChoiceMaterialId.set(materialId);
+  }
+
+  cancelBookChoice(): void {
+    this.bookChoiceMaterialId.set(null);
+  }
+
+  chooseBookChapter(materialId: number): void {
+    this.cancelBookChoice();
+    this.openAddUnitPopup({ materialId, parentUnitId: null, childType: 'Chapter' });
+  }
+
+  /** Opens the start-collection popup, prefilled with the material's title. */
+  requestStartCollection(materialId: number): void {
+    this.actionError.set(null);
+    this.closeAllPopups();
+    const material = this.materials().find((m) => m.id === materialId);
+    if (!material) {
+      return;
+    }
+    this.startCollectionMaterialId.set(materialId);
+    this.startCollectionName.set(material.title);
+  }
+
+  cancelStartCollection(): void {
+    this.startCollectionMaterialId.set(null);
+  }
+
+  /**
+   * Creates the collection from the start-collection popup: renames the
+   * source material to the collection name (when changed) and creates each
+   * listed book in order — list positions become the book numbers.
+   */
+  submitStartCollection(payload: StartCollectionPayload): void {
+    const id = this.startCollectionMaterialId();
+    if (!id || this.startingCollectionFor()) {
+      return;
+    }
+    const material = this.materials().find((m) => m.id === id);
+    if (!material) {
+      return;
+    }
+    const collectionName = payload.collectionName.trim();
+    const bookTitles = payload.bookTitles.map((title) => title.trim());
+    if (!collectionName) {
+      this.actionError.set('A collection name is required.');
+      return;
+    }
+    if (bookTitles.length === 0 || bookTitles.some((title) => !title)) {
+      this.actionError.set('Every book needs a title.');
+      return;
+    }
+
+    this.actionError.set(null);
+    const operations: Observable<unknown>[] = bookTitles.map((title, index) =>
+      this.catalogService.createSourceMaterialUnit(id, {
+        unitType: 'Book',
+        parentUnitId: null,
+        number: index + 1,
+        title,
+      }),
+    );
+    if (collectionName !== material.title) {
+      operations.unshift(
+        this.catalogService.updateSourceMaterial(id, {
+          title: collectionName,
+          medium: material.medium,
+          canonType: material.canonType,
+        }),
+      );
+    }
+    runOperation({
+      busy: this.startingCollectionFor,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: concat(...operations).pipe(last()),
+      onSuccess: () => {
+        this.closeAllPopups();
+        this.materialsWithUnits.update((set) => addedTo(set, id));
+        this.loadUnits(id);
+      },
+    });
+  }
+
+  openAddUnitPopup(context: UnitAddContext): void {
+    this.actionError.set(null);
+    this.closeAllPopups();
+    this.unitPopupContext.set(context);
+    this.popupNumber.set(this.nextNumberFor(context.materialId, context.parentUnitId));
+    this.popupTitle.set('');
+    this.unitAddError.set(null);
+  }
+
+  cancelAddUnit(): void {
+    this.unitPopupContext.set(null);
+    this.unitAddError.set(null);
+  }
+
+  /** Next free number among sibling units under the same parent. */
+  private nextNumberFor(materialId: number, parentUnitId: number | null): number {
+    const siblings = this.unitsFor(materialId).filter((u) => u.parentUnitId === parentUnitId);
+    return siblings.length === 0 ? 1 : Math.max(...siblings.map((u) => u.number)) + 1;
+  }
+
+  /** Heading of the add-unit popup, naming the type and target container. */
+  unitPopupHeading(context: UnitAddContext): string {
+    if (context.parentUnitId === null) {
+      return `Add ${context.childType.toLowerCase()}`;
+    }
+    const parent = this.unitsFor(context.materialId).find((u) => u.id === context.parentUnitId);
+    const target = parent ? this.groupUnitLabel(parent) : 'collection';
+    return `Add ${context.childType.toLowerCase()} to ${target}`;
+  }
+
+  submitAddUnit(): void {
+    const context = this.unitPopupContext();
+    if (!context || this.addingUnitFor()) {
       return;
     }
     const input = this.buildUnitInput(
-      this.newUnitType(),
-      this.newUnitParent(),
-      this.newUnitNumber(),
-      this.newUnitTitle(),
+      context.childType,
+      context.parentUnitId,
+      this.popupNumber(),
+      this.popupTitle(),
     );
     if (!input) {
       this.unitAddError.set('A unit number of at least one is required.');
@@ -424,18 +706,55 @@ export class SourceMaterialCatalog implements OnInit {
     this.unitAddError.set(null);
     runOperation({
       busy: this.addingUnitFor,
-      busyValue: materialId,
+      busyValue: context.materialId,
       idleValue: null,
       error: this.unitAddError,
-      operation: this.catalogService.createSourceMaterialUnit(materialId, input),
+      operation: this.catalogService.createSourceMaterialUnit(context.materialId, input),
       onSuccess: (created) => {
         if (created) {
-          this.newUnitType.set('Episode');
-          this.newUnitParent.set(null);
-          this.newUnitNumber.set(null);
-          this.newUnitTitle.set('');
-          this.materialsWithUnits.update((set) => addedTo(set, materialId));
-          this.loadUnits(materialId);
+          this.cancelAddUnit();
+          this.materialsWithUnits.update((set) => addedTo(set, context.materialId));
+          this.loadUnits(context.materialId);
+        }
+      },
+    });
+  }
+
+  // ─── Convert standalone book to collection ────────────────────────────────
+
+  requestConvert(material: ApiSourceMaterial): void {
+    this.actionError.set(null);
+    this.closeAllPopups();
+    this.convertPopupMaterialId.set(material.id);
+    this.convertTitle.set(material.title);
+  }
+
+  cancelConvert(): void {
+    this.convertPopupMaterialId.set(null);
+  }
+
+  submitConvert(): void {
+    const id = this.convertPopupMaterialId();
+    if (!id || this.convertingId()) {
+      return;
+    }
+    const title = this.convertTitle().trim();
+    if (!title) {
+      this.actionError.set('A collection title is required.');
+      return;
+    }
+
+    this.actionError.set(null);
+    runOperation({
+      busy: this.convertingId,
+      busyValue: id,
+      idleValue: null,
+      error: this.actionError,
+      operation: this.catalogService.convertStandaloneBookToCollection(id, title),
+      onSuccess: (converted) => {
+        if (converted) {
+          this.convertPopupMaterialId.set(null);
+          this.loadUnits(id);
         }
       },
     });
@@ -527,17 +846,6 @@ export class SourceMaterialCatalog implements OnInit {
   };
 
   /**
-   * Candidate container units (seasons/volumes/books/collections) a unit of
-   * the given material can nest inside, for the parent dropdowns.
-   */
-  parentOptionsFor(materialId: number): readonly ParentUnitOption[] {
-    const units = this.unitsByMaterial()[materialId] ?? [];
-    return units
-      .filter((u) => isContainerOrCollectionUnit(u.unitType))
-      .map((u) => ({ id: u.id, label: this.groupUnitLabel(u) }));
-  }
-
-  /**
    * Builds the season/volume/book groups shown in the expanded views.
    *
    * Uses explicit container units (Season/Volume/Book) as group headers,
@@ -565,6 +873,7 @@ export class SourceMaterialCatalog implements OnInit {
         {
           expandKey: 'ungrouped',
           containerId: null,
+          containerType: null,
           label: noun === undefined ? 'All units' : `All ${noun}s`,
           units: [...units].sort((a, b) => a.number - b.number),
         },
@@ -578,6 +887,7 @@ export class SourceMaterialCatalog implements OnInit {
       .map((container) => ({
         expandKey: String(container.id),
         containerId: container.id,
+        containerType: container.unitType,
         label: this.groupUnitLabel(container),
         units: details.filter((u) => u.parentUnitId === container.id),
       }));
@@ -587,7 +897,13 @@ export class SourceMaterialCatalog implements OnInit {
         !containerIds.has(u.parentUnitId),
     );
     if (orphans.length > 0) {
-      groups.push({ expandKey: 'ungrouped', containerId: null, label: 'Ungrouped', units: orphans });
+      groups.push({
+        expandKey: 'ungrouped',
+        containerId: null,
+        containerType: null,
+        label: 'Ungrouped',
+        units: orphans,
+      });
     }
     return groups;
   }
@@ -745,13 +1061,17 @@ export class SourceMaterialCatalog implements OnInit {
     this.expandedMedia.update((set) => toggledIn(set, medium));
   }
 
-  private getDisplayStrategy(medium: Medium): 'grouped-season' | 'grouped-volume' | 'flat' {
-    switch (medium) {
+  private getDisplayStrategy(
+    material: ApiSourceMaterial,
+  ): 'grouped-season' | 'grouped-volume' | 'grouped-book' | 'flat' {
+    switch (material.medium) {
       case 'Live Action Show':
       case 'Animated Show':
         return 'grouped-season';
       case 'Comic':
         return 'grouped-volume';
+      case 'Book':
+        return this.hasBookUnits(material.id) ? 'grouped-book' : 'flat';
       default:
         return 'flat';
     }

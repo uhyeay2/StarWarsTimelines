@@ -1,15 +1,4 @@
 <form class="unit-edit" (ngSubmit)="save.emit()">
-  <select name="unitEditType" [(ngModel)]="unitType">
-    @for (unitType of unitTypes; track unitType) {
-      <option [value]="unitType">{{ unitType }}</option>
-    }
-  </select>
-  <select name="unitEditParent" [(ngModel)]="parentUnitId">
-    <option [ngValue]="null">Top level</option>
-    @for (option of parentOptions(); track option.id) {
-      <option [ngValue]="option.id">{{ option.label }}</option>
-    }
-  </select>
   <input
     name="unitEditNumber"
     type="number"

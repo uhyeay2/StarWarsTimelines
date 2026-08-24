@@ -1,0 +1,29 @@
+// ═══════════════════════════════════════════════════════════════════════
+// Shared form styling for admin popup dialogs. Pair with `admin-popup`
+// for the dialog chrome; use `.source-field` labels for stacked fields.
+// ═══════════════════════════════════════════════════════════════════════
+
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+input,
+select {
+  @include dark-control;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+select option {
+  background: $color-on-accent;
+  color: $color-text;
+}
+
+/// Label wrapping a single dialog field with its caption.
+.source-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $color-text-secondary;
+}

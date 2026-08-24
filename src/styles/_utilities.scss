@@ -46,3 +46,15 @@
   display: flex;
   gap: 0.4rem;
 }
+
+/// Catalog page heading row: the admin "+ Add" button sits left of the title.
+.catalog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+}

@@ -1,35 +1,16 @@
 <section class="species-catalog">
-  <h2>Species</h2>
+  <div class="catalog-header">
+    <h2>Species</h2>
+    @if (isAdmin()) {
+      <button class="btn btn-sm catalog-add-button" type="button" (click)="openAdd()">+ Add</button>
+    }
+  </div>
 
   @if (loading()) {
     <p class="form-status" role="status">Loading…</p>
   } @else if (loadError()) {
     <p class="form-error" role="alert">{{ loadError() }}</p>
   } @else {
-    @if (isAdmin()) {
-      <form class="species-add" (ngSubmit)="add()">
-        <label class="species-field species-field--name">
-          <span class="sr-only">New species name</span>
-          <input name="newName" [(ngModel)]="newName" placeholder="Add a new species…" />
-        </label>
-        <label class="species-field species-field--planet">
-          <span>Home planet</span>
-          <select name="newHomePlanetId" [(ngModel)]="newHomePlanetId">
-            <option [ngValue]="noPlanet">No home planet</option>
-            @for (location of sortedLocations(); track location.id) {
-              <option [ngValue]="location.id">{{ location.name }}</option>
-            }
-          </select>
-        </label>
-        <button class="btn btn-primary" type="submit" [disabled]="adding()">
-          {{ adding() ? 'Adding…' : 'Add' }}
-        </button>
-      </form>
-      @if (addError()) {
-        <p class="form-error" role="alert">{{ addError() }}</p>
-      }
-    }
-
     <label class="species-search">
       <span class="sr-only">Search species</span>
       <input
@@ -102,5 +83,16 @@
     @if (actionError()) {
       <p class="form-error" role="alert">{{ actionError() }}</p>
     }
+  }
+
+  @if (isAdmin() && addOpen()) {
+    <app-species-add-dialog
+      [locationOptions]="sortedLocations()"
+      [(name)]="newName"
+      [(homePlanetId)]="newHomePlanetId"
+      [error]="addError()"
+      [saving]="adding()"
+      (save)="submitAdd()"
+      (cancel)="cancelAdd()" />
   }
 </section>

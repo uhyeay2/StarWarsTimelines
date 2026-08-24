@@ -1,0 +1,64 @@
+@use '../../../styles/tokens' as *;
+@use '../../../styles/mixins' as *;
+@use '../../../styles/admin-popup';
+
+.admin-popup--wide {
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+input {
+  @include dark-control;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.source-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.book-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.book-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.book-number {
+  width: 1.4rem;
+  text-align: right;
+  color: $color-text-secondary;
+  font-size: 0.85rem;
+}
+
+.book-row-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.book-move,
+.book-remove {
+  padding: 0.2rem 0.45rem;
+  line-height: 1;
+}
+
+.add-another {
+  align-self: flex-start;
+}

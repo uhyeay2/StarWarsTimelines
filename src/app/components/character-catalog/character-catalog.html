@@ -1,66 +1,16 @@
 <section class="character-catalog">
-  <h2>Characters</h2>
+  <div class="catalog-header">
+    <h2>Characters</h2>
+    @if (isAdmin()) {
+      <button class="btn btn-sm catalog-add-button" type="button" (click)="openAdd()">+ Add</button>
+    }
+  </div>
 
   @if (loading()) {
     <p class="form-status" role="status">Loading…</p>
   } @else if (loadError()) {
     <p class="character-error" role="alert">{{ loadError() }}</p>
   } @else {
-    @if (isAdmin()) {
-      <form class="character-add" (ngSubmit)="add()">
-        <label class="character-field character-field--name">
-          <span>Name</span>
-          <input name="newName" [(ngModel)]="newName" placeholder="Add a new character…" />
-        </label>
-        <label class="character-field">
-          <span>Species</span>
-          <select name="newSpeciesId" [(ngModel)]="newSpeciesId">
-            <option [ngValue]="noSelection">Unknown</option>
-            @for (species of sortedSpecies(); track species.id) {
-              <option [ngValue]="species.id">{{ species.name }}</option>
-            }
-          </select>
-        </label>
-        <label class="character-field">
-          <span>Birth planet</span>
-          <select name="newPlanetBornOnId" [(ngModel)]="newPlanetBornOnId">
-            <option [ngValue]="noSelection">Unknown</option>
-            @for (location of sortedLocations(); track location.id) {
-              <option [ngValue]="location.id">{{ location.name }}</option>
-            }
-          </select>
-        </label>
-        <label class="character-field character-field--year">
-          <span>Born from</span>
-          <input
-            name="newBirthFrom"
-            type="number"
-            step="1"
-            placeholder="-41 = 41 BBY"
-            [(ngModel)]="newBirthFrom" />
-        </label>
-        <label class="character-field character-field--year">
-          <span>Born to</span>
-          <input name="newBirthTo" type="number" step="1" placeholder="-39 = 39 BBY" [(ngModel)]="newBirthTo" />
-        </label>
-        <label class="character-field character-field--year">
-          <span>Died from</span>
-          <input name="newDeathFrom" type="number" step="1" placeholder="4 = 4 ABY" [(ngModel)]="newDeathFrom" />
-        </label>
-        <label class="character-field character-field--year">
-          <span>Died to</span>
-          <input name="newDeathTo" type="number" step="1" placeholder="35 = 35 ABY" [(ngModel)]="newDeathTo" />
-        </label>
-        <button class="btn btn-primary character-add-button" type="submit" [disabled]="adding()">
-          {{ adding() ? 'Adding…' : 'Add' }}
-        </button>
-      </form>
-      <p class="character-hint">Years use the galactic timeline: negative for BBY, positive for ABY. Leave a pair blank when unknown.</p>
-      @if (addError()) {
-        <p class="character-error" role="alert">{{ addError() }}</p>
-      }
-    }
-
     <label class="character-search">
       <span class="sr-only">Search characters</span>
       <input
@@ -169,5 +119,22 @@
     @if (actionError()) {
       <p class="form-error" role="alert">{{ actionError() }}</p>
     }
+  }
+
+  @if (isAdmin() && addOpen()) {
+    <app-character-add-dialog
+      [speciesOptions]="sortedSpecies()"
+      [locationOptions]="sortedLocations()"
+      [(name)]="newName"
+      [(speciesId)]="newSpeciesId"
+      [(planetBornOnId)]="newPlanetBornOnId"
+      [(birthFrom)]="newBirthFrom"
+      [(birthTo)]="newBirthTo"
+      [(deathFrom)]="newDeathFrom"
+      [(deathTo)]="newDeathTo"
+      [error]="addError()"
+      [saving]="adding()"
+      (save)="submitAdd()"
+      (cancel)="cancelAdd()" />
   }
 </section>

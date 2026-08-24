@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { CatalogError, DuplicateEntityError, EntityInUseError } from '../../models/catalog/catalog-error';
+import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { CatalogService } from './catalog.service';
 
 describe('CatalogService', () => {
@@ -395,6 +396,56 @@ describe('CatalogService', () => {
       expect(caughtError).toBeInstanceOf(DuplicateEntityError);
       expect((caughtError as CatalogError).code).toBe('duplicate-entity');
       expect((caughtError as Error).message).toBe('Source material already has an episode numbered 9.');
+    });
+  });
+
+  describe('convertStandaloneBookToCollection', () => {
+    it('posts the collection title, maps the returned units, and invalidates both caches', () => {
+      // Warm both caches so invalidation triggers a refetch of each.
+      service.fetchSourceMaterials();
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'))
+        .flush([{ id: 21, title: 'Standalone novel', medium: 1, canonType: 0 }]);
+      const cache = service.getUnitCache(21);
+      cache.fetch();
+      httpMock.expectOne((r) => r.url.endsWith('/api/source-materials/21/units')).flush([]);
+
+      let units: ApiSourceMaterialUnit[] | undefined;
+      service
+        .convertStandaloneBookToCollection(21, 'Thrawn Ascendancy Trilogy')
+        .subscribe((result) => (units = result));
+
+      const request = httpMock.expectOne(
+        (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/21/convert-to-collection'),
+      );
+      expect(request.request.body).toEqual({ collectionTitle: 'Thrawn Ascendancy Trilogy' });
+      request.flush([
+        {
+          id: 110,
+          sourceMaterialId: 21,
+          unitType: 7,
+          number: 1,
+          title: 'Standalone novel',
+          parentUnitId: null,
+        },
+        { id: 1, sourceMaterialId: 21, unitType: 1, number: 1, title: null, parentUnitId: 110 },
+      ]);
+
+      expect(units?.length).toBe(2);
+      expect(units![0].unitType).toBe('Book');
+      expect(units![0].title).toBe('Standalone novel');
+      expect(units![1].unitType).toBe('Chapter');
+      expect(units![1].parentUnitId).toBe(110);
+
+      // Both caches were invalidated and re-fetched.
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'))
+        .flush([]);
+      const refetchReq = httpMock.expectOne(
+        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/21/units'),
+      );
+      refetchReq.flush([]);
+      expect(cache.data()).toEqual([]);
     });
   });
 

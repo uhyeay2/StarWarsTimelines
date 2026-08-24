@@ -6,37 +6,6 @@
   } @else if (loadError()) {
     <p class="form-error" role="alert">{{ loadError() }}</p>
   } @else {
-    @if (isAdmin()) {
-      <form class="source-add" (ngSubmit)="add()">
-        <label class="source-field">
-          <span>Title</span>
-          <input name="newTitle" [(ngModel)]="newTitle" placeholder="Add a new source material…" />
-        </label>
-        <label class="source-field">
-          <span>Medium</span>
-          <select name="newMedium" [(ngModel)]="newMedium">
-            @for (medium of media; track medium) {
-              <option [value]="medium">{{ medium }}</option>
-            }
-          </select>
-        </label>
-        <label class="source-field">
-          <span>Canon</span>
-          <select name="newCanonType" [(ngModel)]="newCanonType">
-            @for (canonType of canonTypes; track canonType) {
-              <option [value]="canonType">{{ canonType }}</option>
-            }
-          </select>
-        </label>
-        <button class="btn btn-primary source-add-button" type="submit" [disabled]="adding()">
-          {{ adding() ? 'Adding…' : 'Add' }}
-        </button>
-      </form>
-      @if (addError()) {
-        <p class="form-error" role="alert">{{ addError() }}</p>
-      }
-    }
-
     <label class="source-search">
       <span class="sr-only">Search source materials</span>
       <input
@@ -48,15 +17,27 @@
 
     @for (group of mediumGroups(); track group.medium) {
       <div class="medium-group">
-        <button
-          type="button"
-          class="medium-header"
-          [class.medium-header--open]="isMediumExpanded(group.medium)"
-          (click)="toggleMedium(group.medium)">
-          <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
-          <span class="medium-label">{{ group.medium }}</span>
-          <span class="medium-count">{{ group.materials.length }} {{ group.materials.length === 1 ? 'material' : 'materials' }}</span>
-        </button>
+        <div class="medium-header" [class.medium-header--open]="isMediumExpanded(group.medium)">
+          <button
+            type="button"
+            class="medium-header-toggle"
+            (click)="toggleMedium(group.medium)"
+            [attr.aria-expanded]="isMediumExpanded(group.medium)">
+            <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+            <span class="medium-label">{{ group.medium }}</span>
+            <span class="medium-count">{{ group.materials.length }} {{ group.materials.length === 1 ? 'material' : 'materials' }}</span>
+          </button>
+          @if (isAdmin()) {
+            <button
+              class="btn btn-sm medium-add-button"
+              type="button"
+              [disabled]="probeLoading()"
+              [title]="'Add a ' + group.medium + ' source material'"
+              (click)="openAddMaterial(group.medium)">
+              + Add
+            </button>
+          }
+        </div>
         @if (isMediumExpanded(group.medium)) {
           <ul class="source-list">
             @for (material of group.materials; track material.id) {
@@ -125,6 +106,25 @@
 
                     @if (isAdmin()) {
                       <div class="source-actions">
+                        @if (hasMaterialAdd(group.medium)) {
+                          <button
+                            class="btn btn-sm"
+                            type="button"
+                            [disabled]="probeLoading()"
+                            title="Add a unit to this source material"
+                            (click)="onMaterialAddClick(group.medium, material)">
+                            + Add
+                          </button>
+                        }
+                        @if (isConvertibleStandaloneBook(material)) {
+                          <button
+                            class="btn btn-sm"
+                            type="button"
+                            title="Turn this standalone book into a collection of books"
+                            (click)="requestConvert(material)">
+                            Convert to Collection
+                          </button>
+                        }
                         <button class="btn btn-sm" type="button" (click)="beginEdit(material)">
                           Edit
                         </button>
@@ -159,55 +159,6 @@
                       } @else if (unitsError()) {
                         <p class="form-error" role="alert">{{ unitsError() }}</p>
                       } @else {
-                        <!-- Admin: unit management form -->
-                        @if (isAdmin()) {
-                          <form class="unit-add" (ngSubmit)="addUnit(material.id)">
-                            <label class="source-field">
-                              <span class="sr-only">Unit type</span>
-                              <select name="newUnitType" [(ngModel)]="newUnitType">
-                                @for (unitType of unitTypes; track unitType) {
-                                  <option [value]="unitType">{{ unitType }}</option>
-                                }
-                              </select>
-                            </label>
-                            <label class="source-field">
-                              <span class="sr-only">Parent unit</span>
-                              <select name="newUnitParent" [(ngModel)]="newUnitParent">
-                                <option [ngValue]="null">Top level</option>
-                                @for (option of parentOptionsFor(material.id); track option.id) {
-                                  <option [ngValue]="option.id">{{ option.label }}</option>
-                                }
-                              </select>
-                            </label>
-                            <label class="source-field">
-                              <span class="sr-only">Unit number</span>
-                              <input
-                                name="newUnitNumber"
-                                type="number"
-                                min="1"
-                                placeholder="Number"
-                                required
-                                [(ngModel)]="newUnitNumber" />
-                            </label>
-                            <label class="source-field">
-                              <span class="sr-only">Unit title</span>
-                              <input
-                                name="newUnitTitle"
-                                [(ngModel)]="newUnitTitle"
-                                placeholder="Title (optional)" />
-                            </label>
-                            <button
-                              class="btn btn-sm"
-                              type="submit"
-                              [disabled]="addingUnitFor() === material.id">
-                              {{ addingUnitFor() === material.id ? 'Adding…' : 'Add unit' }}
-                            </button>
-                          </form>
-                          @if (unitAddError()) {
-                            <p class="form-error" role="alert">{{ unitAddError() }}</p>
-                          }
-                        }
-
                         <!-- ═══════════════════════════════════════════════════════════
                              NON-ADMIN UNIT DISPLAY — medium-specific
                              ═══════════════════════════════════════════════════════════ -->
@@ -276,9 +227,6 @@
                                   <li class="unit-item">
                                     @if (unitEditKey()?.unitId === unit.id) {
                                       <app-unit-edit-form
-                                        [(unitType)]="unitEditType"
-                                        [(parentUnitId)]="unitEditParent"
-                                        [parentOptions]="parentOptionsFor(material.id)"
                                         [(number)]="unitEditNumber"
                                         [(title)]="unitEditTitle"
                                         [saving]="unitSavingKey()?.unitId === unit.id"
@@ -327,24 +275,32 @@
                               <ul class="unit-list">
                                 @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
                                   <li class="season-group">
-                                    <button
-                                      type="button"
-                                      class="season-header"
-                                      [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
-                                      (click)="toggleSeason(material.id, displayGroup.expandKey)">
-                                      <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
-                                      <span class="season-label">{{ displayGroup.label }}</span>
-                                      <span class="season-count">{{ displayGroup.units.length }} {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span>
-                                    </button>
+                                    <div class="track-group-row">
+                                      <button
+                                        type="button"
+                                        class="season-header"
+                                        [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
+                                        (click)="toggleSeason(material.id, displayGroup.expandKey)">
+                                        <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                        <span class="season-label">{{ displayGroup.label }}</span>
+                                        <span class="season-count">{{ displayGroup.units.length }} {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span>
+                                      </button>
+                                      @if (displayGroup.containerId !== null) {
+                                        <button
+                                          class="btn btn-sm container-add-button"
+                                          type="button"
+                                          [title]="'Add a unit inside ' + displayGroup.label"
+                                          (click)="openAddUnitPopup({ materialId: material.id, parentUnitId: displayGroup.containerId, childType: nestedChildTypeFor(displayGroup.containerType) })">
+                                          + Add
+                                        </button>
+                                      }
+                                    </div>
                                     @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
                                       <ul class="season-episodes">
                                         @for (unit of displayGroup.units; track unit.id) {
                                           <li class="unit-item">
                                             @if (unitEditKey()?.unitId === unit.id) {
                                               <app-unit-edit-form
-                                                [(unitType)]="unitEditType"
-                                                [(parentUnitId)]="unitEditParent"
-                                                [parentOptions]="parentOptionsFor(material.id)"
                                                 [(number)]="unitEditNumber"
                                                 [(title)]="unitEditTitle"
                                                 [saving]="unitSavingKey()?.unitId === unit.id"
@@ -410,6 +366,59 @@
     }
     @if (actionError()) {
       <p class="form-error" role="alert">{{ actionError() }}</p>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ADMIN POPUPS — one dialog at a time, driven by signals
+         ═══════════════════════════════════════════════════════════════════════ -->
+    @if (isAdmin()) {
+      @if (addMaterialMedium(); as popupMedium) {
+        <app-material-add-dialog
+          [medium]="popupMedium"
+          [titleLabel]="popupMedium === 'Book' ? 'Book Title or Collection Name' : 'Title'"
+          [(title)]="newTitle"
+          [(canonType)]="newCanonType"
+          [error]="addError()"
+          [saving]="adding()"
+          (save)="submitAddMaterial()"
+          (cancel)="cancelAddMaterial()" />
+      }
+
+      @if (bookChoiceMaterialId() !== null) {
+        <app-book-choice-dialog
+          (chooseChapter)="chooseBookChapter(bookChoiceMaterialId()!)"
+          (chooseBook)="requestStartCollection(bookChoiceMaterialId()!)"
+          (cancel)="cancelBookChoice()" />
+      }
+
+      @if (unitPopupContext(); as context) {
+        <app-unit-add-dialog
+          [heading]="unitPopupHeading(context)"
+          [(number)]="popupNumber"
+          [(title)]="popupTitle"
+          [error]="unitAddError()"
+          [saving]="addingUnitFor() === context.materialId"
+          (save)="submitAddUnit()"
+          (cancel)="cancelAddUnit()" />
+      }
+
+      @if (convertPopupMaterialId() !== null) {
+        <app-convert-collection-dialog
+          [(title)]="convertTitle"
+          [error]="actionError()"
+          [saving]="convertingId() === convertPopupMaterialId()"
+          (convert)="submitConvert()"
+          (cancel)="cancelConvert()" />
+      }
+
+      @if (startCollectionMaterialId() !== null) {
+        <app-start-collection-dialog
+          [(collectionName)]="startCollectionName"
+          [error]="actionError()"
+          [saving]="startingCollectionFor() === startCollectionMaterialId()"
+          (save)="submitStartCollection($event)"
+          (cancel)="cancelStartCollection()" />
+      }
     }
   }
 </section>

@@ -6,13 +6,14 @@ import { CreateCharacterInput } from '../../models/catalog/create-character-inpu
 import { formatGalacticYearRange } from '../../utils/galactic-year';
 import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
+import { CharacterAddDialog } from '../character-add-dialog/character-add-dialog';
 
 /** Sentinel select value representing "nothing selected"; catalog ids start at 1. */
 const NONE = 0;
 
 @Component({
   selector: 'app-character-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, CharacterAddDialog],
   templateUrl: './character-catalog.html',
   styleUrl: './character-catalog.scss',
 })
@@ -51,6 +52,9 @@ export class CharacterCatalog implements OnInit {
   readonly newDeathTo = signal<number | null>(null);
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
+
+  /** Whether the add dialog is open. */
+  readonly addOpen = signal(false);
 
   readonly editId = signal<number | null>(null);
   readonly editName = signal('');
@@ -100,7 +104,18 @@ export class CharacterCatalog implements OnInit {
     return parts.length > 0 ? parts.join(' \u00b7 ') : null;
   }
 
-  add(): void {
+  /** Opens the add dialog with a blank form. */
+  openAdd(): void {
+    this.addError.set(null);
+    this.resetAddForm();
+    this.addOpen.set(true);
+  }
+
+  cancelAdd(): void {
+    this.addOpen.set(false);
+  }
+
+  submitAdd(): void {
     if (this.adding()) {
       return;
     }
@@ -135,6 +150,7 @@ export class CharacterCatalog implements OnInit {
       onSuccess: (item) => {
         if (item) {
           this.resetAddForm();
+          this.addOpen.set(false);
         }
       },
     });

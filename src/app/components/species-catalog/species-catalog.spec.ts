@@ -62,19 +62,37 @@ describe('SpeciesCatalog', () => {
     expect(component.items()).toEqual([]);
   });
 
-  it('shows a validation error for a blank name on add', () => {
-    component.newName.set('   ');
+  it('opens the add dialog from the header button and cancels it', () => {
+    const header = fixture.nativeElement.querySelector('.catalog-header') as HTMLElement;
+    const addButton = header.querySelector('.catalog-add-button') as HTMLButtonElement;
+    expect(header.querySelector('h2')?.textContent).toContain('Species');
+    expect(header.lastElementChild).toBe(addButton);
+
+    addButton.click();
     fixture.detectChanges();
-    component.add();
+    expect(component.addOpen()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Add species');
+
+    (fixture.nativeElement.querySelector('.admin-popup-backdrop') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(component.addOpen()).toBe(false);
+  });
+
+  it('shows a validation error for a blank name on add', () => {
+    component.openAdd();
+    fixture.detectChanges();
+    component.newName.set('   ');
+    component.submitAdd();
 
     expect(component.addError()).toBe('A name is required.');
     expect(component.adding()).toBe(false);
   });
 
   it('creates a species without a home planet and reloads the list', () => {
+    component.openAdd();
     component.newName.set('Twi\u2019lek');
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(SPECIES_URL));
     expect(post.request.body).toEqual({ name: 'Twi\u2019lek', homePlanetId: null });
@@ -82,16 +100,18 @@ describe('SpeciesCatalog', () => {
 
     loadSpecies([{ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
 
+    expect(component.addOpen()).toBe(false);
     expect(component.newName()).toBe('');
     expect(component.items()).toEqual([{ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
     expect(fixture.nativeElement.textContent).toContain('Twi\u2019lek');
   });
 
   it('creates a species with a home planet', () => {
+    component.openAdd();
     component.newName.set('Togruta');
     component.newHomePlanetId.set(11);
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(SPECIES_URL));
     expect(post.request.body).toEqual({ name: 'Togruta', homePlanetId: 11 });
@@ -102,10 +122,11 @@ describe('SpeciesCatalog', () => {
     expect(fixture.nativeElement.textContent).toContain('Home: Tatooine');
   });
 
-  it('surfaces a server error when creating a duplicate', () => {
+  it('surfaces a server error inside the dialog when creating a duplicate', () => {
+    component.openAdd();
     component.newName.set('Human');
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     httpMock
       .expectOne((r) => r.method === 'POST')
@@ -224,7 +245,7 @@ describe('SpeciesCatalog', () => {
     loadSpecies([{ id: 3, name: 'Human', homePlanetId: null, homePlanetName: null }]);
 
     expect(fixture.nativeElement.querySelector('.species-actions')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.species-add')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.catalog-add-button')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Human');
   });
 });

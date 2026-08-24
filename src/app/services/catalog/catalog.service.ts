@@ -630,6 +630,33 @@ export class CatalogService {
       );
   }
 
+  /**
+   * Converts a standalone book source material into a book collection.
+   *
+   * The server renames the material to the given collection title, inserts a
+   * new top-level Book unit carrying the material's previous title, and moves
+   * every existing top-level unit (chapters) beneath that book. Tracking users'
+   * in-progress/completed statuses migrate onto the new book unit.
+   *
+   * @param id              The ID of the standalone book source material.
+   * @param collectionTitle The new title for the collection (the material itself).
+   * @returns An observable of the material's updated unit list (with mapped enums).
+   */
+  convertStandaloneBookToCollection(id: number, collectionTitle: string): Observable<ApiSourceMaterialUnit[]> {
+    return this.http
+      .post<readonly SourceMaterialUnitDto[]>(`${BASE}/source-materials/${id}/convert-to-collection`, {
+        collectionTitle,
+      })
+      .pipe(
+        catchError(this.handleError('Unable to convert the book to a collection. Please try again.', 'convertStandaloneBookToCollection')),
+        map((items) => items.map((item) => this.mapUnit(item))),
+        tap(() => {
+          this.sourceMaterialsCache.invalidate();
+          this.unitCaches.get(id)?.invalidate();
+        }),
+      );
+  }
+
   // ─── Source material units ───────────────────────────────────────────────
 
   /**

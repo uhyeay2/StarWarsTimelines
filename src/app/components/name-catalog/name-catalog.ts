@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { CatalogService } from '../../services/catalog/catalog.service';
 import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
+import { NameAddDialog } from '../name-add-dialog/name-add-dialog';
 
 interface NameItem {
   id: number;
@@ -14,7 +15,7 @@ export type NameCatalogKind = 'locations' | 'vehicles';
 
 @Component({
   selector: 'app-name-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, NameAddDialog],
   templateUrl: './name-catalog.html',
   styleUrl: './name-catalog.scss',
 })
@@ -61,6 +62,15 @@ export class NameCatalog implements OnInit {
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
+  /** Whether the add dialog is open. */
+  readonly addOpen = signal(false);
+
+  /** Dialog heading derived from the noun, e.g. "Add Vehicle". */
+  readonly addHeading = computed(() => {
+    const noun = this.noun();
+    return 'Add ' + noun.charAt(0).toUpperCase() + noun.slice(1);
+  });
+
   readonly editId = signal<number | null>(null);
   readonly editName = signal('');
   readonly savingId = signal<number | null>(null);
@@ -84,7 +94,18 @@ export class NameCatalog implements OnInit {
     }
   }
 
-  add(): void {
+  /** Opens the add dialog with a blank name. */
+  openAdd(): void {
+    this.addError.set(null);
+    this.newName.set('');
+    this.addOpen.set(true);
+  }
+
+  cancelAdd(): void {
+    this.addOpen.set(false);
+  }
+
+  submitAdd(): void {
     if (this.adding()) {
       return;
     }
@@ -104,6 +125,7 @@ export class NameCatalog implements OnInit {
       onSuccess: (item) => {
         if (item) {
           this.newName.set('');
+          this.addOpen.set(false);
         }
       },
     });

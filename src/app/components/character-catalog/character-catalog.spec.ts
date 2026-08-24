@@ -79,19 +79,37 @@ describe('CharacterCatalog', () => {
     expect(component.items()).toEqual([]);
   });
 
-  it('shows a validation error for a blank name on add', () => {
-    component.newName.set('   ');
+  it('opens the add dialog from the header button and cancels it', () => {
+    const header = fixture.nativeElement.querySelector('.catalog-header') as HTMLElement;
+    const addButton = header.querySelector('.catalog-add-button') as HTMLButtonElement;
+    expect(header.querySelector('h2')?.textContent).toContain('Characters');
+    expect(header.lastElementChild).toBe(addButton);
+
+    addButton.click();
     fixture.detectChanges();
-    component.add();
+    expect(component.addOpen()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Add character');
+
+    (fixture.nativeElement.querySelector('.admin-popup-backdrop') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(component.addOpen()).toBe(false);
+  });
+
+  it('shows a validation error for a blank name on add', () => {
+    component.openAdd();
+    fixture.detectChanges();
+    component.newName.set('   ');
+    component.submitAdd();
 
     expect(component.addError()).toBe('A name is required.');
     expect(component.adding()).toBe(false);
   });
 
-  it('creates a name-only character', () => {
+  it('creates a name-only character through the dialog', () => {
+    component.openAdd();
     component.newName.set('BD-1');
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(CHARACTERS_URL));
     expect(post.request.body).toEqual({
@@ -104,14 +122,17 @@ describe('CharacterCatalog', () => {
       speciesId: null,
     });
     post.flush({ id: 7, name: 'BD-1' });
+    fixture.detectChanges();
 
     loadCharacters([{ id: 7, name: 'BD-1' }]);
 
+    expect(component.addOpen()).toBe(false);
     expect(component.newName()).toBe('');
     expect(fixture.nativeElement.textContent).toContain('BD-1');
   });
 
   it('creates a character with a full biography', () => {
+    component.openAdd();
     component.newName.set('Grogu');
     component.newSpeciesId.set(4);
     component.newPlanetBornOnId.set(11);
@@ -120,7 +141,7 @@ describe('CharacterCatalog', () => {
     component.newDeathFrom.set(12);
     component.newDeathTo.set(15);
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(CHARACTERS_URL));
     expect(post.request.body).toEqual({
@@ -160,30 +181,34 @@ describe('CharacterCatalog', () => {
   });
 
   it('rejects a half-filled birth-year pair without calling the API', () => {
+    component.openAdd();
     component.newName.set('Yoda');
     component.newBirthFrom.set(-900);
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     expect(component.addError()).toBe('Birth years require both earliest and latest values.');
+    expect(component.addOpen()).toBe(true);
     httpMock.expectNone(() => true);
   });
 
   it('rejects an inverted death-year range without calling the API', () => {
+    component.openAdd();
     component.newName.set('Yoda');
     component.newDeathFrom.set(35);
     component.newDeathTo.set(4);
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     expect(component.addError()).toBe('The earliest death year cannot come after the latest.');
     httpMock.expectNone(() => true);
   });
 
-  it('surfaces a server error when creating a duplicate', () => {
+  it('surfaces a server error inside the dialog when creating a duplicate', () => {
+    component.openAdd();
     component.newName.set('Luke Skywalker');
     fixture.detectChanges();
-    component.add();
+    component.submitAdd();
 
     httpMock
       .expectOne((r) => r.method === 'POST')
@@ -191,6 +216,7 @@ describe('CharacterCatalog', () => {
     fixture.detectChanges();
 
     expect(component.addError()).toBe('A character with this name already exists.');
+    expect(fixture.nativeElement.textContent).toContain('A character with this name already exists.');
   });
 
   it('edits a character biography and reloads the list', () => {
@@ -430,7 +456,7 @@ describe('CharacterCatalog', () => {
     loadCharacters([{ id: 7, name: 'Human' }]);
 
     expect(fixture.nativeElement.querySelector('.character-actions')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.character-add')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.catalog-add-button')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Human');
   });
 });

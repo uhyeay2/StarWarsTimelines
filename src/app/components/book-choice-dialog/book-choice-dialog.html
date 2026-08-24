@@ -1,0 +1,17 @@
+<div class="admin-popup-backdrop" (click)="cancel.emit()"></div>
+<div class="admin-popup" role="dialog" aria-modal="true" aria-label="This book has no chapters yet">
+  <h3>This book has no chapters yet</h3>
+  <p class="admin-popup-hint">
+    Keep it as a single book by adding chapters to it, or turn it into a collection that contains
+    several books.
+  </p>
+  <div class="admin-popup-actions">
+    <button class="btn btn-primary btn-sm" type="button" (click)="chooseChapter.emit()">
+      Add chapter
+    </button>
+    <button class="btn btn-sm" type="button" (click)="chooseBook.emit()">
+      Start collection
+    </button>
+    <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+  </div>
+</div>

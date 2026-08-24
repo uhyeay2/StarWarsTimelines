@@ -24,13 +24,6 @@ select option {
   color: $color-text;
 }
 
-.source-add {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
 .source-field {
   display: flex;
   flex-direction: column;
@@ -38,10 +31,6 @@ select option {
   font-size: 0.75rem;
   font-weight: 600;
   color: $color-text-secondary;
-}
-
-.source-add-button {
-  align-self: flex-end;
 }
 
 .source-list,
@@ -57,10 +46,6 @@ select option {
   gap: 0.5rem;
 }
 
-.unit-list {
-  gap: 0.35rem;
-}
-
 .medium-group,
 .season-group {
   display: flex;
@@ -74,8 +59,7 @@ select option {
   background: rgba($color-accent, 0.06);
   border: 1px solid rgba($color-accent, 0.15);
   border-radius: 8px;
-  padding: 0.55rem 0.7rem;
-  cursor: pointer;
+  padding: 0.35rem 0.45rem 0.35rem 0.25rem;
   margin-bottom: 0.5rem;
   transition: background 0.15s ease;
 
@@ -88,6 +72,24 @@ select option {
     margin-bottom: 0;
     border-bottom-color: transparent;
   }
+}
+
+.medium-header-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0.25rem;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.medium-add-button {
+  flex-shrink: 0;
 }
 
 .medium-toggle,
@@ -220,16 +222,8 @@ select option {
   padding-top: 0.75rem;
 }
 
-.unit-add {
-  display: grid;
-  grid-template-columns: auto auto auto 1fr auto;
-  gap: 0.4rem;
-  align-items: end;
-  margin-bottom: 0.75rem;
-
-  input[type='number'] {
-    width: 5.5rem;
-  }
+.container-add-button {
+  flex-shrink: 0;
 }
 
 .unit-list {
@@ -315,11 +309,8 @@ select option {
 }
 
 @media (max-width: 720px) {
-  .source-add {
-    grid-template-columns: 1fr;
-  }
-
-  .unit-add {
-    grid-template-columns: 1fr 1fr;
+  .source-edit {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

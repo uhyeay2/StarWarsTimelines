@@ -1,0 +1,27 @@
+<div class="admin-popup-backdrop" (click)="cancel.emit()"></div>
+<div class="admin-popup" role="dialog" aria-modal="true" [attr.aria-label]="'Add ' + medium()">
+  <h3>Add {{ medium() }}</h3>
+  <form (ngSubmit)="save.emit()">
+    <label class="source-field">
+      <span>{{ titleLabel() }}</span>
+      <input name="materialTitle" [(ngModel)]="title" placeholder="{{ titleLabel() }}…" required />
+    </label>
+    <label class="source-field">
+      <span>Canon</span>
+      <select name="materialCanonType" [(ngModel)]="canonType">
+        @for (canonType of canonTypes; track canonType) {
+          <option [value]="canonType">{{ canonType }}</option>
+        }
+      </select>
+    </label>
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <div class="admin-popup-actions">
+      <button class="btn btn-primary btn-sm" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Adding…' : 'Add' }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</div>

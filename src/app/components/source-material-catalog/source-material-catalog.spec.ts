@@ -112,20 +112,21 @@ describe('SourceMaterialCatalog', () => {
   });
 
   it('shows a validation error for a blank title on add', () => {
+    component.openAddMaterial('Movie');
     component.newTitle.set('   ');
     fixture.detectChanges();
-    component.add();
+    component.submitAddMaterial();
 
     expect(component.addError()).toBe('A title is required.');
     expect(component.adding()).toBe(false);
   });
 
-  it('creates a source material with mapped enum codes and reloads', () => {
+  it('creates a source material from the medium popup with mapped enum codes and reloads', () => {
+    component.openAddMaterial('Live Action Show');
     component.newTitle.set('Ahsoka');
-    component.newMedium.set('Live Action Show');
     component.newCanonType.set('Legends');
     fixture.detectChanges();
-    component.add();
+    component.submitAddMaterial();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/source-materials'));
     expect(post.request.body).toEqual({ title: 'Ahsoka', medium: 4, canonType: 1 });
@@ -138,15 +139,17 @@ describe('SourceMaterialCatalog', () => {
     fixture.detectChanges();
 
     expect(component.newTitle()).toBe('');
+    expect(component.addMaterialMedium()).toBeNull();
     expect(component.materials()).toEqual([
       { id: 19, title: 'Ahsoka', medium: 'Live Action Show', canonType: 'Legends' },
     ]);
   });
 
   it('surfaces a server error when adding a duplicate title', () => {
+    component.openAddMaterial('Movie');
     component.newTitle.set('Ahsoka');
     fixture.detectChanges();
-    component.add();
+    component.submitAddMaterial();
 
     httpMock
       .expectOne((r) => r.method === 'POST')
@@ -263,7 +266,7 @@ describe('SourceMaterialCatalog', () => {
     vi.useRealTimers();
   });
 
-  it('adds a unit to a material and reloads its units', async () => {
+  it('adds a unit to a material through the add-unit popup and reloads its units', async () => {
     vi.useFakeTimers();
     loadMaterials([{ id: 21, title: 'The Mandalorian', medium: 4, canonType: 0 }]);
 
@@ -274,12 +277,11 @@ describe('SourceMaterialCatalog', () => {
     expect(component.expandedMaterialId()).toBeNull();
 
     // Manually add a unit (the expand section is hidden, but the method still works).
-    component.newUnitType.set('Episode');
-    component.newUnitParent.set(null);
-    component.newUnitNumber.set(9);
-    component.newUnitTitle.set('Chapter 9: The Marshal');
+    component.openAddUnitPopup({ materialId: 21, parentUnitId: null, childType: 'Episode' });
+    component.popupNumber.set(9);
+    component.popupTitle.set('Chapter 9: The Marshal');
     fixture.detectChanges();
-    component.addUnit(21);
+    component.submitAddUnit();
 
     const post = httpMock.expectOne(
       (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/21/units'),
@@ -309,16 +311,17 @@ describe('SourceMaterialCatalog', () => {
     await vi.advanceTimersByTimeAsync(100);
     fixture.detectChanges();
 
-    expect(component.newUnitNumber()).toBeNull();
+    expect(component.unitPopupContext()).toBeNull();
     expect(component.unitsByMaterial()[21]).toHaveLength(1);
     expect(component.materialsWithUnits().has(21)).toBe(true);
     vi.useRealTimers();
   });
 
   it('rejects a unit add without a valid number', () => {
-    component.newUnitNumber.set(0);
+    component.openAddUnitPopup({ materialId: 21, parentUnitId: null, childType: 'Episode' });
+    component.popupNumber.set(0);
     fixture.detectChanges();
-    component.addUnit(21);
+    component.submitAddUnit();
 
     expect(component.unitAddError()).toBe('A unit number of at least one is required.');
   });
@@ -547,12 +550,11 @@ describe('SourceMaterialCatalog', () => {
     const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
     expect(expandButton()).toBeNull();
 
-    component.newUnitType.set('Episode');
-    component.newUnitParent.set(null);
-    component.newUnitNumber.set(1);
-    component.newUnitTitle.set('Part 1');
+    component.openAddUnitPopup({ materialId: 21, parentUnitId: null, childType: 'Episode' });
+    component.popupNumber.set(1);
+    component.popupTitle.set('Part 1');
     fixture.detectChanges();
-    component.addUnit(21);
+    component.submitAddUnit();
 
     httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/units')).flush({
       id: 211, sourceMaterialId: 21, unitType: 0, parentUnitId: null, number: 1, title: 'Part 1',
@@ -566,6 +568,394 @@ describe('SourceMaterialCatalog', () => {
     expect(expandButton()).toBeTruthy();
     expect(component.materialsWithUnits().has(21)).toBe(true);
     vi.useRealTimers();
+  });
+
+  // ─── Admin add & convert UX ───────────────────────────────────────────────
+
+  describe('admin add & convert UX', () => {
+    /** Returns the loaded material with the given id, failing loudly when absent. */
+    function findMaterial(id: number): ApiSourceMaterial {
+      const found = component.materials().find((m) => m.id === id);
+      if (!found) {
+        throw new Error(`Material ${id} was not loaded.`);
+      }
+      return found;
+    }
+
+    /** Returns the rendered material row containing the given title. */
+    function rowFor(title: string): HTMLElement {
+      const rows = fixture.nativeElement.querySelectorAll('.source-item') as NodeListOf<HTMLElement>;
+      const row = Array.from(rows).find((li) => li.textContent?.includes(title));
+      if (!row) {
+        throw new Error(`No material row rendered for "${title}".`);
+      }
+      return row;
+    }
+
+    /** The material-row Add button of a row, if present. */
+    function materialAddButton(row: HTMLElement): HTMLButtonElement | null {
+      return row.querySelector('button[title="Add a unit to this source material"]');
+    }
+
+    /** Marks a material as having units and seeds its known unit list. */
+    function seedUnits(id: number, units: ApiSourceMaterialUnit[]): void {
+      component.materialsWithUnits.update((set) => new Set(set).add(id));
+      component.unitsByMaterial.set({ ...component.unitsByMaterial(), [id]: units });
+      fixture.detectChanges();
+    }
+
+    it('renders an add button on every medium header, including movies', () => {
+      loadMaterials([
+        { id: 11, title: 'A New Hope', medium: 0, canonType: 0 },
+        { id: 12, title: 'Darth Bane', medium: 1, canonType: 0 },
+        { id: 13, title: 'The Mandalorian', medium: 4, canonType: 0 },
+      ]);
+
+      const headerButtons = fixture.nativeElement.querySelectorAll('.medium-add-button');
+      expect(headerButtons.length).toBe(3);
+
+      // The movie group is the first rendered; its header Add opens the dialog.
+      (headerButtons[0] as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(component.addMaterialMedium()).toBe('Movie');
+      const dialog = fixture.nativeElement.querySelector('app-material-add-dialog .admin-popup');
+      expect(dialog).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-material-add-dialog h3')?.textContent?.trim()).toBe(
+        'Add Movie',
+      );
+
+      component.cancelAddMaterial();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('app-material-add-dialog')).toBeNull();
+    });
+
+    it('routes the material-row Add by medium and omits it for movies', () => {
+      loadMaterials([
+        { id: 31, title: 'Show', medium: 4, canonType: 0 },
+        { id: 32, title: 'Game', medium: 5, canonType: 0 },
+        { id: 33, title: 'Comic', medium: 2, canonType: 0 },
+        { id: 34, title: 'Film', medium: 0, canonType: 0 },
+      ]);
+
+      component.onMaterialAddClick('Live Action Show', findMaterial(31));
+      expect(component.unitPopupContext()).toEqual({
+        materialId: 31,
+        parentUnitId: null,
+        childType: 'Season',
+      });
+      component.cancelAddUnit();
+
+      component.onMaterialAddClick('Video Game', findMaterial(32));
+      expect(component.unitPopupContext()!.childType).toBe('Level');
+      component.cancelAddUnit();
+
+      component.onMaterialAddClick('Comic', findMaterial(33));
+      expect(component.unitPopupContext()!.childType).toBe('Volume');
+      component.cancelAddUnit();
+
+      // Movies have no units to add: no button on the row (its medium header
+      // still offers creating a new movie source material).
+      expect(materialAddButton(rowFor('Film'))).toBeNull();
+    });
+
+    it('opens the book choice dialog for a book without units and routes both options', () => {
+      loadMaterials([{ id: 41, title: 'Empty novel', medium: 1, canonType: 0 }]);
+
+      component.onMaterialAddClick('Book', findMaterial(41));
+      fixture.detectChanges();
+
+      expect(component.bookChoiceMaterialId()).toBe(41);
+      expect(
+        fixture.nativeElement.querySelector('app-book-choice-dialog .admin-popup'),
+      ).toBeTruthy();
+
+      component.chooseBookChapter(41);
+      fixture.detectChanges();
+      expect(component.bookChoiceMaterialId()).toBeNull();
+      expect(component.unitPopupContext()).toEqual({
+        materialId: 41,
+        parentUnitId: null,
+        childType: 'Chapter',
+      });
+      component.cancelAddUnit();
+
+      // Choosing "Start collection" opens the multi-book creation popup with
+      // the collection name prefilled from the material title.
+      component.onMaterialAddClick('Book', findMaterial(41));
+      component.requestStartCollection(41);
+      fixture.detectChanges();
+
+      expect(component.bookChoiceMaterialId()).toBeNull();
+      expect(component.startCollectionMaterialId()).toBe(41);
+      expect(component.startCollectionName()).toBe('Empty novel');
+      expect(
+        fixture.nativeElement.querySelector('app-start-collection-dialog .admin-popup'),
+      ).toBeTruthy();
+
+      component.cancelStartCollection();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('app-start-collection-dialog')).toBeNull();
+    });
+
+    it('infers chapter adds with the next free number for standalone books', () => {
+      loadMaterials([{ id: 42, title: 'Novel', medium: 1, canonType: 0 }]);
+      seedUnits(42, [
+        { id: 501, sourceMaterialId: 42, unitType: 'Chapter', parentUnitId: null, number: 1, title: null },
+        { id: 502, sourceMaterialId: 42, unitType: 'Chapter', parentUnitId: null, number: 2, title: null },
+      ]);
+
+      component.onMaterialAddClick('Book', findMaterial(42));
+
+      expect(component.unitPopupContext()).toEqual({
+        materialId: 42,
+        parentUnitId: null,
+        childType: 'Chapter',
+      });
+      expect(component.popupNumber()).toBe(3);
+      component.cancelAddUnit();
+    });
+
+    it('infers book adds for collections and nests chapter adds beneath containers', () => {
+      loadMaterials([{ id: 21, title: 'Trilogy', medium: 1, canonType: 0 }]);
+      seedUnits(21, [
+        { id: 601, sourceMaterialId: 21, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
+        { id: 602, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 1, title: null },
+        { id: 603, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 2, title: null },
+      ]);
+
+      // A collection offers another Book at the top level.
+      component.onMaterialAddClick('Book', findMaterial(21));
+      expect(component.unitPopupContext()).toEqual({
+        materialId: 21,
+        parentUnitId: null,
+        childType: 'Book',
+      });
+      expect(component.popupNumber()).toBe(2);
+      component.cancelAddUnit();
+
+      // Expanding reveals per-container Add buttons prefilling nested chapters.
+      component.expandedMaterialId.set(21);
+      fixture.detectChanges();
+
+      const containerButton = fixture.nativeElement.querySelector(
+        '.container-add-button',
+      ) as HTMLButtonElement;
+      expect(containerButton).toBeTruthy();
+      containerButton.click();
+      fixture.detectChanges();
+
+      const context = component.unitPopupContext();
+      expect(context).toEqual({ materialId: 21, parentUnitId: 601, childType: 'Chapter' });
+      expect(component.popupNumber()).toBe(3);
+      expect(component.unitPopupHeading(context!)).toBe('Add chapter to Book One');
+    });
+
+    it('shows convert only for standalone books with chapters and posts the conversion', async () => {
+      vi.useFakeTimers();
+      loadMaterials([{ id: 43, title: 'Standalone', medium: 1, canonType: 0 }]);
+      seedUnits(43, [
+        { id: 701, sourceMaterialId: 43, unitType: 'Chapter', parentUnitId: null, number: 1, title: null },
+        { id: 702, sourceMaterialId: 43, unitType: 'Chapter', parentUnitId: null, number: 2, title: null },
+      ]);
+      const material = findMaterial(43);
+      expect(component.isConvertibleStandaloneBook(material)).toBe(true);
+
+      const convertButton = Array.from(rowFor('Standalone').querySelectorAll('button')).find(
+        (b) => b.textContent?.includes('Convert to Collection'),
+      ) as HTMLButtonElement | undefined;
+      expect(convertButton).toBeTruthy();
+
+      convertButton!.click();
+      fixture.detectChanges();
+      expect(component.convertPopupMaterialId()).toBe(43);
+      // The dialog prefills the collection title with the current material title.
+      expect(component.convertTitle()).toBe('Standalone');
+      expect(
+        fixture.nativeElement.querySelector('app-convert-collection-dialog'),
+      ).toBeTruthy();
+
+      component.convertTitle.set('Thrawn Trilogy');
+      component.submitConvert();
+
+      const post = httpMock.expectOne(
+        (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/43/convert-to-collection'),
+      );
+      expect(post.request.body).toEqual({ collectionTitle: 'Thrawn Trilogy' });
+      post.flush([]);
+
+      // Cache invalidations fire refetches; flush each explicitly.
+      const unitsReq = httpMock.expectOne((r) => r.url.endsWith('/units'));
+      const materialsReq = httpMock.expectOne((r) => r.url.endsWith('/api/source-materials'));
+      unitsReq.flush([
+        { id: 801, sourceMaterialId: 43, unitType: 7, number: 1, title: 'Standalone', parentUnitId: null },
+        { id: 701, sourceMaterialId: 43, unitType: 1, parentUnitId: 801, number: 1, title: null },
+      ]);
+      materialsReq.flush([{ id: 43, title: 'Thrawn Trilogy', medium: 1, canonType: 0 }]);
+      await vi.advanceTimersByTimeAsync(100);
+      fixture.detectChanges();
+
+      expect(component.convertPopupMaterialId()).toBeNull();
+      expect(component.unitsByMaterial()[43].length).toBe(2);
+      // The converted shape is no longer convertible.
+      expect(component.isConvertibleStandaloneBook(findMaterial(43))).toBe(false);
+      vi.useRealTimers();
+    });
+
+    it('hides convert for collections and empty books', () => {
+      loadMaterials([{ id: 44, title: 'Collection', medium: 1, canonType: 0 }]);
+      seedUnits(44, [
+        { id: 901, sourceMaterialId: 44, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
+        { id: 902, sourceMaterialId: 44, unitType: 'Chapter', parentUnitId: 901, number: 1, title: null },
+      ]);
+      expect(component.isConvertibleStandaloneBook(findMaterial(44))).toBe(false);
+      expect(rowFor('Collection').textContent).not.toContain('Convert to Collection');
+
+      loadMaterials([{ id: 45, title: 'Empty book', medium: 1, canonType: 0 }]);
+      expect(component.isConvertibleStandaloneBook(findMaterial(45))).toBe(false);
+      expect(rowFor('Empty book').textContent).not.toContain('Convert to Collection');
+    });
+    it('labels the material title "Book Title or Collection Name" only when creating a book', () => {
+      loadMaterials([
+        { id: 21, title: 'Trilogy', medium: 1, canonType: 0 },
+        { id: 22, title: 'Show', medium: 4, canonType: 0 },
+      ]);
+
+      // Creating a NEW Book source material: ambiguous → custom label.
+      component.openAddMaterial('Book');
+      fixture.detectChanges();
+      const materialLabels = fixture.nativeElement.querySelectorAll(
+        'app-material-add-dialog .source-field > span',
+      ) as NodeListOf<HTMLElement>;
+      expect(materialLabels[0].textContent?.trim()).toBe('Book Title or Collection Name');
+      component.cancelAddMaterial();
+
+      // Other media keep the plain Title label.
+      component.openAddMaterial('Live Action Show');
+      fixture.detectChanges();
+      const showLabels = fixture.nativeElement.querySelectorAll(
+        'app-material-add-dialog .source-field > span',
+      ) as NodeListOf<HTMLElement>;
+      expect(showLabels[0].textContent?.trim()).toBe('Title');
+      component.cancelAddMaterial();
+
+      // Adding a unit INSIDE an existing collection: unambiguous → plain Title.
+      seedUnits(21, [
+        { id: 601, sourceMaterialId: 21, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
+        { id: 602, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 1, title: null },
+      ]);
+      component.onMaterialAddClick('Book', findMaterial(21));
+      fixture.detectChanges();
+      const unitLabels = fixture.nativeElement.querySelectorAll(
+        'app-unit-add-dialog .source-field > span',
+      ) as NodeListOf<HTMLElement>;
+      const labelTexts = Array.from(unitLabels).map((span) => span.textContent?.trim());
+      expect(labelTexts).toContain('Title');
+      expect(labelTexts).not.toContain('Book Title or Collection Name');
+      component.cancelAddUnit();
+    });
+
+    it('renames the material and creates numbered books when starting a collection', async () => {
+      vi.useFakeTimers();
+      loadMaterials([{ id: 41, title: 'Empty novel', medium: 1, canonType: 0 }]);
+      component.requestStartCollection(41);
+      component.startCollectionName.set('Thrawn Trilogy');
+
+      component.submitStartCollection({
+        collectionName: 'Thrawn Trilogy',
+        bookTitles: ['Thrawn', 'Dark Force Rising', 'The Last Command'],
+      });
+      expect(component.startingCollectionFor()).toBe(41);
+
+      // The rename fires first since the collection name differs.
+      const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/41'));
+      expect(put.request.body).toEqual({ title: 'Thrawn Trilogy', medium: 1, canonType: 0 });
+      put.flush({ id: 41, title: 'Thrawn Trilogy', medium: 1, canonType: 0 });
+      // Updating the material auto-invalidates the materials cache.
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'))
+        .flush([{ id: 41, title: 'Thrawn Trilogy', medium: 1, canonType: 0 }]);
+
+      // Books are created sequentially with numbers assigned by list position.
+      const expectedBooks = [
+        { number: 1, title: 'Thrawn' },
+        { number: 2, title: 'Dark Force Rising' },
+        { number: 3, title: 'The Last Command' },
+      ];
+      for (const expected of expectedBooks) {
+        const post = httpMock.expectOne(
+          (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/41/units'),
+        );
+        expect(post.request.body).toEqual({
+          unitType: 7,
+          parentUnitId: null,
+          number: expected.number,
+          title: expected.title,
+        });
+        post.flush({
+          id: 900 + expected.number,
+          sourceMaterialId: 41,
+          unitType: 7,
+          parentUnitId: null,
+          number: expected.number,
+          title: expected.title,
+        });
+      }
+
+      // Success closes the popup and reloads the material's units.
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/41/units'))
+        .flush(expectedBooks.map((book) => ({ id: 0, sourceMaterialId: 41, unitType: 7, parentUnitId: null, ...book })));
+      await vi.advanceTimersByTimeAsync(100);
+      fixture.detectChanges();
+
+      expect(component.startingCollectionFor()).toBeNull();
+      expect(component.startCollectionMaterialId()).toBeNull();
+      expect(component.unitsByMaterial()[41].length).toBe(3);
+      vi.useRealTimers();
+    });
+
+    it('skips the rename when the collection keeps the material title', () => {
+      vi.useFakeTimers();
+      loadMaterials([{ id: 45, title: 'Empty novel', medium: 1, canonType: 0 }]);
+      component.requestStartCollection(45);
+      // Collection name stays as the material title.
+
+      component.submitStartCollection({ collectionName: 'Empty novel', bookTitles: ['Only Book'] });
+
+      const post = httpMock.expectOne(
+        (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/45/units'),
+      );
+      expect(post.request.body).toEqual({ unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' });
+      post.flush({ id: 950, sourceMaterialId: 45, unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' });
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/45/units'))
+        .flush([{ id: 950, sourceMaterialId: 45, unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' }]);
+      vi.advanceTimersByTime(100);
+
+      expect(component.startCollectionMaterialId()).toBeNull();
+      expect(httpMock.match((r) => r.method === 'PUT').length).toBe(0);
+      vi.useRealTimers();
+    });
+
+    it('validates the collection name and book titles before any request', () => {
+      loadMaterials([{ id: 46, title: 'Empty novel', medium: 1, canonType: 0 }]);
+      component.requestStartCollection(46);
+
+      component.submitStartCollection({ collectionName: '   ', bookTitles: ['Book'] });
+      expect(component.actionError()).toBe('A collection name is required.');
+
+      component.submitStartCollection({ collectionName: 'Saga', bookTitles: ['Book', '   '] });
+      expect(component.actionError()).toBe('Every book needs a title.');
+
+      component.submitStartCollection({ collectionName: 'Saga', bookTitles: [] });
+      expect(component.actionError()).toBe('Every book needs a title.');
+      expect(component.startingCollectionFor()).toBeNull();
+
+      // No requests were made while validating.
+      fixture.detectChanges();
+      expect(component.materials().length).toBe(1);
+    });
   });
 
   // ─── Non-admin tracking ──────────────────────────────────────────────────
