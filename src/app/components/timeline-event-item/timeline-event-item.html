@@ -69,7 +69,9 @@
 
       @for (source of item.sources; track trackSource(source)) {
         @if (sourceDetail(source); as detail) {
-          <span class="event-source-unit">{{ detail }}</span>
+          @if (!isNestedContainerUnit(source)) {
+            <span class="event-source-unit">{{ detail }}</span>
+          }
         }
 
         <!-- ─── Tracking Status Dropdown ──────────────────────────────────── -->

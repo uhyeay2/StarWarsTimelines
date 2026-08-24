@@ -1,6 +1,6 @@
 import { matchesCanonView, CanonView } from './canon';
 import { MEDIA, Medium } from './medium';
-import { sourceGroupName } from './source-material';
+import { isContainerUnitType, sourceGroupName, sourceUnitLabel } from './source-material';
 import { EventSource, TimelineEvent } from './timeline-event';
 
 /** Facet category keys for timeline event filtering. */
@@ -108,6 +108,8 @@ export interface SourceFilterChip {
  * - No unit or unpinned non-chapter unit: the material's ID (or title)
  * - Unit inside a container: `sourceId:parentUnitId`, except issues which
  *   are individually addressable as `sourceId:parentUnitId:unitId`
+ * - Container units nested inside another container (e.g. a Book within a
+ *   collection) address their own scope as `sourceId:u{unitId}`
  * - Standalone chapter: `sourceId:u{unitId}`
  *
  * @param source  One of the event's source materials.
@@ -123,6 +125,9 @@ export function sourceFacetKey(source: EventSource): string {
   }
   if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
     const parentId = unit.parentUnitId;
+    if (isContainerUnitType(unit.unitType)) {
+      return unit.id !== undefined ? `${source.sourceId}:u${unit.id}` : `${source.sourceId}:${parentId}`;
+    }
     if (unit.unitType === 'Issue') {
       return `${source.sourceId}:${parentId}:${unit.id}`;
     }
@@ -146,9 +151,9 @@ export function eventSourceFacetKeys(event: TimelineEvent): readonly string[] {
 
 /**
  * Builds the source filter chips for a single source material of an event:
- * the material chip plus optional group-level chips (season, volume,
- * chapter). Medium-level chips are handled once per distinct medium by
- * {@link sourceChipsForEvent}.
+ * the material chip plus optional scope chips (season, volume, chapter, or
+ * a book nested within a collection). Medium-level chips are handled once
+ * per distinct medium by {@link sourceChipsForEvent}.
  *
  * @param source   The event source to build chips for.
  * @param sources  The source filter tree nodes.
@@ -171,16 +176,21 @@ function materialChipsForSource(
 
   const unit = source.unit;
   if (unit !== undefined && source.sourceId !== undefined) {
-    if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
+    if (
+      unit.parentUnitId !== undefined &&
+      unit.parentUnitId !== null &&
+      !isContainerUnitType(unit.unitType)
+    ) {
       const groupValue = `${source.sourceId}:${unit.parentUnitId}`;
       const groupNode = materialNode.children?.find((node) => node.value === groupValue);
       if (groupNode !== undefined) {
         chips.push({ label: groupNode.label, values: collectTreeLeaves(groupNode) });
       }
-    } else if (unit.unitType === 'Chapter') {
-      const chapterValue = `${source.sourceId}:u${unit.id}`;
-      if (materialNode.children?.some((node) => node.value === chapterValue)) {
-        chips.push({ label: `Chapter ${unit.number}`, values: [chapterValue] });
+    } else if (unit.id !== undefined) {
+      const unitValue = `${source.sourceId}:u${unit.id}`;
+      const unitNode = materialNode.children?.find((node) => node.value === unitValue);
+      if (unitNode !== undefined) {
+        chips.push({ label: unitNode.label, values: [unitValue] });
       }
     }
   }
@@ -192,9 +202,10 @@ function materialChipsForSource(
  * Builds the source filter chips for a single timeline event.
  *
  * Constructs a hierarchy of chips across every source depicting the event:
- * one chip per distinct medium, then per material, and optional group-level
- * chips (season, volume, chapter). Duplicate chips (same values) are
- * collapsed so two sources sharing a medium produce one medium chip.
+ * one chip per distinct medium, then per material, and optional scope chips
+ * (season, volume, chapter, nested book). Duplicate chips (same label and
+ * values) are collapsed so two sources sharing a medium produce one medium
+ * chip.
  *
  * @param event    The timeline event to build chips for.
  * @param sources  The source filter tree nodes.
@@ -207,7 +218,10 @@ export function sourceChipsForEvent(
   const chips: SourceFilterChip[] = [];
   const seen = new Set<string>();
   const push = (chip: SourceFilterChip): void => {
-    const key = `${chip.medium === true ? 'm' : 's'}:${chip.values.join('|')}`;
+    // The label is part of the key so a whole-material chip and a group chip
+    // covering the same single scope (e.g. a show with one visible season)
+    // both render instead of collapsing into one.
+    const key = `${chip.medium === true ? 'm' : 's'}:${chip.label}:${chip.values.join('|')}`;
     if (!seen.has(key)) {
       seen.add(key);
       chips.push(chip);
@@ -249,8 +263,12 @@ interface MaterialFacet {
   whole: FilterTreeNode | undefined;
   /** Container scopes keyed by container unit ID. */
   containers: Map<number, ContainerFacet>;
-  /** Standalone chapter leaves keyed by unit ID. */
-  chapters: Map<number, string>;
+  /**
+   * Standalone unit leaves keyed by unit ID — chapters pinned without a
+   * container plus nested containers (books within collections) that are
+   * individually addressable.
+   */
+  unitLeaves: Map<number, string>;
 }
 
 /**
@@ -258,14 +276,14 @@ interface MaterialFacet {
  *
  * Creates a "Whole" entry when the material has both plain and unit-linked
  * events, then one node per container scope (nesting individual issue leaves
- * when present) and standalone chapter leaves.
+ * when present) and standalone unit leaves (chapters, nested books).
  *
  * @param facet  The material facet data.
  * @returns An array of tree nodes representing the material's children.
  */
 function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
   const children: FilterTreeNode[] = [];
-  if (facet.whole !== undefined && (facet.containers.size > 0 || facet.chapters.size > 0)) {
+  if (facet.whole !== undefined && (facet.containers.size > 0 || facet.unitLeaves.size > 0)) {
     children.push({ value: facet.whole.value, label: `${facet.title} — Whole` });
   }
   const sourcePrefix = facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
@@ -284,7 +302,7 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
       children.push({ value, label });
     }
   }
-  for (const [unitId, label] of [...facet.chapters.entries()].sort((a, b) => a[0] - b[0])) {
+  for (const [unitId, label] of [...facet.unitLeaves.entries()].sort((a, b) => a[0] - b[0])) {
     children.push({ value: `${sourcePrefix}:u${unitId}`, label });
   }
   return children;
@@ -295,7 +313,8 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
  *
  * Whole-material entries come from plain depictions; container-scoped
  * depictions register their parent container (with per-issue leaves for
- * comics); standalone chapters become individual leaves.
+ * comics); nested containers (books within collections) and standalone
+ * chapters become individually addressable leaves.
  *
  * @param source             The event source to accumulate.
  * @param materialsByMedium  Mutable facet maps keyed by medium and material key.
@@ -317,7 +336,7 @@ function accumulateMaterialFacet(
       sourceId: source.sourceId,
       whole: undefined,
       containers: new Map(),
-      chapters: new Map(),
+      unitLeaves: new Map(),
     };
     byMedium.set(materialKey, facet);
   }
@@ -328,6 +347,15 @@ function accumulateMaterialFacet(
     return;
   }
   if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
+    // A container pinned inside another container (e.g. a Book within a
+    // collection) addresses its own scope as an individually selectable
+    // leaf; its parent gets no group node since no event keys to it.
+    if (isContainerUnitType(unit.unitType)) {
+      if (!facet.unitLeaves.has(unit.id!)) {
+        facet.unitLeaves.set(unit.id!, sourceUnitLabel(unit));
+      }
+      return;
+    }
     let container = facet.containers.get(unit.parentUnitId);
     if (container === undefined) {
       container = { label: undefined, issues: new Map() };
@@ -340,12 +368,13 @@ function accumulateMaterialFacet(
           label: `Issue ${unit.number}`,
         });
       }
+      return;
     }
     return;
   }
   if (unit.unitType === 'Chapter') {
-    if (!facet.chapters.has(unit.id!)) {
-      facet.chapters.set(unit.id!, `Chapter ${unit.number}`);
+    if (!facet.unitLeaves.has(unit.id!)) {
+      facet.unitLeaves.set(unit.id!, `Chapter ${unit.number}`);
     }
     return;
   }

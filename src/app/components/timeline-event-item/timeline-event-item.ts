@@ -39,7 +39,7 @@ import {
 } from '@angular/core';
 import { FacetKey, SourceFilterChip } from '../../models/timeline-filters';
 import { formatGalacticYears, EventSource } from '../../models/timeline-event';
-import { sourceUnitDetail, sourceUnitLabel } from '../../models/source-material';
+import { isContainerUnitType, sourceUnitDetail } from '../../models/source-material';
 import { TimelineEvent } from '../../models/timeline-event';
 import { LibraryItem } from '../../models/library-item';
 import { TrackSelectOption, findTrackedItem, groupTrackingStatus, groupUnitIsTracked, materialTrackingStatus, trackSelectOptions } from '../../models/tracking-selection';
@@ -88,19 +88,13 @@ export class TimelineEventItem implements OnInit {
 
   // ─── Constants ─────────────────────────────────────────────────────────
 
-  /** Function to generate a human-readable label for a source unit. */
-  readonly sourceUnitLabel = sourceUnitLabel;
-
-  /** Function to generate a detail string for a source unit. */
-  readonly sourceUnitDetail = sourceUnitDetail;
-
   /** Function to format the event's galactic date or range. */
   readonly formatDate = formatGalacticYears;
 
   /**
-   * Detail string for the source's pinned unit, including its container
-   * scope ("Season 2 · Episode 5") when the parent unit is resolvable from
-   * the catalog's unit cache.
+   * Detail string for the source's pinned unit alone ("Episode 5: Title").
+   * Container scope ("Season 2") is intentionally excluded — containers
+   * surface as clickable filter chips instead of text.
    *
    * @param source  The event source.
    * @returns The formatted detail, or `undefined` when no unit is pinned.
@@ -110,12 +104,24 @@ export class TimelineEventItem implements OnInit {
     if (unit === undefined) {
       return undefined;
     }
-    let parent;
-    if (source.sourceId !== undefined && unit.parentUnitId != null) {
-      const units = this.catalogService.getUnitCache(source.sourceId).data() ?? [];
-      parent = units.find((u) => u.id === unit.parentUnitId);
-    }
-    return sourceUnitDetail(unit, parent);
+    return sourceUnitDetail(unit);
+  }
+
+  /**
+   * Whether the source's pinned unit is itself a container nested inside
+   * another container (e.g. a Book within a collection). Such units render
+   * as filter chips, so their plain-text detail span is suppressed.
+   *
+   * @param source  The event source.
+   * @returns `true` when the pinned unit renders as a chip.
+   */
+  isNestedContainerUnit(source: EventSource): boolean {
+    const unit = source.unit;
+    return (
+      unit !== undefined &&
+      unit.parentUnitId != null &&
+      isContainerUnitType(unit.unitType)
+    );
   }
 
   // ─── Outputs ───────────────────────────────────────────────────────────

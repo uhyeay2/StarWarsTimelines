@@ -1,4 +1,5 @@
 ﻿import { Canon } from './canon';
+import { SourceMaterialUnit } from './source-material';
 import { TimelineEvent } from './timeline-event';
 import {
   collectFacetOptions,
@@ -177,6 +178,30 @@ describe('matchesFacetFilters', () => {
     );
   });
 
+  it('matches a nested book key only for events pinned to that book', () => {
+    const bookEvent: TimelineEvent = {
+      ...EVENT,
+      sources: [
+        {
+          title: 'Thrawn Ascendancy Trilogy',
+          medium: 'Book' as const,
+          canon: ['Canon'],
+          sourceId: 23,
+          unit: { id: 74, unitType: 'Book', parentUnitId: 73, number: 1, title: 'Chaos Rising' },
+        },
+      ],
+    };
+    expect(
+      matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u74'] }),
+    ).toBe(true);
+    expect(
+      matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u78'] }),
+    ).toBe(false);
+    expect(matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23'] })).toBe(
+      false,
+    );
+  });
+
   it('matches a multi-source event when only one of its sources is selected', () => {
     const dualEvent: TimelineEvent = {
       ...EVENT,
@@ -257,6 +282,18 @@ describe('sourceFacetKey', () => {
         unit: { unitType: 'Chapter', id: 42, number: 2 },
       }),
     ).toBe('40:u42');
+  });
+
+  it('addresses a nested book by its own unit id', () => {
+    expect(
+      sourceFacetKey({
+        title: 'Thrawn Ascendancy Trilogy',
+        medium: 'Book',
+        canon: [],
+        sourceId: 23,
+        unit: { id: 74, unitType: 'Book', parentUnitId: 73, number: 1, title: 'Chaos Rising' },
+      }),
+    ).toBe('23:u74');
   });
 
   it('returns one key per depicting source on the event', () => {
@@ -757,5 +794,121 @@ describe('sourceChipsForEvent', () => {
       { label: 'Mystery A', values: ['91'] },
       { label: 'Mystery B', values: ['92'] },
     ]);
+  });
+
+  it('keeps whole-show and season chips when they cover the same single season', () => {
+    const singleSeasonTree = [
+      {
+        value: 'medium:Live Action Show',
+        label: 'Live Action Show',
+        children: [
+          {
+            value: '12',
+            label: 'The Mandalorian',
+            children: [{ value: '12:32', label: 'Season 1' }],
+          },
+        ],
+      },
+    ];
+    const event = {
+      ...EVENT,
+      sources: [
+        {
+          title: 'The Mandalorian',
+          medium: 'Live Action Show' as const,
+          canon: [],
+          sourceId: 12,
+          unit: { unitType: 'Episode' as const, parentUnitId: 32, number: 8 },
+        },
+      ],
+    };
+    expect(sourceChipsForEvent(event, singleSeasonTree)).toEqual([
+      { label: 'Live Action Show', values: ['12:32'], medium: true },
+      { label: 'The Mandalorian', values: ['12:32'] },
+      { label: 'Season 1', values: ['12:32'] },
+    ]);
+  });
+});
+
+const THRAWN_TREE = [
+  {
+    value: 'medium:Book',
+    label: 'Book',
+    children: [
+      {
+        value: '23',
+        label: 'Thrawn Ascendancy Trilogy',
+        children: [
+          { value: '23:u74', label: 'Book 1: Chaos Rising' },
+          { value: '23:u78', label: 'Book 2: Greater Good' },
+        ],
+      },
+    ],
+  },
+];
+
+describe('books within collections', () => {
+  const bookEvent = (unit: SourceMaterialUnit): TimelineEvent => ({
+    ...EVENT,
+    sources: [
+      {
+        title: 'Thrawn Ascendancy Trilogy',
+        medium: 'Book' as const,
+        canon: [] as readonly Canon[],
+        sourceId: 23,
+        unit,
+      },
+    ],
+  });
+
+  it('creates one leaf per collection book, labeled from the unit', () => {
+    const options = collectFacetOptions([
+      bookEvent({ id: 78, unitType: 'Book', parentUnitId: 73, number: 2, title: 'Greater Good' }),
+      bookEvent({ id: 74, unitType: 'Book', parentUnitId: 73, number: 1, title: 'Chaos Rising' }),
+    ]);
+    expect(options.sources).toEqual([
+      {
+        value: 'medium:Book',
+        label: 'Book',
+        children: [
+          {
+            value: '23',
+            label: 'Thrawn Ascendancy Trilogy',
+            children: [
+              { value: '23:u74', label: 'Book 1: Chaos Rising' },
+              { value: '23:u78', label: 'Book 2: Greater Good' },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('adds a chip for the pinned collection book alongside the collection chip', () => {
+    const event = bookEvent({
+      id: 74,
+      unitType: 'Book',
+      parentUnitId: 73,
+      number: 1,
+      title: 'Chaos Rising',
+    });
+    expect(sourceChipsForEvent(event, THRAWN_TREE)).toEqual([
+      { label: 'Book', values: ['23:u74', '23:u78'], medium: true },
+      { label: 'Thrawn Ascendancy Trilogy', values: ['23:u74', '23:u78'] },
+      { label: 'Book 1: Chaos Rising', values: ['23:u74'] },
+    ]);
+  });
+
+  it('emits only the pinned book key when its chip is clicked', () => {
+    const event = bookEvent({
+      id: 78,
+      unitType: 'Book',
+      parentUnitId: 73,
+      number: 2,
+      title: 'Greater Good',
+    });
+    const chips = sourceChipsForEvent(event, THRAWN_TREE);
+    expect(chips.map((chip) => chip.label)).toContain('Book 2: Greater Good');
+    expect(chips.find((chip) => chip.label === 'Book 2: Greater Good')?.values).toEqual(['23:u78']);
   });
 });

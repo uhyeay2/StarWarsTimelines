@@ -408,6 +408,51 @@ describe('TimelineEventItem', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
   });
+
+  it('renders a nested collection book as a chip instead of a plain-text detail', () => {
+    fixture.componentRef.setInput('event', {
+      id: 20,
+      canon: ['Canon'],
+      title: 'Test Event',
+      description: 'A test event description.',
+      sources: [
+        {
+          title: 'Thrawn Ascendancy Trilogy',
+          medium: 'Book',
+          canon: ['Canon'],
+          sourceId: 23,
+          unit: {
+            id: 74,
+            unitType: 'Book',
+            parentUnitId: 73,
+            number: 1,
+            title: 'Chaos Rising',
+          },
+        },
+      ],
+      locations: [],
+      characters: [],
+      vehicles: [],
+      yearStart: -3,
+      yearEnd: -3,
+      sequence: 1,
+    });
+    fixture.componentRef.setInput('sourceChips', [
+      { label: 'Thrawn Ascendancy Trilogy', values: ['23:u74', '23:u78'] },
+      { label: 'Book 1: Chaos Rising', values: ['23:u74'] },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
+    const bookChip = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.source-chip--source'),
+    ].find((chip) => chip.textContent?.trim() === 'Book 1: Chaos Rising') as HTMLElement;
+    expect(bookChip).toBeTruthy();
+
+    const emissions: ToggleFacetEvent[] = [];
+    component.toggleFacet.subscribe((event) => emissions.push(event));
+    bookChip.click();
+    expect(emissions).toEqual([{ key: 'sources', values: ['23:u74'] }]);
+  });
 });
 
 describe('TimelineEventItem tracking dropdown', () => {
@@ -641,5 +686,33 @@ describe('TimelineEventItem tracking dropdown', () => {
     });
 
     expect(trackSelect()).toBeNull();
+  });
+
+  it('shows the episode detail without the season scope once the season resolves', async () => {
+    await setupTracking({
+      medium: 'Animated Show',
+      unit: {
+        id: 207,
+        unitType: 'Episode',
+        parentUnitId: 107,
+        number: 9,
+        title: 'The Siege of Mandalore',
+      },
+      catalogUnits: [
+        { id: 107, sourceMaterialId: 11, unitType: 3, parentUnitId: null, number: 7, title: null },
+        {
+          id: 207,
+          sourceMaterialId: 11,
+          unitType: 0,
+          parentUnitId: 107,
+          number: 9,
+          title: 'The Siege of Mandalore',
+        },
+      ],
+      library: [],
+    });
+
+    const unit = fixture.nativeElement.querySelector('.event-source-unit') as HTMLElement;
+    expect(unit.textContent?.trim()).toBe('Episode 9: The Siege of Mandalore');
   });
 });

@@ -276,6 +276,19 @@ export class Timeline {
       this.catalog.fetchVehicles();
     });
 
+    // Fetch every depicted material's unit cache so container facet labels
+    // ("Season 2", book titles) resolve from catalog data. `fetch` is a
+    // no-op once cached, making repeated runs cheap.
+    effect(() => {
+      for (const event of this.continuityEvents()) {
+        for (const source of event.sources) {
+          if (source.sourceId !== undefined) {
+            this.catalog.getUnitCache(source.sourceId).fetch();
+          }
+        }
+      }
+    });
+
     this.logger.debug('[Timeline] Component initialized');
   }
 
