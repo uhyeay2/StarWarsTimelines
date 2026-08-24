@@ -14,11 +14,11 @@ import { Timeline } from './timeline';
 
 const FIXTURE_EVENTS: readonly TimelineEvent[] = [
   {
-    id: 'canon-event',
+    id: 1,
     canon: ['Canon'],
     title: 'Canon Only',
     description: '',
-    sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+    sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
     locations: ['Naboo'],
     characters: ['Padme Amidala'],
     vehicles: [],
@@ -27,11 +27,11 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     sequence: 1,
   },
   {
-    id: 'legends-event',
+    id: 2,
     canon: ['Legends'],
     title: 'Legends Only',
     description: '',
-    sources: [{ title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 'material-b' }],
+    sources: [{ title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 20 }],
     locations: ['Coruscant'],
     characters: ['Darth Maul'],
     vehicles: ['Sith Infiltrator'],
@@ -40,12 +40,12 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     sequence: 1,
   },
   {
-    id: 'shared-event',
+    id: 3,
     canon: ['Canon', 'Legends'],
     title: 'Both',
     description: '',
     sources: [
-      { title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 'material-c' },
+      { title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 30 },
     ],
     locations: ['Naboo', 'Coruscant'],
     characters: ['Padme Amidala', 'Darth Maul'],
@@ -64,9 +64,10 @@ describe('Timeline', () => {
   let catalogEvents$: Subject<CatalogEvent>;
 
   function catalogMock(overrides?: {
-    characters?: { id: string; name: string }[];
-    locations?: { id: string; name: string }[];
-    vehicles?: { id: string; name: string }[];
+    characters?: { id: number; name: string }[];
+    locations?: { id: number; name: string }[];
+    vehicles?: { id: number; name: string }[];
+    units?: { id: number; title?: string; unitType: string; number: number }[];
   }) {
     return {
       fetchCharacters: vi.fn(),
@@ -75,6 +76,11 @@ describe('Timeline', () => {
       characters: signal(overrides?.characters ?? null),
       locations: signal(overrides?.locations ?? null),
       vehicles: signal(overrides?.vehicles ?? null),
+      getUnitCache: vi.fn(() => ({
+        data: () => overrides?.units ?? [],
+        loading: () => false,
+        fetch: vi.fn(),
+      })),
     };
   }
 
@@ -113,14 +119,14 @@ describe('Timeline', () => {
         provide: CatalogService,
         useValue: catalogMock({
           characters: [
-            { id: 'c1', name: 'Padme Amidala' },
-            { id: 'c2', name: 'Darth Maul' },
+            { id: 7, name: 'Padme Amidala' },
+            { id: 8, name: 'Darth Maul' },
           ],
           locations: [
-            { id: 'l1', name: 'Naboo' },
-            { id: 'l2', name: 'Coruscant' },
+            { id: 11, name: 'Naboo' },
+            { id: 12, name: 'Coruscant' },
           ],
-          vehicles: [{ id: 'v1', name: 'Sith Infiltrator' }],
+          vehicles: [{ id: 13, name: 'Sith Infiltrator' }],
         }),
       },
       { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -168,7 +174,7 @@ describe('Timeline', () => {
   });
 
   it('shows only events from the given source ids', () => {
-    fixture.componentRef.setInput('sourceIds', ['material-a']);
+    fixture.componentRef.setInput('sourceIds', [10]);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Canon Only']);
   });
@@ -182,7 +188,7 @@ describe('Timeline', () => {
   it('filters sources by season for unit-linked events', async () => {
     const seasonEvents: readonly TimelineEvent[] = [
       {
-        id: 's2e3',
+        id: 4,
         canon: ['Canon'],
         title: 'Heroes on Both Sides',
         description: '',
@@ -191,8 +197,8 @@ describe('Timeline', () => {
             title: 'The Clone Wars',
             medium: 'Animated Show',
             canon: ['Canon'],
-            sourceId: 'material-tcw',
-            unit: { unitType: 'Episode', groupNumber: 2, number: 3 },
+            sourceId: 50,
+            unit: { unitType: 'Episode', parentUnitId: 102, number: 3 },
           },
         ],
         locations: [],
@@ -203,7 +209,7 @@ describe('Timeline', () => {
         sequence: 1,
       },
       {
-        id: 's7e9',
+        id: 5,
         canon: ['Canon'],
         title: 'The Siege of Mandalore',
         description: '',
@@ -212,8 +218,8 @@ describe('Timeline', () => {
             title: 'The Clone Wars',
             medium: 'Animated Show',
             canon: ['Canon'],
-            sourceId: 'material-tcw',
-            unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+            sourceId: 50,
+            unit: { unitType: 'Episode', parentUnitId: 107, number: 9 },
           },
         ],
         locations: [],
@@ -244,11 +250,11 @@ describe('Timeline', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    component.updateFilter('sources', ['material-tcw:7']);
+    component.updateFilter('sources', ['50:107']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['The Siege of Mandalore']);
 
-    component.updateFilter('sources', ['material-tcw']);
+    component.updateFilter('sources', ['50']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual([]);
 
@@ -355,7 +361,7 @@ describe('Timeline', () => {
     const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
     medium.click();
     fixture.detectChanges();
-    expect(component.filters().sources).toEqual(['material-a', 'material-c']);
+    expect(component.filters().sources).toEqual(['10', '30']);
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
@@ -366,7 +372,7 @@ describe('Timeline', () => {
     ) as HTMLElement;
     source.click();
     fixture.detectChanges();
-    expect(component.filters().sources).toEqual(['material-a']);
+    expect(component.filters().sources).toEqual(['10']);
     expect(eventTitles()).toEqual(['Canon Only']);
   });
 
@@ -385,7 +391,7 @@ describe('Timeline', () => {
   });
 
   it('highlights the medium chip once all its sources are part of the filter', () => {
-    component.updateFilter('sources', ['material-a', 'material-c']);
+    component.updateFilter('sources', ['10', '30']);
     fixture.detectChanges();
     const medium = cardFor('Both').querySelector('.source-chip--medium') as HTMLElement;
     expect(medium.classList.contains('chip--selected')).toBe(true);
@@ -393,7 +399,7 @@ describe('Timeline', () => {
   });
 
   it('highlights the source chip once its source is part of the filter', () => {
-    component.updateFilter('sources', ['material-c']);
+    component.updateFilter('sources', ['30']);
     fixture.detectChanges();
     const title = [...cardFor('Both').querySelectorAll('.source-chip--source')].find(
       (chip) => chip.textContent?.trim() === 'Source C',
@@ -419,13 +425,13 @@ describe('Timeline', () => {
   });
 
   it('filters to events from any source under a medium', () => {
-    component.updateFilter('sources', ['material-a', 'material-c']);
+    component.updateFilter('sources', ['10', '30']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
   it('combines filters across categories', () => {
-    component.updateFilter('sources', ['material-a', 'material-c']);
+    component.updateFilter('sources', ['10', '30']);
     component.updateFilter('characters', ['Darth Maul']);
     fixture.detectChanges();
     expect(eventTitles()).toEqual(['Both']);
@@ -517,9 +523,9 @@ describe('Timeline', () => {
   it('shows catalog characters in the filter even if not in any events', async () => {
     const catalog = catalogMock({
       characters: [
-        { id: 'c1', name: 'Padme Amidala' },
-        { id: 'c2', name: 'Darth Maul' },
-        { id: 'c3', name: 'Yoda' },
+        { id: 7, name: 'Padme Amidala' },
+        { id: 8, name: 'Darth Maul' },
+        { id: 9, name: 'Yoda' },
       ],
     });
     await setupTimeline([
@@ -559,8 +565,8 @@ describe('Timeline', () => {
   it('shows catalog locations in the filter even if not in any events', async () => {
     const catalog = catalogMock({
       locations: [
-        { id: 'l1', name: 'Naboo' },
-        { id: 'l2', name: 'Tatooine' },
+        { id: 11, name: 'Naboo' },
+        { id: 12, name: 'Tatooine' },
       ],
     });
     await setupTimeline([
@@ -599,9 +605,9 @@ describe('Timeline', () => {
   it('selecting a catalog character not in any events yields zero results', async () => {
     const catalog = catalogMock({
       characters: [
-        { id: 'c1', name: 'Padme Amidala' },
-        { id: 'c2', name: 'Darth Maul' },
-        { id: 'c3', name: 'Yoda' },
+        { id: 7, name: 'Padme Amidala' },
+        { id: 8, name: 'Darth Maul' },
+        { id: 9, name: 'Yoda' },
       ],
     });
     await setupTimeline([
@@ -633,11 +639,11 @@ describe('Timeline', () => {
   it('refreshes events when a source-material SSE event arrives', async () => {
     const eventsSig = signal<readonly TimelineEvent[]>(FIXTURE_EVENTS);
     const newEvent: TimelineEvent = {
-      id: 'new-event',
+      id: 6,
       canon: ['Canon'],
       title: 'New Event',
       description: '',
-      sources: [{ title: 'Source D', medium: 'Book', canon: ['Canon'], sourceId: 'material-d' }],
+      sources: [{ title: 'Source D', medium: 'Book', canon: ['Canon'], sourceId: 40 }],
       locations: [],
       characters: [],
       vehicles: [],
@@ -695,14 +701,14 @@ describe('Timeline', () => {
 
     it('filters events to only those with matching source IDs', () => {
       component.selectView('Legends');
-      fixture.componentRef.setInput('sourceIds', ['material-b']);
+      fixture.componentRef.setInput('sourceIds', [20]);
       fixture.detectChanges();
       expect(eventTitles()).toEqual(['Legends Only']);
     });
 
     it('excludes events with undefined sourceId', async () => {
       const eventNoId: TimelineEvent = {
-        id: 'no-source-id',
+        id: 7,
         canon: ['Canon'],
         title: 'No Source ID',
         description: '',
@@ -734,7 +740,7 @@ describe('Timeline', () => {
       component = fixture.componentInstance;
       fixture.detectChanges();
       await fixture.whenStable();
-      fixture.componentRef.setInput('sourceIds', ['no-source-id']);
+      fixture.componentRef.setInput('sourceIds', [7]);
       fixture.detectChanges();
       expect(eventTitles()).toEqual([]);
     });
@@ -742,7 +748,7 @@ describe('Timeline', () => {
     it('hides unit-pinned events outside the tracked unit scope', async () => {
       const seasonEvents: readonly TimelineEvent[] = [
         {
-          id: 's1-event',
+          id: 8,
           canon: ['Canon'],
           title: 'Season One Event',
           description: '',
@@ -751,8 +757,8 @@ describe('Timeline', () => {
               title: 'The Clone Wars',
               medium: 'Animated Show',
               canon: ['Canon'],
-              sourceId: 'material-tcw',
-              unit: { id: 'season-1-unit', unitType: 'Season', groupNumber: 1, number: 1 },
+              sourceId: 50,
+              unit: { id: 101, unitType: 'Season', number: 1 },
             },
           ],
           locations: [],
@@ -763,7 +769,7 @@ describe('Timeline', () => {
           sequence: 1,
         },
         {
-          id: 's7-event',
+          id: 9,
           canon: ['Canon'],
           title: 'Season Seven Event',
           description: '',
@@ -772,8 +778,8 @@ describe('Timeline', () => {
               title: 'The Clone Wars',
               medium: 'Animated Show',
               canon: ['Canon'],
-              sourceId: 'material-tcw',
-              unit: { id: 'season-7-unit', unitType: 'Season', groupNumber: 7, number: 7 },
+              sourceId: 50,
+              unit: { id: 107, unitType: 'Season', number: 7 },
             },
           ],
           locations: [],
@@ -784,7 +790,7 @@ describe('Timeline', () => {
           sequence: 1,
         },
         {
-          id: 'unpinned-event',
+          id: 10,
           canon: ['Canon'],
           title: 'Whole Show Event',
           description: '',
@@ -793,7 +799,7 @@ describe('Timeline', () => {
               title: 'The Clone Wars',
               medium: 'Animated Show',
               canon: ['Canon'],
-              sourceId: 'material-tcw',
+              sourceId: 50,
             },
           ],
           locations: [],
@@ -823,10 +829,10 @@ describe('Timeline', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      fixture.componentRef.setInput('sourceIds', ['material-tcw']);
+      fixture.componentRef.setInput('sourceIds', [50]);
       fixture.componentRef.setInput(
         'trackedUnitScope',
-        new Map([['material-tcw', new Set(['season-1-unit'])]]),
+        new Map([[50, new Set([101])]]),
       );
       fixture.detectChanges();
 
@@ -837,7 +843,7 @@ describe('Timeline', () => {
     it('shows every pinned event when the material tracks at the material level', async () => {
       const bookEvents: readonly TimelineEvent[] = [
         {
-          id: 'book-event',
+          id: 11,
           canon: ['Canon'],
           title: 'Chapter Pinned Event',
           description: '',
@@ -846,8 +852,8 @@ describe('Timeline', () => {
               title: 'A Novel',
               medium: 'Book',
               canon: ['Canon'],
-              sourceId: 'material-novel',
-              unit: { id: 'chapter-3', unitType: 'Chapter', groupNumber: 1, number: 3 },
+              sourceId: 60,
+              unit: { id: 501, unitType: 'Chapter', number: 3 },
             },
           ],
           locations: [],
@@ -877,8 +883,8 @@ describe('Timeline', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      fixture.componentRef.setInput('sourceIds', ['material-novel']);
-      fixture.componentRef.setInput('trackedUnitScope', new Map([['material-novel', 'all']]));
+      fixture.componentRef.setInput('sourceIds', [60]);
+      fixture.componentRef.setInput('trackedUnitScope', new Map([[60, 'all']]));
       fixture.detectChanges();
 
       expect(eventTitles()).toEqual(['Chapter Pinned Event']);
@@ -915,36 +921,36 @@ describe('Timeline', () => {
       const tiedEvents: readonly TimelineEvent[] = [
         {
           ...FIXTURE_EVENTS[0],
-          id: 'tied-b',
+          id: 12,
           title: 'Beta Event',
-          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
           yearStart: 0,
           yearEnd: 0,
           sequence: 5,
         },
         {
           ...FIXTURE_EVENTS[0],
-          id: 'tied-a',
+          id: 13,
           title: 'Alpha Event',
-          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
           yearStart: 0,
           yearEnd: 0,
           sequence: 2,
         },
         {
           ...FIXTURE_EVENTS[0],
-          id: 'tied-c',
+          id: 14,
           title: 'Alpha Event',
-          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
           yearStart: 0,
           yearEnd: 0,
           sequence: 1,
         },
         {
           ...FIXTURE_EVENTS[0],
-          id: 'tied-d',
+          id: 15,
           title: 'Gamma Event',
-          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' }],
+          sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
           yearStart: 0,
           yearEnd: 1,
           sequence: 1,
@@ -985,11 +991,11 @@ describe('Timeline', () => {
     it('matches a multi-source event when any of its sources is selected', async () => {
       const dualEvent: TimelineEvent = {
         ...FIXTURE_EVENTS[0],
-        id: 'dual-event',
+        id: 16,
         title: 'Dual Source',
         sources: [
-          { title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 'material-a' },
-          { title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 'material-b' },
+          { title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 },
+          { title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 20 },
         ],
         canon: ['Canon', 'Legends'],
       };
@@ -1009,7 +1015,7 @@ describe('Timeline', () => {
       fixture = TestBed.createComponent(Timeline);
       component = fixture.componentInstance;
       await fixture.whenStable();
-      fixture.componentRef.setInput('sourceIds', ['material-b']);
+      fixture.componentRef.setInput('sourceIds', [20]);
       fixture.detectChanges();
       expect(eventTitles()).toEqual(['Dual Source']);
     });

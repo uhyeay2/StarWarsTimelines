@@ -7,8 +7,8 @@ import { formatGalacticYearRange } from '../../utils/galactic-year';
 import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
 
-/** Sentinel select value representing "nothing selected". */
-const NONE = '';
+/** Sentinel select value representing "nothing selected"; catalog ids start at 1. */
+const NONE = 0;
 
 @Component({
   selector: 'app-character-catalog',
@@ -39,6 +39,9 @@ export class CharacterCatalog implements OnInit {
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
+  /** "Unknown" select sentinel, exposed for `[ngValue]` template bindings. */
+  protected readonly noSelection = NONE;
+
   readonly newName = signal('');
   readonly newPlanetBornOnId = signal(NONE);
   readonly newSpeciesId = signal(NONE);
@@ -49,7 +52,7 @@ export class CharacterCatalog implements OnInit {
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
-  readonly editId = signal<string | null>(null);
+  readonly editId = signal<number | null>(null);
   readonly editName = signal('');
   readonly editPlanetBornOnId = signal(NONE);
   readonly editSpeciesId = signal(NONE);
@@ -57,10 +60,10 @@ export class CharacterCatalog implements OnInit {
   readonly editBirthTo = signal<number | null>(null);
   readonly editDeathFrom = signal<number | null>(null);
   readonly editDeathTo = signal<number | null>(null);
-  readonly savingId = signal<string | null>(null);
+  readonly savingId = signal<number | null>(null);
 
-  readonly confirmDeleteId = signal<string | null>(null);
-  readonly deletingId = signal<string | null>(null);
+  readonly confirmDeleteId = signal<number | null>(null);
+  readonly deletingId = signal<number | null>(null);
   readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {

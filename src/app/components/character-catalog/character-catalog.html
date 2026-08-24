@@ -15,18 +15,18 @@
         <label class="character-field">
           <span>Species</span>
           <select name="newSpeciesId" [(ngModel)]="newSpeciesId">
-            <option value="">Unknown</option>
+            <option [ngValue]="noSelection">Unknown</option>
             @for (species of sortedSpecies(); track species.id) {
-              <option [value]="species.id">{{ species.name }}</option>
+              <option [ngValue]="species.id">{{ species.name }}</option>
             }
           </select>
         </label>
         <label class="character-field">
           <span>Birth planet</span>
           <select name="newPlanetBornOnId" [(ngModel)]="newPlanetBornOnId">
-            <option value="">Unknown</option>
+            <option [ngValue]="noSelection">Unknown</option>
             @for (location of sortedLocations(); track location.id) {
-              <option [value]="location.id">{{ location.name }}</option>
+              <option [ngValue]="location.id">{{ location.name }}</option>
             }
           </select>
         </label>
@@ -78,15 +78,15 @@
               <form class="character-edit" (ngSubmit)="saveEdit()">
                 <input name="editName" [(ngModel)]="editName" aria-label="Character name" />
                 <select name="editSpeciesId" [(ngModel)]="editSpeciesId" aria-label="Species">
-                  <option value="">Unknown</option>
+                  <option [ngValue]="noSelection">Unknown</option>
                   @for (species of sortedSpecies(); track species.id) {
-                    <option [value]="species.id">{{ species.name }}</option>
+                    <option [ngValue]="species.id">{{ species.name }}</option>
                   }
                 </select>
                 <select name="editPlanetBornOnId" [(ngModel)]="editPlanetBornOnId" aria-label="Birth planet">
-                  <option value="">Unknown</option>
+                  <option [ngValue]="noSelection">Unknown</option>
                   @for (location of sortedLocations(); track location.id) {
-                    <option [value]="location.id">{{ location.name }}</option>
+                    <option [ngValue]="location.id">{{ location.name }}</option>
                   }
                 </select>
                 <input

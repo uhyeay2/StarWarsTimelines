@@ -1,12 +1,12 @@
 export interface ApiCharacter {
-  id: string;
+  id: number;
   name: string;
-  planetBornOnId?: string | null;
+  planetBornOnId?: number | null;
   planetBornOnName?: string | null;
   yearOfBirthEarliest?: number | null;
   yearOfBirthLatest?: number | null;
   yearOfDeathEarliest?: number | null;
   yearOfDeathLatest?: number | null;
-  speciesId?: string | null;
+  speciesId?: number | null;
   speciesName?: string | null;
 }

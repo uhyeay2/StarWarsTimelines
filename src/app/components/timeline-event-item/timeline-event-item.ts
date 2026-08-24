@@ -97,6 +97,27 @@ export class TimelineEventItem implements OnInit {
   /** Function to format the event's galactic date or range. */
   readonly formatDate = formatGalacticYears;
 
+  /**
+   * Detail string for the source's pinned unit, including its container
+   * scope ("Season 2 · Episode 5") when the parent unit is resolvable from
+   * the catalog's unit cache.
+   *
+   * @param source  The event source.
+   * @returns The formatted detail, or `undefined` when no unit is pinned.
+   */
+  sourceDetail(source: EventSource): string | undefined {
+    const unit = source.unit;
+    if (unit === undefined) {
+      return undefined;
+    }
+    let parent;
+    if (source.sourceId !== undefined && unit.parentUnitId != null) {
+      const units = this.catalogService.getUnitCache(source.sourceId).data() ?? [];
+      parent = units.find((u) => u.id === unit.parentUnitId);
+    }
+    return sourceUnitDetail(unit, parent);
+  }
+
   // ─── Outputs ───────────────────────────────────────────────────────────
 
   /** Emitted when a facet chip is toggled. */
@@ -122,7 +143,7 @@ export class TimelineEventItem implements OnInit {
    * @param source  The event source.
    * @returns The material ID when known, otherwise the material title.
    */
-  trackSource(source: EventSource): string {
+  trackSource(source: EventSource): number | string {
     return source.sourceId ?? source.title;
   }
 
@@ -147,30 +168,19 @@ export class TimelineEventItem implements OnInit {
 
   /**
    * Resolves the Season/Volume/Book container unit for the source's pinned
-   * unit from the catalog's unit cache, or `null` when none matches.
+   * unit directly from its `parentUnitId`, or `null` when unpinned.
    */
-  private resolveContainerUnit(source: EventSource): string | null {
-    const unit = source.unit;
-    if (source.sourceId === undefined || unit === undefined) {
-      return null;
-    }
-    const targetGroup = unit.groupNumber ?? unit.number;
-    const units = this.catalogService.getUnitCache(source.sourceId).data() ?? [];
-    const container = units.find(
-      (u) =>
-        (u.unitType === 'Season' || u.unitType === 'Volume' || u.unitType === 'Book') &&
-        (u.number === targetGroup || u.groupNumber === targetGroup),
-    );
-    return container?.id ?? null;
+  private resolveContainerUnit(source: EventSource): number | null {
+    return source.unit?.parentUnitId ?? null;
   }
 
   /**
    * The Season/Volume/Book container unit ID governing tracking for grouped
-   * sources, resolved from the catalog's unit cache. `null` for flat mediums,
-   * whole-material events on grouped mediums, or when no explicit container
-   * unit exists (mirroring the catalog page, which hides the dropdown then).
+   * sources, resolved from the pinned unit's parent link. `null` for flat
+   * mediums, whole-material events on grouped mediums, or unpinned units
+   * (mirroring the catalog page, which hides the dropdown then).
    */
-  containerUnitId(source: EventSource): string | null {
+  containerUnitId(source: EventSource): number | null {
     if (!this.isGroupedMedium(source)) {
       return null;
     }
@@ -205,9 +215,7 @@ export class TimelineEventItem implements OnInit {
       return false;
     }
     const ids = new Set(units.map((u) => u.id));
-    return units.some(
-      (u) => u.parentUnitId != null && u.parentUnitId !== '' && ids.has(u.parentUnitId),
-    );
+    return units.some((u) => u.parentUnitId != null && ids.has(u.parentUnitId));
   }
 
   /** Select options: statuses, plus 'Remove From Library' once tracked. */

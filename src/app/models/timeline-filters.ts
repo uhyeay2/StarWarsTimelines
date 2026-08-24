@@ -47,6 +47,15 @@ export interface TimelineFacetOptions {
 }
 
 /**
+ * Resolves the display label ("Season 1", "Volume 2") for a material's
+ * container unit, or `undefined` while the unit data is unavailable.
+ */
+export type ContainerLabelResolver = (
+  materialId: number,
+  containerUnitId: number,
+) => string | undefined;
+
+/**
  * Creates an empty filter state with the default Canon view.
  *
  * @returns A {@link TimelineFilters} object with no active facet selections.
@@ -95,11 +104,11 @@ export interface SourceFilterChip {
 /**
  * Generates the unique facet key for one of an event's source materials.
  *
- * The key format depends on the unit structure:
- * - No unit: `sourceId` or `title`
- * - Season/episode: `sourceId:groupNumber`
- * - Volume/issue: `sourceId:groupNumber:number`
- * - Chapter: `sourceId:chapter-number`
+ * The key format depends on the pinned unit's nesting:
+ * - No unit or unpinned non-chapter unit: the material's ID (or title)
+ * - Unit inside a container: `sourceId:parentUnitId`, except issues which
+ *   are individually addressable as `sourceId:parentUnitId:unitId`
+ * - Standalone chapter: `sourceId:u{unitId}`
  *
  * @param source  One of the event's source materials.
  * @returns The unique source facet key string.
@@ -110,18 +119,19 @@ export function sourceFacetKey(source: EventSource): string {
   }
   const unit = source.unit;
   if (unit === undefined) {
-    return source.sourceId;
+    return String(source.sourceId);
   }
-  if (unit.groupNumber !== undefined) {
+  if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
+    const parentId = unit.parentUnitId;
     if (unit.unitType === 'Issue') {
-      return `${source.sourceId}:${unit.groupNumber}:${unit.number}`;
+      return `${source.sourceId}:${parentId}:${unit.id}`;
     }
-    return `${source.sourceId}:${unit.groupNumber}`;
+    return `${source.sourceId}:${parentId}`;
   }
   if (unit.unitType === 'Chapter') {
-    return `${source.sourceId}:chapter-${unit.number}`;
+    return `${source.sourceId}:u${unit.id}`;
   }
-  return source.sourceId;
+  return String(source.sourceId);
 }
 
 /**
@@ -149,9 +159,8 @@ function materialChipsForSource(
   sources: readonly FilterTreeNode[],
 ): readonly SourceFilterChip[] {
   const mediumNode = sources.find((node) => node.label === source.medium);
-  const materialNode = mediumNode?.children?.find(
-    (node) => node.value === (source.sourceId ?? source.title),
-  );
+  const materialValue = source.sourceId !== undefined ? String(source.sourceId) : source.title;
+  const materialNode = mediumNode?.children?.find((node) => node.value === materialValue);
   if (mediumNode === undefined || materialNode === undefined) {
     return [{ label: source.title, values: [sourceFacetKey(source)] }];
   }
@@ -162,15 +171,14 @@ function materialChipsForSource(
 
   const unit = source.unit;
   if (unit !== undefined && source.sourceId !== undefined) {
-    if (unit.groupNumber !== undefined) {
-      const groupNode = materialNode.children?.find(
-        (node) => node.value === `${source.sourceId}:${unit.groupNumber}`,
-      );
+    if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
+      const groupValue = `${source.sourceId}:${unit.parentUnitId}`;
+      const groupNode = materialNode.children?.find((node) => node.value === groupValue);
       if (groupNode !== undefined) {
         chips.push({ label: groupNode.label, values: collectTreeLeaves(groupNode) });
       }
     } else if (unit.unitType === 'Chapter') {
-      const chapterValue = `${source.sourceId}:chapter-${unit.number}`;
+      const chapterValue = `${source.sourceId}:u${unit.id}`;
       if (materialNode.children?.some((node) => node.value === chapterValue)) {
         chips.push({ label: `Chapter ${unit.number}`, values: [chapterValue] });
       }
@@ -226,47 +234,58 @@ export function sourceChipsForEvent(
   return chips;
 }
 
+/** Per-container facet state accumulated from pinned event units. */
+interface ContainerFacet {
+  /** Label resolved via the container-label resolver, when available. */
+  label: string | undefined;
+  /** Per-issue leaf nodes when the container holds pinned issues. */
+  issues: Map<number, FilterTreeNode>;
+}
+
 /** Internal state for a material's facet data during collection. */
 interface MaterialFacet {
   title: string;
-  sourceId: string | undefined;
+  sourceId: number | undefined;
   whole: FilterTreeNode | undefined;
-  groups: Map<number, string>;
-  volumes: Map<number, Map<number, string>>;
+  /** Container scopes keyed by container unit ID. */
+  containers: Map<number, ContainerFacet>;
+  /** Standalone chapter leaves keyed by unit ID. */
   chapters: Map<number, string>;
 }
 
 /**
  * Builds tree children for a material facet.
  *
- * Creates "Whole" entries when the material has both plain and unit-linked
- * events, and creates group/volume/chapter nodes as appropriate.
+ * Creates a "Whole" entry when the material has both plain and unit-linked
+ * events, then one node per container scope (nesting individual issue leaves
+ * when present) and standalone chapter leaves.
  *
  * @param facet  The material facet data.
  * @returns An array of tree nodes representing the material's children.
  */
 function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
   const children: FilterTreeNode[] = [];
-  if (
-    facet.whole !== undefined &&
-    (facet.groups.size > 0 || facet.volumes.size > 0 || facet.chapters.size > 0)
-  ) {
+  if (facet.whole !== undefined && (facet.containers.size > 0 || facet.chapters.size > 0)) {
     children.push({ value: facet.whole.value, label: `${facet.title} — Whole` });
   }
-  for (const [groupNumber, label] of [...facet.groups.entries()].sort((a, b) => a[0] - b[0])) {
-    children.push({ value: `${facet.sourceId}:${groupNumber}`, label });
+  const sourcePrefix = facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
+  for (const [containerId, container] of [...facet.containers.entries()].sort((a, b) => a[0] - b[0])) {
+    const value = `${sourcePrefix}:${containerId}`;
+    const label = container.label ?? 'Group';
+    if (container.issues.size > 0) {
+      children.push({
+        value,
+        label,
+        children: [...container.issues.entries()]
+          .sort((a, b) => a[0] - b[0])
+          .map(([, node]) => node),
+      });
+    } else {
+      children.push({ value, label });
+    }
   }
-  for (const [volume, issues] of [...facet.volumes.entries()].sort((a, b) => a[0] - b[0])) {
-    children.push({
-      value: `${facet.sourceId}:${volume}`,
-      label: `Volume ${volume}`,
-      children: [...issues.entries()]
-        .sort((a, b) => a[0] - b[0])
-        .map(([number, label]) => ({ value: `${facet.sourceId}:${volume}:${number}`, label })),
-    });
-  }
-  for (const [number, label] of [...facet.chapters.entries()].sort((a, b) => a[0] - b[0])) {
-    children.push({ value: `${facet.sourceId}:chapter-${number}`, label });
+  for (const [unitId, label] of [...facet.chapters.entries()].sort((a, b) => a[0] - b[0])) {
+    children.push({ value: `${sourcePrefix}:u${unitId}`, label });
   }
   return children;
 }
@@ -274,10 +293,11 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
 /**
  * Accumulates a single source into its material's facet data.
  *
- * Mirrors the old single-source logic per source: whole-material entries,
- * volume/issue nesting, season/episode grouping, and standalone chapters.
+ * Whole-material entries come from plain depictions; container-scoped
+ * depictions register their parent container (with per-issue leaves for
+ * comics); standalone chapters become individual leaves.
  *
- * @param source        The event source to accumulate.
+ * @param source             The event source to accumulate.
  * @param materialsByMedium  Mutable facet maps keyed by medium and material key.
  */
 function accumulateMaterialFacet(
@@ -289,47 +309,47 @@ function accumulateMaterialFacet(
     byMedium = new Map();
     materialsByMedium.set(source.medium, byMedium);
   }
-  const materialKey = source.sourceId ?? source.title;
+  const materialKey = source.sourceId !== undefined ? String(source.sourceId) : source.title;
   let facet = byMedium.get(materialKey);
   if (facet === undefined) {
     facet = {
       title: source.title,
       sourceId: source.sourceId,
       whole: undefined,
-      groups: new Map(),
-      volumes: new Map(),
+      containers: new Map(),
       chapters: new Map(),
     };
     byMedium.set(materialKey, facet);
   }
 
   const unit = source.unit;
-  if (
-    source.sourceId === undefined ||
-    unit === undefined ||
-    (unit.groupNumber === undefined && unit.unitType !== 'Chapter')
-  ) {
-    facet.whole = { value: source.sourceId ?? source.title, label: source.title };
-  } else if (unit.groupNumber !== undefined && unit.unitType === 'Issue') {
-    let issues = facet.volumes.get(unit.groupNumber);
-    if (issues === undefined) {
-      issues = new Map();
-      facet.volumes.set(unit.groupNumber, issues);
-    }
-    if (!issues.has(unit.number)) {
-      issues.set(unit.number, `Issue ${unit.number}`);
-    }
-  } else if (unit.groupNumber !== undefined) {
-    if (!facet.groups.has(unit.groupNumber)) {
-      const groupName = sourceGroupName(unit.unitType);
-      facet.groups.set(
-        unit.groupNumber,
-        groupName === undefined ? `Group ${unit.groupNumber}` : `${groupName} ${unit.groupNumber}`,
-      );
-    }
-  } else if (!facet.chapters.has(unit.number)) {
-    facet.chapters.set(unit.number, `Chapter ${unit.number}`);
+  if (source.sourceId === undefined || unit === undefined) {
+    facet.whole = { value: materialKey, label: source.title };
+    return;
   }
+  if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
+    let container = facet.containers.get(unit.parentUnitId);
+    if (container === undefined) {
+      container = { label: undefined, issues: new Map() };
+      facet.containers.set(unit.parentUnitId, container);
+    }
+    if (unit.unitType === 'Issue') {
+      if (!container.issues.has(unit.id!)) {
+        container.issues.set(unit.id!, {
+          value: `${source.sourceId}:${unit.parentUnitId}:${unit.id}`,
+          label: `Issue ${unit.number}`,
+        });
+      }
+    }
+    return;
+  }
+  if (unit.unitType === 'Chapter') {
+    if (!facet.chapters.has(unit.id!)) {
+      facet.chapters.set(unit.id!, `Chapter ${unit.number}`);
+    }
+    return;
+  }
+  facet.whole = { value: materialKey, label: source.title };
 }
 
 /**
@@ -338,12 +358,18 @@ function accumulateMaterialFacet(
  * Builds a hierarchical source tree grouped by medium and material,
  * and flat lists of locations, characters, and vehicles. Every source
  * depicting an event contributes to the facets; source tree nodes include
- * group/volume/chapter nesting for multi-unit materials.
+ * container nesting (seasons/volumes/books) for multi-unit materials, with
+ * labels resolved through `resolveContainerLabel` when provided.
  *
- * @param events  The timeline events to collect facet data from.
+ * @param events                 The timeline events to collect facet data from.
+ * @param resolveContainerLabel  Optional resolver producing display labels for
+ *                               container units ("Season 1") from catalog data.
  * @returns A complete set of {@link TimelineFacetOptions}.
  */
-export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineFacetOptions {
+export function collectFacetOptions(
+  events: readonly TimelineEvent[],
+  resolveContainerLabel?: ContainerLabelResolver,
+): TimelineFacetOptions {
   const materialsByMedium = new Map<Medium, Map<string, MaterialFacet>>();
   const locations = new Set<string>();
   const characters = new Set<string>();
@@ -358,6 +384,21 @@ export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineF
     for (const vehicle of event.vehicles) vehicles.add(vehicle);
   }
 
+  // Resolve container labels once accumulation is done, so each container
+  // lookup happens at most once even across many events.
+  if (resolveContainerLabel !== undefined) {
+    for (const byMedium of materialsByMedium.values()) {
+      for (const facet of byMedium.values()) {
+        if (facet.sourceId === undefined) {
+          continue;
+        }
+        for (const [containerId, container] of facet.containers) {
+          container.label = resolveContainerLabel(facet.sourceId, containerId);
+        }
+      }
+    }
+  }
+
   const sources: FilterTreeNode[] = [];
   for (const medium of MEDIA) {
     const byMedium = materialsByMedium.get(medium);
@@ -370,7 +411,9 @@ export function collectFacetOptions(events: readonly TimelineEvent[]): TimelineF
       if (children.length === 0 && facet.whole !== undefined) {
         materialNodes.push(facet.whole);
       } else if (children.length > 0) {
-        materialNodes.push({ value: facet.sourceId ?? facet.title, label: facet.title, children });
+        const materialValue =
+          facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
+        materialNodes.push({ value: materialValue, label: facet.title, children });
       }
     }
     materialNodes.sort((a, b) => a.label.localeCompare(b.label));

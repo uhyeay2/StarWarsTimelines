@@ -6,7 +6,7 @@ import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
 
 interface NameItem {
-  id: string;
+  id: number;
   name: string;
 }
 
@@ -61,12 +61,12 @@ export class NameCatalog implements OnInit {
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
-  readonly editId = signal<string | null>(null);
+  readonly editId = signal<number | null>(null);
   readonly editName = signal('');
-  readonly savingId = signal<string | null>(null);
+  readonly savingId = signal<number | null>(null);
 
-  readonly confirmDeleteId = signal<string | null>(null);
-  readonly deletingId = signal<string | null>(null);
+  readonly confirmDeleteId = signal<number | null>(null);
+  readonly deletingId = signal<number | null>(null);
   readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -182,7 +182,7 @@ export class NameCatalog implements OnInit {
     }
   }
 
-  private update(id: string, name: string): Observable<NameItem | null> {
+  private update(id: number, name: string): Observable<NameItem | null> {
     switch (this.catalog()) {
       case 'locations':
         return this.catalogService.updateLocation(id, name);
@@ -191,7 +191,7 @@ export class NameCatalog implements OnInit {
     }
   }
 
-  private remove(id: string): Observable<void> {
+  private remove(id: number): Observable<void> {
     switch (this.catalog()) {
       case 'locations':
         return this.catalogService.deleteLocation(id);

@@ -102,7 +102,7 @@ export class CatalogService {
   );
 
   /** Per-material unit caches keyed by source material ID. */
-  private readonly unitCaches = new Map<string, SignalCache<readonly ApiSourceMaterialUnit[]>>();
+  private readonly unitCaches = new Map<number, SignalCache<readonly ApiSourceMaterialUnit[]>>();
 
   // ─── Public signals ──────────────────────────────────────────────────────
 
@@ -213,17 +213,17 @@ export class CatalogService {
    * @returns A `Set` of material IDs that have units, or `null` if any
    *          probe is still loading.
    */
-  checkProbeResults(): Set<string> | null {
+  checkProbeResults(): Set<number> | null {
     const materials = this.sourceMaterialsCache.data();
     if (!materials || materials.length === 0) {
-      return new Set<string>();
+      return new Set<number>();
     }
 
     if (materials.some((m) => this.getUnitCache(m.id).loading())) {
       return null;
     }
 
-    const withUnits = new Set<string>();
+    const withUnits = new Set<number>();
     for (const m of materials) {
       const units = this.getUnitCache(m.id).data();
       if (units && units.length > 0) {
@@ -237,7 +237,7 @@ export class CatalogService {
    * Returns the signal cache for units of a specific source material.
    * Creates the cache on first access.
    */
-  getUnitCache(sourceMaterialId: string): SignalCache<readonly ApiSourceMaterialUnit[]> {
+  getUnitCache(sourceMaterialId: number): SignalCache<readonly ApiSourceMaterialUnit[]> {
     let cache = this.unitCaches.get(sourceMaterialId);
     if (!cache) {
       cache = new SignalCache<readonly ApiSourceMaterialUnit[]>(
@@ -271,7 +271,7 @@ export class CatalogService {
    *                (e.g. `'characters'`, `'source-materials'`).
    * @param id      The ID of the specific entity that changed, when available.
    */
-  invalidateEntity(entity: string, id?: string): void {
+  invalidateEntity(entity: string, id?: number): void {
     switch (entity) {
       case 'characters':
         this.charactersCache.invalidate();
@@ -309,7 +309,7 @@ export class CatalogService {
    * When the unit isn't found in any loaded cache, no action is taken (the
    * data hasn't been fetched yet, so there's nothing to invalidate).
    */
-  private invalidateUnitById(unitId: string): void {
+  private invalidateUnitById(unitId: number): void {
     for (const [materialId, cache] of this.unitCaches) {
       const units = cache.data();
       if (units?.some((u) => u.id === unitId)) {
@@ -368,7 +368,7 @@ export class CatalogService {
    * @param input  The updated payload.
    * @returns An observable of the updated character.
    */
-  updateCharacter(id: string, input: CreateCharacterInput): Observable<ApiCharacter> {
+  updateCharacter(id: number, input: CreateCharacterInput): Observable<ApiCharacter> {
     return this.http
       .put<ApiCharacter>(`${BASE}/characters/${id}`, {
         name: input.name,
@@ -394,7 +394,7 @@ export class CatalogService {
    * @param id  The ID of the character to delete.
    * @returns An observable that completes when the character has been deleted.
    */
-  deleteCharacter(id: string): Observable<void> {
+  deleteCharacter(id: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/characters/${id}`)
       .pipe(
@@ -427,7 +427,7 @@ export class CatalogService {
    * @param name  The new display name.
    * @returns An observable of the updated location.
    */
-  updateLocation(id: string, name: string): Observable<ApiLocation> {
+  updateLocation(id: number, name: string): Observable<ApiLocation> {
     return this.http
       .put<ApiLocation>(`${BASE}/locations/${id}`, { name })
       .pipe(
@@ -445,7 +445,7 @@ export class CatalogService {
    * @param id  The ID of the location to delete.
    * @returns An observable that completes when the location has been deleted.
    */
-  deleteLocation(id: string): Observable<void> {
+  deleteLocation(id: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/locations/${id}`)
       .pipe(
@@ -478,7 +478,7 @@ export class CatalogService {
    * @param name  The new display name.
    * @returns An observable of the updated vehicle.
    */
-  updateVehicle(id: string, name: string): Observable<ApiVehicle> {
+  updateVehicle(id: number, name: string): Observable<ApiVehicle> {
     return this.http
       .put<ApiVehicle>(`${BASE}/vehicles/${id}`, { name })
       .pipe(
@@ -496,7 +496,7 @@ export class CatalogService {
    * @param id  The ID of the vehicle to delete.
    * @returns An observable that completes when the vehicle has been deleted.
    */
-  deleteVehicle(id: string): Observable<void> {
+  deleteVehicle(id: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/vehicles/${id}`)
       .pipe(
@@ -514,7 +514,7 @@ export class CatalogService {
    * @param homePlanetId  The optional home planet location ID.
    * @returns An observable of the created species.
    */
-  createSpecies(name: string, homePlanetId: string | null): Observable<ApiSpecies> {
+  createSpecies(name: string, homePlanetId: number | null): Observable<ApiSpecies> {
     return this.http
       .post<ApiSpecies>(`${BASE}/species`, { name, homePlanetId })
       .pipe(
@@ -534,7 +534,7 @@ export class CatalogService {
    * @param homePlanetId  The new home planet location ID, or `null` for unknown.
    * @returns An observable of the updated species.
    */
-  updateSpecies(id: string, name: string, homePlanetId: string | null): Observable<ApiSpecies> {
+  updateSpecies(id: number, name: string, homePlanetId: number | null): Observable<ApiSpecies> {
     return this.http
       .put<ApiSpecies>(`${BASE}/species/${id}`, { name, homePlanetId })
       .pipe(
@@ -554,7 +554,7 @@ export class CatalogService {
    * @param id  The ID of the species to delete.
    * @returns An observable that completes when the species has been deleted.
    */
-  deleteSpecies(id: string): Observable<void> {
+  deleteSpecies(id: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/species/${id}`)
       .pipe(
@@ -595,7 +595,7 @@ export class CatalogService {
    * @param input  The updated payload.
    * @returns An observable of the updated source material (with mapped enums).
    */
-  updateSourceMaterial(id: string, input: CreateSourceMaterialInput): Observable<ApiSourceMaterial> {
+  updateSourceMaterial(id: number, input: CreateSourceMaterialInput): Observable<ApiSourceMaterial> {
     return this.http
       .put<SourceMaterialDto>(`${BASE}/source-materials/${id}`, {
         title: input.title,
@@ -618,7 +618,7 @@ export class CatalogService {
    * @param id  The ID of the source material to delete.
    * @returns An observable that completes when the source material has been deleted.
    */
-  deleteSourceMaterial(id: string): Observable<void> {
+  deleteSourceMaterial(id: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/source-materials/${id}`)
       .pipe(
@@ -643,7 +643,7 @@ export class CatalogService {
    * @returns An observable of the created unit (with mapped enum).
    */
   createSourceMaterialUnit(
-    sourceMaterialId: string,
+    sourceMaterialId: number,
     input: CreateSourceMaterialUnitInput,
   ): Observable<ApiSourceMaterialUnit> {
     return this.http
@@ -651,7 +651,7 @@ export class CatalogService {
         `${BASE}/source-materials/${sourceMaterialId}/units`,
         {
           unitType: unitTypeToApiCode(input.unitType),
-          groupNumber: input.groupNumber,
+          parentUnitId: input.parentUnitId,
           number: input.number,
           title: input.title,
         },
@@ -672,8 +672,8 @@ export class CatalogService {
    * @returns An observable of the updated unit (with mapped enum).
    */
   updateSourceMaterialUnit(
-    sourceMaterialId: string,
-    unitId: string,
+    sourceMaterialId: number,
+    unitId: number,
     input: CreateSourceMaterialUnitInput,
   ): Observable<ApiSourceMaterialUnit> {
     return this.http
@@ -681,7 +681,7 @@ export class CatalogService {
         `${BASE}/source-materials/${sourceMaterialId}/units/${unitId}`,
         {
           unitType: unitTypeToApiCode(input.unitType),
-          groupNumber: input.groupNumber,
+          parentUnitId: input.parentUnitId,
           number: input.number,
           title: input.title,
         },
@@ -700,7 +700,7 @@ export class CatalogService {
    * @param unitId            The ID of the unit to delete.
    * @returns An observable that completes when the unit has been deleted.
    */
-  deleteSourceMaterialUnit(sourceMaterialId: string, unitId: string): Observable<void> {
+  deleteSourceMaterialUnit(sourceMaterialId: number, unitId: number): Observable<void> {
     return this.http
       .delete<void>(`${BASE}/source-materials/${sourceMaterialId}/units/${unitId}`)
       .pipe(
@@ -782,7 +782,6 @@ export class CatalogService {
       id: item.id,
       sourceMaterialId: item.sourceMaterialId,
       unitType: unitTypeFromApiCode(item.unitType),
-      groupNumber: item.groupNumber,
       number: item.number,
       title: item.title,
       parentUnitId: item.parentUnitId,

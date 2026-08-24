@@ -21,21 +21,21 @@ const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé A
 
 const TRACKED: LibraryItem[] = [
   {
-    id: 'material-episode-i',
+    id: 21,
     title: 'Star Wars: Episode I - The Phantom Menace',
     medium: 'Movie',
     status: 'Completed',
     favorite: true,
   },
   {
-    id: 'material-episode-ii',
+    id: 22,
     title: 'Star Wars: Episode II - Attack of the Clones',
     medium: 'Movie',
     status: 'In progress',
     favorite: false,
   },
   {
-    id: 'material-episode-ix',
+    id: 23,
     title: 'Star Wars: Episode IX - The Rise of Skywalker',
     medium: 'Movie',
     status: 'Wish Listed',
@@ -118,14 +118,14 @@ describe('KnownTimelinePage', () => {
     const { fixture, component } = await setup(USER);
     expect(component.statusSelection()).toEqual([]);
     expect(component.consumedIds()).toEqual([
-      'material-episode-i',
-      'material-episode-ii',
-      'material-episode-ix',
+      21,
+      22,
+      23,
     ]);
     expect(timelineSourceIds(fixture)).toEqual([
-      'material-episode-i',
-      'material-episode-ii',
-      'material-episode-ix',
+      21,
+      22,
+      23,
     ]);
   });
 
@@ -134,7 +134,7 @@ describe('KnownTimelinePage', () => {
     clickTabs(fixture, 'Completed');
 
     expect(component.statusSelection()).toEqual<TrackingStatus[]>(['Completed']);
-    expect(component.consumedIds()).toEqual(['material-episode-i']);
+    expect(component.consumedIds()).toEqual([21]);
   });
 
   it('shows only In Progress items when that status is selected', async () => {
@@ -142,8 +142,8 @@ describe('KnownTimelinePage', () => {
     clickTabs(fixture, 'In progress');
 
     expect(component.statusSelection()).toEqual<TrackingStatus[]>(['In progress']);
-    expect(component.consumedIds()).toEqual(['material-episode-ii']);
-    expect(timelineSourceIds(fixture)).toEqual(['material-episode-ii']);
+    expect(component.consumedIds()).toEqual([22]);
+    expect(timelineSourceIds(fixture)).toEqual([22]);
   });
 
   it('supports combining statuses such as In Progress and Wish Listed', async () => {
@@ -151,8 +151,8 @@ describe('KnownTimelinePage', () => {
     clickTabs(fixture, 'In progress', 'Wish Listed');
 
     expect(component.statusSelection()).toEqual<TrackingStatus[]>(['In progress', 'Wish Listed']);
-    expect(component.consumedIds()).toEqual(['material-episode-ii', 'material-episode-ix']);
-    expect(timelineSourceIds(fixture)).toEqual(['material-episode-ii', 'material-episode-ix']);
+    expect(component.consumedIds()).toEqual([22, 23]);
+    expect(timelineSourceIds(fixture)).toEqual([22, 23]);
   });
 
   it('returns to All when the last selected status is deselected', async () => {
@@ -168,33 +168,33 @@ describe('KnownTimelinePage', () => {
     const { fixture, component } = await setup(USER, [
       ...TRACKED,
       {
-        id: 'material-tcw',
+        id: 30,
         title: 'Star Wars: The Clone Wars',
         medium: 'Animated Show',
         status: null,
         favorite: false,
         units: [
-          { id: 'season-1', unitType: 'Season', number: 1, status: 'Completed' },
+          { id: 101, unitType: 'Season', number: 1, status: 'Completed' },
           {
-            id: 'ep-1',
+            id: 201,
             unitType: 'Episode',
-            groupNumber: 1,
+            
             number: 1,
             status: null,
-            parentUnitId: 'season-1',
+            parentUnitId: 101,
           },
         ],
       },
     ]);
 
     // The show is in scope, but only through its tracked units.
-    expect(component.consumedIds()).toContain('material-tcw');
-    expect(component.trackedUnitScope().get('material-tcw')).toEqual(
-      new Set(['season-1', 'ep-1']),
+    expect(component.consumedIds()).toContain(30);
+    expect(component.trackedUnitScope().get(30)).toEqual(
+      new Set([101, 201]),
     );
 
     const timeline = fixture.debugElement.query(By.directive(Timeline)).componentInstance;
-    expect(timeline.trackedUnitScope().get('material-tcw')).toEqual(new Set(['season-1', 'ep-1']));
+    expect(timeline.trackedUnitScope().get(30)).toEqual(new Set([101, 201]));
   });
 
   it('marks active status filters with the active class', async () => {

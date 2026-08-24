@@ -24,7 +24,7 @@ describe('TimelineEventItem', () => {
     fixture = TestBed.createComponent(TimelineEventItem);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('event', {
-      id: 'test-event',
+      id: 1,
       canon: ['Canon', 'Legends'],
       title: 'Test Event',
       description: 'A test event description.',
@@ -251,7 +251,7 @@ describe('TimelineEventItem', () => {
     const emissions: ToggleFacetEvent[] = [];
     component.toggleFacet.subscribe((event) => emissions.push(event));
     fixture.componentRef.setInput('event', {
-      id: 'test-event',
+      id: 1,
       canon: ['Canon'],
       title: 'Test Event',
       description: 'A test event description.',
@@ -285,7 +285,7 @@ describe('TimelineEventItem', () => {
 
   it('renders the source unit detail next to the chips when the event has a unit', () => {
     fixture.componentRef.setInput('event', {
-      id: 'test-event',
+      id: 1,
       canon: ['Canon', 'Legends'],
       title: 'Test Event',
       description: 'A test event description.',
@@ -297,7 +297,7 @@ describe('TimelineEventItem', () => {
           sourceId: 'material-tcw',
           unit: {
             unitType: 'Episode',
-            groupNumber: 7,
+            parentUnitId: 107,
             number: 9,
             title: 'The Siege of Mandalore',
           },
@@ -352,14 +352,14 @@ describe('TimelineEventItem', () => {
           medium: 'Animated Show',
           canon: ['Canon'],
           sourceId: 'material-tcw',
-          unit: { unitType: 'Episode', groupNumber: 7, number: 9, title: 'The Siege of Mandalore' },
+          unit: { unitType: 'Episode', parentUnitId: 107, number: 9, title: 'The Siege of Mandalore' },
         },
         {
           title: 'Darth Vader (2017)',
           medium: 'Comic',
           canon: ['Legends'],
           sourceId: 'material-dv',
-          unit: { unitType: 'Issue', groupNumber: 1, number: 6 },
+          unit: { unitType: 'Issue', parentUnitId: null, number: 6 },
         },
       ],
       locations: [],
@@ -381,7 +381,7 @@ describe('TimelineEventItem', () => {
 
   it('omits the unit detail for a chapter unit without a title', () => {
     fixture.componentRef.setInput('event', {
-      id: 'test-event',
+      id: 1,
       canon: ['Canon'],
       title: 'Test Event',
       description: 'A test event description.',
@@ -424,7 +424,7 @@ describe('TimelineEventItem tracking dropdown', () => {
   };
 
   const TRACKED_MOVIE_DTO: LibraryItemDto = {
-    sourceMaterialId: 'mat-1',
+    sourceMaterialId: 11,
     title: 'A New Hope',
     medium: 0,
     canonType: 0,
@@ -454,7 +454,7 @@ describe('TimelineEventItem tracking dropdown', () => {
 
     fixture = TestBed.createComponent(TimelineEventItem);
     fixture.componentRef.setInput('event', {
-      id: 'test-event',
+      id: 1,
       canon: ['Canon'],
       title: 'Test Event',
       description: '',
@@ -463,7 +463,7 @@ describe('TimelineEventItem tracking dropdown', () => {
           title: 'Test Source',
           medium: options.medium,
           canon: ['Canon'],
-          sourceId: 'mat-1',
+          sourceId: 11,
           ...(options.unit !== undefined && { unit: options.unit }),
         },
       ],
@@ -481,7 +481,7 @@ describe('TimelineEventItem tracking dropdown', () => {
       .flush(options.library ?? []);
     // Signed-in cards fetch every depicted material's unit cache.
     httpMock
-      .expectOne(`${API_BASE}/source-materials/mat-1/units`)
+      .expectOne(`${API_BASE}/source-materials/11/units`)
       .flush(options.catalogUnits ?? []);
     fixture.detectChanges();
   }
@@ -527,7 +527,7 @@ describe('TimelineEventItem tracking dropdown', () => {
 
     const post = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`);
     expect(post.request.method).toBe('POST');
-    expect(post.request.body).toEqual({ sourceMaterialId: 'mat-1', status: 0 });
+    expect(post.request.body).toEqual({ sourceMaterialId: 11, status: 0 });
     post.flush(null);
     httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([]);
   });
@@ -539,12 +539,12 @@ describe('TimelineEventItem tracking dropdown', () => {
     select.value = 'Wish Listed';
     select.dispatchEvent(new Event('change'));
 
-    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
     expect(put.request.method).toBe('PUT');
     expect(put.request.body).toEqual({ status: 2 });
     put.flush(null);
     httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
       .flush(TRACKED_MOVIE_DTO);
   });
 
@@ -555,7 +555,7 @@ describe('TimelineEventItem tracking dropdown', () => {
     select.value = 'remove';
     select.dispatchEvent(new Event('change'));
 
-    const remove = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
+    const remove = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
     expect(remove.request.method).toBe('DELETE');
     remove.flush(null);
     httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([]);
@@ -564,10 +564,10 @@ describe('TimelineEventItem tracking dropdown', () => {
   it('tracks comics at the volume level resolved from the catalog units', async () => {
     await setupTracking({
       medium: 'Comic',
-      unit: { unitType: 'Issue', groupNumber: 2, number: 5 },
+      unit: { unitType: 'Issue', parentUnitId: 301, number: 5 },
       catalogUnits: [
-        { id: 'unit-vol2', sourceMaterialId: 'mat-1', unitType: 4, groupNumber: null, number: 2, title: null },
-        { id: 'unit-issue5', sourceMaterialId: 'mat-1', unitType: 2, groupNumber: 2, number: 5, title: null },
+        { id: 301, sourceMaterialId: 11, unitType: 4, parentUnitId: null, number: 2, title: null },
+        { id: 305, sourceMaterialId: 11, unitType: 2, parentUnitId: 301, number: 5, title: null },
       ],
       library: [],
     });
@@ -580,37 +580,37 @@ describe('TimelineEventItem tracking dropdown', () => {
     select.dispatchEvent(new Event('change'));
 
     const post = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`);
-    expect(post.request.body).toEqual({ sourceMaterialId: 'mat-1', status: 1 });
+    expect(post.request.body).toEqual({ sourceMaterialId: 11, status: 1 });
     post.flush(null);
     httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush([TRACKED_MOVIE_DTO]);
-    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
-    expect(put.request.body).toEqual({ status: 1, unitId: 'unit-vol2' });
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
+    expect(put.request.body).toEqual({ status: 1, unitId: 301 });
     put.flush(null);
     httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
       .flush(TRACKED_MOVIE_DTO);
   });
 
   it('derives the season status from tracked episodes for shows', async () => {
     await setupTracking({
       medium: 'Animated Show',
-      unit: { unitType: 'Episode', groupNumber: 7, number: 9 },
+      unit: { unitType: 'Episode', parentUnitId: 107, number: 9 },
       catalogUnits: [
-        { id: 'unit-s7', sourceMaterialId: 'mat-1', unitType: 3, groupNumber: null, number: 7, title: null },
-        { id: 'unit-ep9', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: 7, number: 9, title: null },
+        { id: 107, sourceMaterialId: 11, unitType: 3, parentUnitId: null, number: 7, title: null },
+        { id: 207, sourceMaterialId: 11, unitType: 0, parentUnitId: 107, number: 9, title: null },
       ],
       library: [
         {
-          sourceMaterialId: 'mat-1',
+          sourceMaterialId: 11,
           title: 'The Clone Wars',
           medium: 3,
           canonType: 0,
           status: 0,
           isFavorite: false,
           units: [
-            { id: 'unit-s7', unitType: 3, groupNumber: null, number: 7, title: null, status: null },
-            { id: 'unit-ep9', unitType: 0, groupNumber: 7, number: 9, title: null, status: 1, parentUnitId: 'unit-s7' },
-            { id: 'unit-ep10', unitType: 0, groupNumber: 7, number: 10, title: null, status: null, parentUnitId: 'unit-s7' },
+            { id: 107, unitType: 3, number: 7, title: null, status: null },
+            { id: 207, unitType: 0, number: 9, title: null, status: 1, parentUnitId: 107 },
+            { id: 208, unitType: 0, number: 10, title: null, status: null, parentUnitId: 107 },
           ],
         },
       ],
@@ -622,20 +622,20 @@ describe('TimelineEventItem tracking dropdown', () => {
 
     select.value = 'Completed';
     select.dispatchEvent(new Event('change'));
-    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`);
-    expect(put.request.body).toEqual({ status: 1, unitId: 'unit-s7' });
+    const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
+    expect(put.request.body).toEqual({ status: 1, unitId: 107 });
     put.flush(null);
     httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/mat-1`)
+      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
       .flush(TRACKED_MOVIE_DTO);
   });
 
   it('hides the season dropdown when no explicit season container exists', async () => {
     await setupTracking({
       medium: 'Live Action Show',
-      unit: { unitType: 'Episode', groupNumber: 1, number: 4 },
+      unit: { unitType: 'Episode', parentUnitId: null, number: 4 },
       catalogUnits: [
-        { id: 'unit-ep4', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: 1, number: 4, title: null },
+        { id: 204, sourceMaterialId: 11, unitType: 0, parentUnitId: null, number: 4, title: null },
       ],
       library: [],
     });

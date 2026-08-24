@@ -11,7 +11,7 @@ import {
   trackSelectOptions,
 } from './tracking-selection';
 
-function unit(partial: Partial<LibraryUnit> & { id: string }): LibraryUnit {
+function unit(partial: Partial<LibraryUnit> & { id: number }): LibraryUnit {
   return {
     unitType: 'Episode',
     number: 1,
@@ -21,7 +21,7 @@ function unit(partial: Partial<LibraryUnit> & { id: string }): LibraryUnit {
 }
 
 const baseItem: LibraryItem = {
-  id: 'mat-1',
+  id: 11,
   title: 'A Show',
   medium: 'Animated Show',
   status: null,
@@ -30,14 +30,14 @@ const baseItem: LibraryItem = {
 
 describe('findTrackedItem', () => {
   it('finds the item matching the material id', () => {
-    const items = [baseItem, { ...baseItem, id: 'mat-2' }];
+    const items = [baseItem, { ...baseItem, id: 12 }];
 
-    expect(findTrackedItem(items, 'mat-2')?.id).toBe('mat-2');
+    expect(findTrackedItem(items, 12)?.id).toBe(12);
   });
 
   it('returns null when the material is untracked', () => {
-    expect(findTrackedItem([baseItem], 'other')).toBeNull();
-    expect(findTrackedItem([], 'mat-1')).toBeNull();
+    expect(findTrackedItem([baseItem], 99)).toBeNull();
+    expect(findTrackedItem([], 11)).toBeNull();
   });
 });
 
@@ -83,59 +83,59 @@ describe('groupUnitIsTracked', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 'season-1', unitType: 'Season', number: 1, status: 'In progress' }),
-        unit({ id: 'ep-1', parentUnitId: 'season-1' }),
+        unit({ id: 101, unitType: 'Season', number: 1, status: 'In progress' }),
+        unit({ id: 201, parentUnitId: 101 }),
       ],
     };
 
-    expect(groupUnitIsTracked(item, 'season-1')).toBe(true);
+    expect(groupUnitIsTracked(item, 101)).toBe(true);
   });
 
   it('is true when a child unit is tracked via parentUnitId', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 'season-1', unitType: 'Season', number: 1 }),
-        unit({ id: 'ep-1', parentUnitId: 'season-1', status: 'Completed' }),
+        unit({ id: 101, unitType: 'Season', number: 1 }),
+        unit({ id: 201, parentUnitId: 101, status: 'Completed' }),
       ],
     };
 
-    expect(groupUnitIsTracked(item, 'season-1')).toBe(true);
+    expect(groupUnitIsTracked(item, 101)).toBe(true);
   });
 
   it('is false when neither the container nor its children are tracked', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 'season-1', unitType: 'Season', number: 1 }),
-        unit({ id: 'ep-1', parentUnitId: 'season-1' }),
-        unit({ id: 'ep-2', parentUnitId: 'season-2', status: 'Completed' }),
+        unit({ id: 101, unitType: 'Season', number: 1 }),
+        unit({ id: 201, parentUnitId: 101 }),
+        unit({ id: 202, parentUnitId: 102, status: 'Completed' }),
       ],
     };
 
-    expect(groupUnitIsTracked(item, 'season-1')).toBe(false);
+    expect(groupUnitIsTracked(item, 101)).toBe(false);
   });
 
   it('is false without an item or a units array', () => {
-    expect(groupUnitIsTracked(null, 'season-1')).toBe(false);
-    expect(groupUnitIsTracked(baseItem, 'season-1')).toBe(false);
+    expect(groupUnitIsTracked(null, 101)).toBe(false);
+    expect(groupUnitIsTracked(baseItem, 101)).toBe(false);
   });
 });
 
 describe('groupTrackingStatus', () => {
   it('returns null when untracked or the container is missing', () => {
-    expect(groupTrackingStatus(null, 'season-1')).toBeNull();
-    expect(groupTrackingStatus(baseItem, 'season-1')).toBeNull();
+    expect(groupTrackingStatus(null, 101)).toBeNull();
+    expect(groupTrackingStatus(baseItem, 101)).toBeNull();
   });
 
   it('derives Completed/In progress from a directly tracked container', () => {
     const done = groupTrackingStatus(
-      { ...baseItem, units: [unit({ id: 'v1', unitType: 'Volume', status: 'Completed' })] },
-      'v1',
+      { ...baseItem, units: [unit({ id: 301, unitType: 'Volume', status: 'Completed' })] },
+      301,
     );
     const wip = groupTrackingStatus(
-      { ...baseItem, units: [unit({ id: 'v1', unitType: 'Volume', status: 'In progress' })] },
-      'v1',
+      { ...baseItem, units: [unit({ id: 301, unitType: 'Volume', status: 'In progress' })] },
+      301,
     );
 
     expect(done).toBe('Completed');
@@ -146,156 +146,132 @@ describe('groupTrackingStatus', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 's1', unitType: 'Season', number: 1 }),
-        unit({ id: 'e1', parentUnitId: 's1' }),
+        unit({ id: 311, unitType: 'Season', number: 1 }),
+        unit({ id: 411, parentUnitId: 311 }),
       ],
     };
 
-    expect(groupTrackingStatus(item, 's1')).toBeNull();
+    expect(groupTrackingStatus(item, 311)).toBeNull();
   });
 
   it('reports Completed when every child is completed (parentUnitId matching)', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 'b1', unitType: 'Book', number: 1 }),
-        unit({ id: 'c1', unitType: 'Chapter', number: 1, parentUnitId: 'b1', status: 'Completed' }),
-        unit({ id: 'c2', unitType: 'Chapter', number: 2, parentUnitId: 'b1', status: 'Completed' }),
+        unit({ id: 501, unitType: 'Book', number: 1 }),
+        unit({ id: 601, unitType: 'Chapter', number: 1, parentUnitId: 501, status: 'Completed' }),
+        unit({ id: 602, unitType: 'Chapter', number: 2, parentUnitId: 501, status: 'Completed' }),
       ],
     };
 
-    expect(groupTrackingStatus(item, 'b1')).toBe('Completed');
+    expect(groupTrackingStatus(item, 501)).toBe('Completed');
   });
 
   it('reports In progress when some but not all children are completed', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 's1', unitType: 'Season', number: 1 }),
-        unit({ id: 'e1', parentUnitId: 's1', status: 'Completed' }),
-        unit({ id: 'e2', parentUnitId: 's1', status: 'In progress' }),
+        unit({ id: 311, unitType: 'Season', number: 1 }),
+        unit({ id: 411, parentUnitId: 311, status: 'Completed' }),
+        unit({ id: 412, parentUnitId: 311, status: 'In progress' }),
       ],
     };
 
-    expect(groupTrackingStatus(item, 's1')).toBe('In progress');
+    expect(groupTrackingStatus(item, 311)).toBe('In progress');
   });
 
   it('reports In progress when children are tracked but none completed', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 's1', unitType: 'Season', number: 1 }),
-        unit({ id: 'e1', parentUnitId: 's1', status: 'In progress' }),
+        unit({ id: 311, unitType: 'Season', number: 1 }),
+        unit({ id: 411, parentUnitId: 311, status: 'In progress' }),
       ],
     };
 
-    expect(groupTrackingStatus(item, 's1')).toBe('In progress');
-  });
-
-  it('falls back to group-number child matching without parentUnitId', () => {
-    const item: LibraryItem = {
-      ...baseItem,
-      units: [
-        unit({ id: 's1', unitType: 'Season', number: 1 }),
-        unit({ id: 'e1', groupNumber: 1, status: 'Completed' }),
-      ],
-    };
-
-    expect(groupTrackingStatus(item, 's1')).toBe('Completed');
+    expect(groupTrackingStatus(item, 311)).toBe('In progress');
   });
 
   it('scopes child derivation to the selected container only', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 's1', unitType: 'Season', number: 1 }),
-        unit({ id: 's2', unitType: 'Season', number: 2 }),
-        unit({ id: 'e1', parentUnitId: 's2', status: 'Completed' }),
+        unit({ id: 311, unitType: 'Season', number: 1 }),
+        unit({ id: 312, unitType: 'Season', number: 2 }),
+        unit({ id: 413, parentUnitId: 312, status: 'Completed' }),
       ],
     };
 
-    expect(groupTrackingStatus(item, 's1')).toBeNull();
-    expect(groupTrackingStatus(item, 's2')).toBe('Completed');
-  });
-
-  it('ignores other containers when matching children by group number', () => {
-    const item: LibraryItem = {
-      ...baseItem,
-      units: [
-        unit({ id: 'v2', unitType: 'Volume', number: 2 }),
-        unit({ id: 'i5', groupNumber: 2, status: 'Completed' }),
-      ],
-    };
-
-    expect(groupTrackingStatus(item, 'v2')).toBe('Completed');
+    expect(groupTrackingStatus(item, 311)).toBeNull();
+    expect(groupTrackingStatus(item, 312)).toBe('Completed');
   });
 });
 
 describe('buildTrackedScope', () => {
   it('marks material-level items as all-covering', () => {
-    const scope = buildTrackedScope([{ ...baseItem, id: 'movie-1', status: 'Completed' }]);
+    const scope = buildTrackedScope([{ ...baseItem, id: 21, status: 'Completed' }]);
 
-    expect(scope.get('movie-1')).toBe('all');
+    expect(scope.get(21)).toBe('all');
   });
 
   it('collects tracked unit ids for container-based items', () => {
     const item: LibraryItem = {
       ...baseItem,
       units: [
-        unit({ id: 'season-1', unitType: 'Season', number: 1, status: 'Completed' }),
-        unit({ id: 'ep-1', parentUnitId: 'season-1' }),
-        unit({ id: 'ep-2', parentUnitId: 'season-1' }),
+        unit({ id: 101, unitType: 'Season', number: 1, status: 'Completed' }),
+        unit({ id: 201, parentUnitId: 101 }),
+        unit({ id: 202, parentUnitId: 101 }),
       ],
     };
     const scope = buildTrackedScope([item]);
 
-    expect(scope.get('mat-1')).toEqual(new Set(['season-1', 'ep-1', 'ep-2']));
+    expect(scope.get(11)).toEqual(new Set([101, 201, 202]));
   });
 
   it('skips items excluded by the status selection', () => {
     const items: LibraryItem[] = [
-      { ...baseItem, id: 'movie-1', status: 'Completed' },
-      { ...baseItem, id: 'show-1', status: null },
-      { ...baseItem, id: 'movie-2', status: 'Wish Listed' },
+      { ...baseItem, id: 21, status: 'Completed' },
+      { ...baseItem, id: 31, status: null },
+      { ...baseItem, id: 22, status: 'Wish Listed' },
     ];
 
     const all = buildTrackedScope(items);
-    expect(all.has('movie-1')).toBe(true);
-    expect(all.has('show-1')).toBe(true);
-    expect(all.has('movie-2')).toBe(true);
+    expect(all.has(21)).toBe(true);
+    expect(all.has(31)).toBe(true);
+    expect(all.has(22)).toBe(true);
 
     const completedOnly = buildTrackedScope(items, ['Completed']);
-    expect(completedOnly.has('movie-1')).toBe(true);
-    expect(completedOnly.has('show-1')).toBe(false);
-    expect(completedOnly.has('movie-2')).toBe(false);
+    expect(completedOnly.has(21)).toBe(true);
+    expect(completedOnly.has(31)).toBe(false);
+    expect(completedOnly.has(22)).toBe(false);
   });
 });
 
 describe('depictionIsTracked', () => {
-  const scope: TrackedScopeMap = new Map<string, 'all' | ReadonlySet<string>>([
-    ['movie-1', 'all'],
-    ['show-1', new Set(['season-1', 'ep-1'])],
+  const scope: TrackedScopeMap = new Map<number, 'all' | ReadonlySet<number>>([
+    [21, 'all'],
+    [31, new Set([101, 201])],
   ]);
 
   it('is false for materials outside the scope', () => {
-    expect(depictionIsTracked(scope, 'other', undefined)).toBe(false);
-    expect(depictionIsTracked(scope, 'other', 'season-1')).toBe(false);
-    expect(depictionIsTracked(scope, undefined, 'season-1')).toBe(false);
+    expect(depictionIsTracked(scope, 99, undefined)).toBe(false);
+    expect(depictionIsTracked(scope, 99, 101)).toBe(false);
+    expect(depictionIsTracked(scope, undefined, 101)).toBe(false);
   });
 
   it('is true for every depiction of a material-level scope', () => {
-    expect(depictionIsTracked(scope, 'movie-1', undefined)).toBe(true);
-    expect(depictionIsTracked(scope, 'movie-1', 'chapter-9')).toBe(true);
+    expect(depictionIsTracked(scope, 21, undefined)).toBe(true);
+    expect(depictionIsTracked(scope, 21, 909)).toBe(true);
   });
 
   it('is true for unpinned depictions of a unit-tracked material', () => {
-    expect(depictionIsTracked(scope, 'show-1', undefined)).toBe(true);
+    expect(depictionIsTracked(scope, 31, undefined)).toBe(true);
   });
 
   it('is true only for pinned units inside a unit-tracked scope', () => {
-    expect(depictionIsTracked(scope, 'show-1', 'season-1')).toBe(true);
-    expect(depictionIsTracked(scope, 'show-1', 'ep-1')).toBe(true);
-    expect(depictionIsTracked(scope, 'show-1', 'season-7')).toBe(false);
-    expect(depictionIsTracked(scope, 'show-1', 'ep-99')).toBe(false);
+    expect(depictionIsTracked(scope, 31, 101)).toBe(true);
+    expect(depictionIsTracked(scope, 31, 201)).toBe(true);
+    expect(depictionIsTracked(scope, 31, 107)).toBe(false);
+    expect(depictionIsTracked(scope, 31, 299)).toBe(false);
   });
 });

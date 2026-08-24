@@ -33,7 +33,7 @@ export type TrackSelectOption = TrackingStatus | 'remove';
  */
 export function findTrackedItem(
   items: readonly LibraryItem[],
-  materialId: string,
+  materialId: number,
 ): LibraryItem | null {
   return items.find((item) => item.id === materialId) ?? null;
 }
@@ -71,7 +71,7 @@ export function materialTrackingStatus(item: LibraryItem | null): TrackingStatus
  * @param unitId  The container unit ID.
  * @returns `true` when that exact unit or one of its children has a non-null `status`.
  */
-export function groupUnitIsTracked(item: LibraryItem | null, unitId: string): boolean {
+export function groupUnitIsTracked(item: LibraryItem | null, unitId: number): boolean {
   const units = item?.units ?? [];
   return units.some(
     (u) => (u.id === unitId || u.parentUnitId === unitId) && u.status !== null,
@@ -95,16 +95,15 @@ export function isContainerUnit(unitType: string): boolean {
  * to this container's children only so sibling containers never influence
  * the result.
  *
- * Children are matched by `parentUnitId` first; when absent (e.g. stale or
- * partial data), children fall back to matching by group number. When some
- * but not all children are completed, the status derives as in progress;
- * only fully-completed groups report completed.
+ * Children are matched by `parentUnitId`. When some but not all children are
+ * completed, the status derives as in progress; only fully-completed groups
+ * report completed.
  *
  * @param item    The tracked library item, or `null` when the material is untracked.
  * @param unitId  The container unit ID.
  * @returns The derived {@link TrackingStatus}, or `null`.
  */
-export function groupTrackingStatus(item: LibraryItem | null, unitId: string): TrackingStatus | null {
+export function groupTrackingStatus(item: LibraryItem | null, unitId: number): TrackingStatus | null {
   const units = item?.units ?? [];
   const container = units.find((u) => u.id === unitId);
   if (!container) {
@@ -114,9 +113,7 @@ export function groupTrackingStatus(item: LibraryItem | null, unitId: string): T
     return container.status;
   }
   const children = units.filter(
-    (u) =>
-      !isContainerUnit(u.unitType) &&
-      (u.parentUnitId ? u.parentUnitId === container.id : u.groupNumber === container.number),
+    (u) => !isContainerUnit(u.unitType) && u.parentUnitId === container.id,
   );
   if (!children.some((c) => c.status !== null)) {
     return null;
@@ -141,10 +138,10 @@ export function groupTrackingStatus(item: LibraryItem | null, unitId: string): T
  *   full subtree, and containers included only because descendants are
  *   tracked list just those branches.
  */
-export type TrackedScope = 'all' | ReadonlySet<string>;
+export type TrackedScope = 'all' | ReadonlySet<number>;
 
 /** Maps each tracked source material ID to its {@link TrackedScope}. */
-export type TrackedScopeMap = ReadonlyMap<string, TrackedScope>;
+export type TrackedScopeMap = ReadonlyMap<number, TrackedScope>;
 
 /**
  * Builds the tracked scope for a set of library items, optionally filtered
@@ -160,7 +157,7 @@ export function buildTrackedScope(
   items: readonly LibraryItem[],
   selectedStatuses: readonly TrackingStatus[] = [],
 ): TrackedScopeMap {
-  const scope = new Map<string, TrackedScope>();
+  const scope = new Map<number, TrackedScope>();
   for (const item of items) {
     if (
       selectedStatuses.length > 0 &&
@@ -191,8 +188,8 @@ export function buildTrackedScope(
  */
 export function depictionIsTracked(
   scope: TrackedScopeMap,
-  sourceId: string | undefined,
-  unitId: string | undefined,
+  sourceId: number | undefined,
+  unitId: number | undefined,
 ): boolean {
   if (sourceId === undefined) {
     return false;

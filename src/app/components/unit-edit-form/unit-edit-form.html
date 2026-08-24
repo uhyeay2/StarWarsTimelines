@@ -4,12 +4,12 @@
       <option [value]="unitType">{{ unitType }}</option>
     }
   </select>
-  <input
-    name="unitEditGroup"
-    type="number"
-    min="1"
-    placeholder="Group"
-    [(ngModel)]="groupNumber" />
+  <select name="unitEditParent" [(ngModel)]="parentUnitId">
+    <option [ngValue]="null">Top level</option>
+    @for (option of parentOptions(); track option.id) {
+      <option [ngValue]="option.id">{{ option.label }}</option>
+    }
+  </select>
   <input
     name="unitEditNumber"
     type="number"

@@ -14,13 +14,13 @@ export interface EventSource {
   /** Continuity coverage of the source material. */
   canon: readonly Canon[];
   /** Server-assigned identifier of the source material. */
-  sourceId?: string;
+  sourceId?: number;
   /** The specific unit depicting the event, when the event is tied to one. */
   unit?: SourceMaterialUnit;
 }
 
 export interface TimelineEvent {
-  id: string;
+  id: number;
   /**
    * Union of the continuity coverage across every source material that
    * depicts this event (e.g. an event covered by both a Canon movie and a

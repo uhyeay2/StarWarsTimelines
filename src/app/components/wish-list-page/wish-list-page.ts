@@ -56,7 +56,7 @@ export class WishListPage {
   // ─── Drag-and-drop state ────────────────────────────────────────────────
 
   /** ID of the item currently being dragged, or `null`. */
-  readonly draggedId = signal<string | null>(null);
+  readonly draggedId = signal<number | null>(null);
 
   // ─── Computed state ─────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ export class WishListPage {
    * @param itemId  The source material ID.
    * @param status  The new tracking status.
    */
-  setStatus(itemId: string, status: TrackingStatus): void {
+  setStatus(itemId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -104,7 +104,7 @@ export class WishListPage {
    * @param unitId      The unit ID to update.
    * @param status      The new tracking status.
    */
-  setGroupStatus(materialId: string, unitId: string, status: TrackingStatus): void {
+  setGroupStatus(materialId: number, unitId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -121,7 +121,7 @@ export class WishListPage {
    * @param materialId  The source material ID.
    * @param unitId      The unit ID whose progress should be cleared.
    */
-  clearGroupProgress(materialId: string, unitId: string): void {
+  clearGroupProgress(materialId: number, unitId: number): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -136,7 +136,7 @@ export class WishListPage {
    *
    * @param itemId  The source material ID to remove.
    */
-  removeTracked(itemId: string): void {
+  removeTracked(itemId: number): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -151,7 +151,7 @@ export class WishListPage {
    * @param unitId      The unit ID to update.
    * @param status      The new tracking status for the unit.
    */
-  setUnitProgress(materialId: string, unitId: string, status: TrackingStatus): void {
+  setUnitProgress(materialId: number, unitId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -167,7 +167,7 @@ export class WishListPage {
    * @param itemId    The item to move.
    * @param direction `-1` to move up, `1` to move down.
    */
-  moveWishListItem(itemId: string, direction: -1 | 1): void {
+  moveWishListItem(itemId: number, direction: -1 | 1): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -198,7 +198,7 @@ export class WishListPage {
    *
    * @param itemId  The ID of the item being dragged.
    */
-  onDragStart(itemId: string): void {
+  onDragStart(itemId: number): void {
     this.draggedId.set(itemId);
   }
 
@@ -221,7 +221,7 @@ export class WishListPage {
    *
    * @param targetId  The ID of the item to drop onto.
    */
-  reorderWishList(targetId: string): void {
+  reorderWishList(targetId: number): void {
     const userId = this.userId();
     const draggedId = this.draggedId();
     if (!userId || !draggedId) {
@@ -248,7 +248,7 @@ export class WishListPage {
    *
    * @param orderedSourceMaterialIds  The ordered list of source material IDs.
    */
-  private applyOrder(orderedSourceMaterialIds: readonly string[]): void {
+  private applyOrder(orderedSourceMaterialIds: readonly number[]): void {
     const userId = this.userId();
     if (!userId) {
       return;

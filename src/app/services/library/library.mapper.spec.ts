@@ -3,9 +3,8 @@ import { isValidItemDto, isValidUnitDto, mapLibraryItem, mapLibraryUnit } from '
 
 function unitDto(partial: Partial<LibraryUnitDto> = {}): LibraryUnitDto {
   return {
-    id: 'unit-1',
+    id: 101,
     unitType: 0,
-    groupNumber: null,
     number: 1,
     title: null,
     status: 0,
@@ -15,7 +14,7 @@ function unitDto(partial: Partial<LibraryUnitDto> = {}): LibraryUnitDto {
 }
 
 const itemDto: LibraryItemDto = {
-  sourceMaterialId: 'mat-1',
+  sourceMaterialId: 10,
   title: 'A New Hope',
   medium: 0,
   canonType: 1,
@@ -36,7 +35,7 @@ describe('isValidUnitDto', () => {
   it('rejects non-objects and missing or mistyped fields', () => {
     expect(isValidUnitDto(null)).toBe(false);
     expect(isValidUnitDto('unit')).toBe(false);
-    expect(isValidUnitDto(unitDto({ id: '' }))).toBe(false);
+    expect(isValidUnitDto(unitDto({ id: '101' as unknown as number }))).toBe(false);
     expect(isValidUnitDto(unitDto({ unitType: 'Episode' as unknown as number }))).toBe(false);
     expect(isValidUnitDto(unitDto({ number: '1' as unknown as number }))).toBe(false);
     expect(isValidUnitDto(unitDto({ status: undefined as unknown as number | null }))).toBe(false);
@@ -55,7 +54,7 @@ describe('isValidItemDto', () => {
   it('rejects non-objects and missing or mistyped fields', () => {
     expect(isValidItemDto(null)).toBe(false);
     expect(isValidItemDto({})).toBe(false);
-    expect(isValidItemDto({ ...itemDto, sourceMaterialId: '' })).toBe(false);
+    expect(isValidItemDto({ ...itemDto, sourceMaterialId: '10' })).toBe(false);
     expect(
       isValidItemDto({ ...itemDto, status: 'In progress' as unknown as number | null }),
     ).toBe(false);
@@ -74,29 +73,26 @@ describe('mapLibraryUnit', () => {
     const mapped = mapLibraryUnit(
       unitDto({
         unitType: 2,
-        groupNumber: 2,
         number: 5,
         title: 'Twilight',
         status: 1,
-        parentUnitId: 'vol-9',
+        parentUnitId: 72,
       }),
     );
 
     expect(mapped).toEqual({
-      id: 'unit-1',
+      id: 101,
       unitType: 'Issue',
-      groupNumber: 2,
       number: 5,
       title: 'Twilight',
-      parentUnitId: 'vol-9',
+      parentUnitId: 72,
       status: 'Completed',
     });
   });
 
-  it('converts null group/title/parent to undefined and null status to null', () => {
+  it('converts null title/parent to undefined and null status to null', () => {
     const mapped = mapLibraryUnit(unitDto({ status: null }));
 
-    expect(mapped.groupNumber).toBeUndefined();
     expect(mapped.title).toBeUndefined();
     expect(mapped.parentUnitId).toBeUndefined();
     expect(mapped.status).toBeNull();
@@ -116,7 +112,7 @@ describe('mapLibraryItem', () => {
     const mapped = mapLibraryItem(itemDto);
 
     expect(mapped).toMatchObject({
-      id: 'mat-1',
+      id: 10,
       title: 'A New Hope',
       favorite: true,
     });
@@ -136,27 +132,25 @@ describe('mapLibraryItem', () => {
       status: null,
       units: [
         unitDto({
-          id: 'season-1',
+          id: 101,
           unitType: 3,
           number: 1,
           title: 'Season 1',
           status: 1,
           units: [
             unitDto({
-              id: 'episode-1',
-              groupNumber: 1,
+              id: 201,
               number: 1,
               title: 'Ambush',
               status: null,
-              parentUnitId: 'season-1',
+              parentUnitId: 101,
             }),
             unitDto({
-              id: 'episode-2',
-              groupNumber: 1,
+              id: 202,
               number: 2,
               title: 'Rising Malevolence',
               status: null,
-              parentUnitId: 'season-1',
+              parentUnitId: 101,
             }),
           ],
         }),
@@ -165,21 +159,21 @@ describe('mapLibraryItem', () => {
 
     const units = mapLibraryItem(dto).units ?? [];
 
-    expect(units.map((u) => u.id)).toEqual(['season-1', 'episode-1', 'episode-2']);
+    expect(units.map((u) => u.id)).toEqual([101, 201, 202]);
     expect(units[0]).toMatchObject({ unitType: 'Season', status: 'Completed' });
-    expect(units[1].parentUnitId).toBe('season-1');
-    expect(units[2].parentUnitId).toBe('season-1');
+    expect(units[1].parentUnitId).toBe(101);
+    expect(units[2].parentUnitId).toBe(101);
   });
 
   it('drops malformed units instead of throwing', () => {
     const dto: LibraryItemDto = {
       ...itemDto,
-      units: [unitDto({ id: 'good' }), { bad: true } as unknown as LibraryUnitDto],
+      units: [unitDto({ id: 301 }), { bad: true } as unknown as LibraryUnitDto],
     };
 
     const mapped = mapLibraryItem(dto);
 
-    expect((mapped.units ?? []).map((u) => u.id)).toEqual(['good']);
+    expect((mapped.units ?? []).map((u) => u.id)).toEqual([301]);
   });
 
   it('drops malformed units nested inside a tracked container', () => {
@@ -188,17 +182,17 @@ describe('mapLibraryItem', () => {
       status: null,
       units: [
         unitDto({
-          id: 'season-1',
+          id: 101,
           unitType: 3,
           number: 1,
           status: 1,
-          units: [unitDto({ id: 'good-child' }), { bad: true } as unknown as LibraryUnitDto],
+          units: [unitDto({ id: 302 }), { bad: true } as unknown as LibraryUnitDto],
         }),
       ],
     };
 
     const units = mapLibraryItem(dto).units ?? [];
 
-    expect(units.map((u) => u.id)).toEqual(['season-1', 'good-child']);
+    expect(units.map((u) => u.id)).toEqual([101, 302]);
   });
 });

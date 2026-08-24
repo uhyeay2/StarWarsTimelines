@@ -97,7 +97,7 @@ export class Timeline {
    * Used by {@link KnownTimelinePage} to display a per-source timeline.
    * `null` means show all events; an empty array means show none.
    */
-  readonly sourceIds = input<readonly string[] | null>(null);
+  readonly sourceIds = input<readonly number[] | null>(null);
 
   /**
    * Unit-level tracked scope per material ID (see {@link buildTrackedScope}).
@@ -161,11 +161,22 @@ export class Timeline {
    *
    * Combines source, location, character, and vehicle facets from events
    * with full catalog data so that catalog-only entries (not in any event)
-   * are still filterable. Cached to avoid recomputation when inputs are
-   * unchanged.
+   * are still filterable. Container unit labels ("Season 1") resolve from
+   * the per-material unit caches; the computed re-runs once those caches
+   * finish loading. Cached to avoid recomputation when inputs are unchanged.
    */
   protected readonly facetOptions = computed(() => {
-    const eventFacets = collectFacetOptions(this.continuityEvents());
+    const eventFacets = collectFacetOptions(
+      this.continuityEvents(),
+      (materialId, containerUnitId) => {
+        const units = this.catalog.getUnitCache(materialId).data() ?? [];
+        const container = units.find((u) => u.id === containerUnitId);
+        if (!container) {
+          return undefined;
+        }
+        return container.title ?? `${container.unitType} ${container.number}`;
+      },
+    );
     const characters = this.catalog.characters();
     const locations = this.catalog.locations();
     const vehicles = this.catalog.vehicles();
@@ -185,7 +196,7 @@ export class Timeline {
    */
   protected readonly sourceChipsByEvent = computed(() => {
     const sources = this.facetOptions().sources;
-    const chips = new Map<string, readonly SourceFilterChip[]>();
+    const chips = new Map<number, readonly SourceFilterChip[]>();
     for (const event of this.continuityEvents()) {
       chips.set(event.id, sourceChipsForEvent(event, sources));
     }

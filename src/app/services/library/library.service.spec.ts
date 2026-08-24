@@ -3,7 +3,7 @@
  * and the DTO validation guards.
  */
 
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
@@ -23,9 +23,8 @@ import { LibraryService } from './library.service';
 // ─── Fixture builders ──────────────────────────────────────────────────────
 
 const UNIT_DTO_A: LibraryUnitDto = {
-  id: 'u1',
+  id: 101,
   unitType: 0,
-  groupNumber: null,
   number: 1,
   title: 'Chapter 1',
   status: 0,
@@ -33,9 +32,8 @@ const UNIT_DTO_A: LibraryUnitDto = {
 };
 
 const UNIT_DTO_B: LibraryUnitDto = {
-  id: 'u2',
+  id: 102,
   unitType: 1,
-  groupNumber: 2,
   number: 3,
   title: null,
   status: 1,
@@ -43,7 +41,7 @@ const UNIT_DTO_B: LibraryUnitDto = {
 };
 
 const ITEM_DTO_A: LibraryItemDto = {
-  sourceMaterialId: 'sm1',
+  sourceMaterialId: 10,
   title: 'The High Republic',
   medium: 1,
   canonType: 0,
@@ -53,7 +51,7 @@ const ITEM_DTO_A: LibraryItemDto = {
 };
 
 const ITEM_DTO_B: LibraryItemDto = {
-  sourceMaterialId: 'sm2',
+  sourceMaterialId: 20,
   title: 'Shadows of the Sith',
   medium: 3,
   canonType: 0,
@@ -63,36 +61,32 @@ const ITEM_DTO_B: LibraryItemDto = {
 };
 
 const UNIT_A: LibraryUnit = {
-  id: 'u1',
+  id: 101,
   unitType: 'Episode',
-  groupNumber: undefined,
   number: 1,
   title: 'Chapter 1',
   status: 'In progress',
 };
 
 const UNIT_B: LibraryUnit = {
-  id: 'u2',
+  id: 102,
   unitType: 'Chapter',
-  groupNumber: 2,
   number: 3,
   title: undefined,
   status: 'Completed',
 };
 
 const UNIT_C: LibraryUnit = {
-  id: 'u3',
+  id: 103,
   unitType: 'Season',
-  groupNumber: undefined,
   number: 1,
   title: 'Season 1',
   status: 'In progress',
 };
 
 const UNIT_DTO_C: LibraryUnitDto = {
-  id: 'u3',
+  id: 103,
   unitType: 3,
-  groupNumber: null,
   number: 1,
   title: 'Season 1',
   status: 0,
@@ -100,7 +94,7 @@ const UNIT_DTO_C: LibraryUnitDto = {
 };
 
 const ITEM_A: LibraryItem = {
-  id: 'sm1',
+  id: 10,
   title: 'The High Republic',
   medium: 'Book',
   status: 'In progress',
@@ -109,7 +103,7 @@ const ITEM_A: LibraryItem = {
 };
 
 const ITEM_B: LibraryItem = {
-  id: 'sm2',
+  id: 20,
   title: 'Shadows of the Sith',
   medium: 'Animated Show',
   status: 'Completed',
@@ -118,7 +112,7 @@ const ITEM_B: LibraryItem = {
 };
 
 const ITEM_DTO_C: LibraryItemDto = {
-  sourceMaterialId: 'sm3',
+  sourceMaterialId: 30,
   title: 'Rebels',
   medium: 4,
   canonType: 0,
@@ -128,7 +122,7 @@ const ITEM_DTO_C: LibraryItemDto = {
 };
 
 const ITEM_C: LibraryItem = {
-  id: 'sm3',
+  id: 30,
   title: 'Rebels',
   medium: 'Live Action Show',
   status: 'Wish Listed',
@@ -167,8 +161,8 @@ describe('isValidUnitDto', () => {
     expect(isValidUnitDto(rest)).toBe(false);
   });
 
-  it('returns false when id is empty string', () => {
-    expect(isValidUnitDto({ ...UNIT_DTO_A, id: '' })).toBe(false);
+  it('returns false when id is not a number', () => {
+    expect(isValidUnitDto({ ...UNIT_DTO_A, id: '101' as unknown as number })).toBe(false);
   });
 
   it('returns false when unitType is not a number', () => {
@@ -183,8 +177,8 @@ describe('isValidUnitDto', () => {
     expect(isValidUnitDto({ ...UNIT_DTO_A, status: null })).toBe(true);
   });
 
-  it('accepts null groupNumber and title', () => {
-    expect(isValidUnitDto({ ...UNIT_DTO_A, groupNumber: null, title: null })).toBe(true);
+  it('accepts a null title', () => {
+    expect(isValidUnitDto({ ...UNIT_DTO_A, title: null })).toBe(true);
   });
 });
 
@@ -208,7 +202,7 @@ describe('isValidItemDto', () => {
     expect(isValidItemDto(rest)).toBe(false);
   });
 
-  it('returns false when sourceMaterialId is empty', () => {
+  it('returns false when sourceMaterialId is not a number', () => {
     expect(isValidItemDto({ ...ITEM_DTO_A, sourceMaterialId: '' })).toBe(false);
   });
 
@@ -232,12 +226,12 @@ describe('mapLibraryUnit', () => {
     expect(mapLibraryUnit(UNIT_DTO_A)).toEqual(UNIT_A);
   });
 
-  it('converts null groupNumber to undefined', () => {
-    expect(mapLibraryUnit(UNIT_DTO_A).groupNumber).toBeUndefined();
+  it('converts null parentUnitId to undefined', () => {
+    expect(mapLibraryUnit(UNIT_DTO_A).parentUnitId).toBeUndefined();
   });
 
-  it('preserves groupNumber when present', () => {
-    expect(mapLibraryUnit(UNIT_DTO_B).groupNumber).toBe(2);
+  it('preserves parentUnitId when present', () => {
+    expect(mapLibraryUnit({ ...UNIT_DTO_B, parentUnitId: 55 }).parentUnitId).toBe(55);
   });
 
   it('converts null title to undefined', () => {
@@ -255,7 +249,7 @@ describe('mapLibraryUnit', () => {
 
   it('preserves id and number', () => {
     const result = mapLibraryUnit(UNIT_DTO_A);
-    expect(result.id).toBe('u1');
+    expect(result.id).toBe(101);
     expect(result.number).toBe(1);
   });
 });
@@ -268,7 +262,7 @@ describe('mapLibraryItem', () => {
   });
 
   it('maps sourceMaterialId to id', () => {
-    expect(mapLibraryItem(ITEM_DTO_A).id).toBe('sm1');
+    expect(mapLibraryItem(ITEM_DTO_A).id).toBe(10);
   });
 
   it('maps numeric medium to string union', () => {
@@ -301,11 +295,11 @@ describe('mapLibraryItem', () => {
   it('drops invalid unit entries gracefully', () => {
     const dtoWithBadUnit: LibraryItemDto = {
       ...ITEM_DTO_A,
-      units: [UNIT_DTO_A, { id: '', unitType: 0, groupNumber: null, number: 1, title: null, status: 0 } as LibraryUnitDto],
+      units: [UNIT_DTO_A, { id: '', unitType: 0, number: 1, title: null, status: 0 } as unknown as LibraryUnitDto],
     };
     const result = mapLibraryItem(dtoWithBadUnit);
     expect(result.units).toHaveLength(1);
-    expect(result.units![0].id).toBe('u1');
+    expect(result.units![0].id).toBe(101);
   });
 });
 
@@ -393,7 +387,7 @@ describe('LibraryService', () => {
       flushGetRequest().flush(mixed);
       const items = await promise;
       expect(items).toHaveLength(1);
-      expect(items[0].id).toBe('sm1');
+      expect(items[0].id).toBe(10);
     });
 
     it('throws LibraryError with NotFound code on 404', async () => {
@@ -491,7 +485,7 @@ describe('LibraryService', () => {
       const promise = firstValueFrom(service.addTracked('u1', ITEM_B));
       const req = httpMock.expectOne(`${BASE}/u1/source-materials`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ sourceMaterialId: 'sm2' });
+      expect(req.request.body).toEqual({ sourceMaterialId: 20 });
       req.flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
       expect(await promise).toEqual([ITEM_A, ITEM_B]);
@@ -534,24 +528,24 @@ describe('LibraryService', () => {
       flushGetRequest().flush(makeItemList());
       await setupPromise;
 
-      const promise = firstValueFrom(service.setStatus('u1', 'sm1', 'Completed'));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const promise = firstValueFrom(service.setStatus('u1', 10, 'Completed'));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ status: 1 });
       req.flush({}, { status: 200, statusText: 'OK' });
 
-      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       expect(reloadReq.request.method).toBe('GET');
       reloadReq.flush(ITEM_DTO_A);
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual(['sm1', 'sm2']);
+      expect(items.map(i => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with NotFound code on 404', async () => {
-      const promise = firstValueFrom(service.setStatus('u1', 'missing', 'Completed'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/missing`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      const promise = firstValueFrom(service.setStatus('u1', 99, 'Completed'));
+      httpMock.expectOne(`${BASE}/u1/source-materials/99`).flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
 
@@ -559,19 +553,19 @@ describe('LibraryService', () => {
       const setupPromise = firstValueFrom(service.getTracked('u1'));
       flushGetRequest().flush(makeItemList([ITEM_DTO_A]));
       await setupPromise;
-      expect(service.items().map((i) => i.id)).toEqual(['sm1']);
+      expect(service.items().map((i) => i.id)).toEqual([10]);
 
-      const promise = firstValueFrom(service.setStatus('u1', 'sm3', 'Wish Listed'));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm3`);
+      const promise = firstValueFrom(service.setStatus('u1', 30, 'Wish Listed'));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/30`);
       expect(req.request.method).toBe('PUT');
       req.flush({}, { status: 200, statusText: 'OK' });
 
-      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm3`);
+      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/30`);
       reloadReq.flush(ITEM_DTO_C);
 
       const items = await promise;
-      expect(items.map((i) => i.id)).toEqual(['sm1', 'sm3']);
-      expect(service.items().map((i) => i.id)).toEqual(['sm1', 'sm3']);
+      expect(items.map((i) => i.id)).toEqual([10, 30]);
+      expect(service.items().map((i) => i.id)).toEqual([10, 30]);
     });
   });
 
@@ -583,23 +577,23 @@ describe('LibraryService', () => {
       flushGetRequest().flush(makeItemList());
       await setupPromise;
 
-      const promise = firstValueFrom(service.setFavorite('u1', 'sm1', false));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const promise = firstValueFrom(service.setFavorite('u1', 10, false));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ isFavorite: false });
       req.flush({}, { status: 200, statusText: 'OK' });
 
-      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       reloadReq.flush(ITEM_DTO_A);
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual(['sm1', 'sm2']);
+      expect(items.map(i => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with ValidationError code on 400', async () => {
-      const promise = firstValueFrom(service.setFavorite('u1', 'sm1', true));
-      httpMock.expectOne(`${BASE}/u1/source-materials/sm1`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      const promise = firstValueFrom(service.setFavorite('u1', 10, true));
+      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
     });
   });
@@ -608,8 +602,8 @@ describe('LibraryService', () => {
 
   describe('removeTracked', () => {
     it('DELETEs the material and performs a full reload', async () => {
-      const promise = firstValueFrom(service.removeTracked('u1', 'sm1'));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const promise = firstValueFrom(service.removeTracked('u1', 10));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       expect(req.request.method).toBe('DELETE');
       req.flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
@@ -617,8 +611,8 @@ describe('LibraryService', () => {
     });
 
     it('throws LibraryError with NotFound code on 404', async () => {
-      const promise = firstValueFrom(service.removeTracked('u1', 'missing'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/missing`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      const promise = firstValueFrom(service.removeTracked('u1', 99));
+      httpMock.expectOne(`${BASE}/u1/source-materials/99`).flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
   });
@@ -631,23 +625,23 @@ describe('LibraryService', () => {
       flushGetRequest().flush(makeItemList());
       await setupPromise;
 
-      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', 'Completed'));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u1`);
+      const promise = firstValueFrom(service.setUnitProgress('u1', 10, 101, 'Completed'));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/10/units/101`);
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({ status: 1 });
       req.flush({}, { status: 200, statusText: 'OK' });
 
-      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/sm1`);
+      const reloadReq = httpMock.expectOne(`${BASE}/u1/source-materials/10`);
       reloadReq.flush(ITEM_DTO_A);
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual(['sm1', 'sm2']);
+      expect(items.map(i => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with ValidationError code on 400', async () => {
-      const promise = firstValueFrom(service.setUnitProgress('u1', 'sm1', 'u1', 'In progress'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u1`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      const promise = firstValueFrom(service.setUnitProgress('u1', 10, 101, 'In progress'));
+      httpMock.expectOne(`${BASE}/u1/source-materials/10/units/101`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
     });
   });
@@ -656,8 +650,8 @@ describe('LibraryService', () => {
 
   describe('clearUnitProgress', () => {
     it('DELETEs the unit progress URL and performs a full reload', async () => {
-      const promise = firstValueFrom(service.clearUnitProgress('u1', 'sm1', 'u2'));
-      const req = httpMock.expectOne(`${BASE}/u1/source-materials/sm1/units/u2`);
+      const promise = firstValueFrom(service.clearUnitProgress('u1', 10, 102));
+      const req = httpMock.expectOne(`${BASE}/u1/source-materials/10/units/102`);
       expect(req.request.method).toBe('DELETE');
       req.flush(null, { status: 204, statusText: 'No Content' });
       flushGetRequest().flush(makeItemList());
@@ -665,8 +659,8 @@ describe('LibraryService', () => {
     });
 
     it('throws LibraryError with NotFound code on 404', async () => {
-      const promise = firstValueFrom(service.clearUnitProgress('u1', 'missing', 'u1'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/missing/units/u1`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      const promise = firstValueFrom(service.clearUnitProgress('u1', 99, 101));
+      httpMock.expectOne(`${BASE}/u1/source-materials/99/units/101`).flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
   });
@@ -675,17 +669,17 @@ describe('LibraryService', () => {
 
   describe('reorderTrackedItem', () => {
     it('PUTs the typed request body and performs a full reload', async () => {
-      const promise = firstValueFrom(service.reorderTrackedItem('u1', ['sm2', 'sm1']));
+      const promise = firstValueFrom(service.reorderTrackedItem('u1', [20, 10]));
       const req = httpMock.expectOne(`${BASE}/u1/source-materials/reorder`);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ orderedSourceMaterialIds: ['sm2', 'sm1'] });
+      expect(req.request.body).toEqual({ orderedSourceMaterialIds: [20, 10] });
       req.flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
       expect(await promise).toEqual([ITEM_A, ITEM_B]);
     });
 
     it('accepts readonly array input without error', async () => {
-      const ids: readonly string[] = ['sm1'];
+      const ids: readonly number[] = [10];
       const promise = firstValueFrom(service.reorderTrackedItem('u1', ids));
       httpMock.expectOne(`${BASE}/u1/source-materials/reorder`).flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
@@ -701,11 +695,11 @@ describe('LibraryService', () => {
       flushGetRequest().flush(makeItemList());
       await setupPromise;
 
-      const promise = firstValueFrom(service.setFavorite('u1', 'sm1', false));
+      const promise = firstValueFrom(service.setFavorite('u1', 10, false));
 
-      httpMock.expectOne(`${BASE}/u1/source-materials/sm1`).flush({}, { status: 200, statusText: 'OK' });
+      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush({}, { status: 200, statusText: 'OK' });
 
-      httpMock.expectOne(`${BASE}/u1/source-materials/sm1`).flush('Server Error', { status: 500, statusText: 'Server Error' });
+      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush('Server Error', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toMatchObject({
         code: LibraryErrorCode.NetworkError,

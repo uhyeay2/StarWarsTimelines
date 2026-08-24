@@ -1,11 +1,10 @@
 import { UnitType } from './unit-type';
 
 export interface ApiSourceMaterialUnit {
-  id: string;
-  sourceMaterialId: string;
+  id: number;
+  sourceMaterialId: number;
   unitType: UnitType;
-  groupNumber: number | null;
   number: number;
   title: string | null;
-  parentUnitId: string | null;
+  parentUnitId: number | null;
 }

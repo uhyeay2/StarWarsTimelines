@@ -171,13 +171,13 @@
                               </select>
                             </label>
                             <label class="source-field">
-                              <span class="sr-only">Group number</span>
-                              <input
-                                name="newUnitGroup"
-                                type="number"
-                                min="1"
-                                placeholder="Group"
-                                [(ngModel)]="newUnitGroup" />
+                              <span class="sr-only">Parent unit</span>
+                              <select name="newUnitParent" [(ngModel)]="newUnitParent">
+                                <option [ngValue]="null">Top level</option>
+                                @for (option of parentOptionsFor(material.id); track option.id) {
+                                  <option [ngValue]="option.id">{{ option.label }}</option>
+                                }
+                              </select>
                             </label>
                             <label class="source-field">
                               <span class="sr-only">Unit number</span>
@@ -277,7 +277,8 @@
                                     @if (unitEditKey()?.unitId === unit.id) {
                                       <app-unit-edit-form
                                         [(unitType)]="unitEditType"
-                                        [(groupNumber)]="unitEditGroup"
+                                        [(parentUnitId)]="unitEditParent"
+                                        [parentOptions]="parentOptionsFor(material.id)"
                                         [(number)]="unitEditNumber"
                                         [(title)]="unitEditTitle"
                                         [saving]="unitSavingKey()?.unitId === unit.id"
@@ -324,54 +325,31 @@
                             }
                             @default {
                               <ul class="unit-list">
-                                @for (group of seasonGroups()[material.id] ?? []; track group.groupNumber) {
+                                @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
                                   <li class="season-group">
                                     <button
                                       type="button"
                                       class="season-header"
-                                      [class.season-header--open]="isSeasonExpanded(material.id, group.groupNumber)"
-                                      (click)="toggleSeason(material.id, group.groupNumber)">
-                                      <span class="season-toggle">{{ isSeasonExpanded(material.id, group.groupNumber) ? '▾' : '▸' }}</span>
-                                      <span class="season-label">{{ groupLabel(group.groupNumber, group.groupTitle, displayStrategy()[material.id]) }}</span>
-                                      <span class="season-count">{{ group.units.length }} {{ group.units.length === 1 ? 'unit' : 'units' }}</span>
+                                      [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
+                                      (click)="toggleSeason(material.id, displayGroup.expandKey)">
+                                      <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                      <span class="season-label">{{ displayGroup.label }}</span>
+                                      <span class="season-count">{{ displayGroup.units.length }} {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span>
                                     </button>
-                                    @if (isSeasonExpanded(material.id, group.groupNumber)) {
+                                    @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
                                       <ul class="season-episodes">
-                                        @for (unit of group.units; track unit.id) {
+                                        @for (unit of displayGroup.units; track unit.id) {
                                           <li class="unit-item">
                                             @if (unitEditKey()?.unitId === unit.id) {
-                                              <form class="unit-edit" (ngSubmit)="saveUnitEdit()">
-                                                <select name="unitEditType" [(ngModel)]="unitEditType">
-                                                  @for (unitType of unitTypes; track unitType) {
-                                                    <option [value]="unitType">{{ unitType }}</option>
-                                                  }
-                                                </select>
-                                                <input
-                                                  name="unitEditGroup"
-                                                  type="number"
-                                                  min="1"
-                                                  placeholder="Group"
-                                                  [(ngModel)]="unitEditGroup" />
-                                                <input
-                                                  name="unitEditNumber"
-                                                  type="number"
-                                                  min="1"
-                                                  required
-                                                  [(ngModel)]="unitEditNumber" />
-                                                <input
-                                                  name="unitEditTitle"
-                                                  [(ngModel)]="unitEditTitle"
-                                                  placeholder="Title (optional)" />
-                                                <button
-                                                  class="btn btn-sm"
-                                                  type="submit"
-                                                  [disabled]="unitSavingKey()?.unitId === unit.id">
-                                                  {{ unitSavingKey()?.unitId === unit.id ? 'Saving…' : 'Save' }}
-                                                </button>
-                                                <button class="btn btn-sm" type="button" (click)="cancelUnitEdit()">
-                                                  Cancel
-                                                </button>
-                                              </form>
+                                              <app-unit-edit-form
+                                                [(unitType)]="unitEditType"
+                                                [(parentUnitId)]="unitEditParent"
+                                                [parentOptions]="parentOptionsFor(material.id)"
+                                                [(number)]="unitEditNumber"
+                                                [(title)]="unitEditTitle"
+                                                [saving]="unitSavingKey()?.unitId === unit.id"
+                                                (save)="saveUnitEdit()"
+                                                (cancel)="cancelUnitEdit()" />
                                             } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
                                               <span class="unit-delete-prompt">
                                                 Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a

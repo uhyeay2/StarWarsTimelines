@@ -15,33 +15,33 @@ const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé A
 
 const TRACKED: LibraryItem[] = [
   {
-    id: 'material-episode-i',
+    id: 21,
     title: 'Star Wars: Episode I - The Phantom Menace',
     medium: 'Movie',
     status: 'Completed',
     favorite: true,
   },
   {
-    id: 'material-episode-ii',
+    id: 22,
     title: 'Star Wars: Episode II - Attack of the Clones',
     medium: 'Movie',
     status: 'In progress',
     favorite: false,
     units: [
-      { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', status: null },
-      { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', parentUnitId: 'season-1', status: null },
-      { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', parentUnitId: 'season-1', status: 'Completed' },
+      { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: null },
+      { id: 201, unitType: 'Episode', number: 1, title: 'Attack of the Clones', parentUnitId: 101, status: null },
+      { id: 202, unitType: 'Episode', number: 2, title: 'Sneak Preview', parentUnitId: 101, status: 'Completed' },
     ],
   },
   {
-    id: 'material-episode-ix',
+    id: 23,
     title: 'Star Wars: Episode IX - The Rise of Skywalker',
     medium: 'Movie',
     status: 'Wish Listed',
     favorite: false,
   },
   {
-    id: 'material-darth-plagueis',
+    id: 24,
     title: 'Darth Plagueis',
     medium: 'Book',
     status: 'Wish Listed',
@@ -95,18 +95,18 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
   libraryMock.ensureTracked.mockImplementation(() => undefined);
   libraryMock.getTracked.mockReturnValue(of(TRACKED));
   libraryMock.setStatus.mockImplementation(
-    (_userId: string, materialId: string, status: string) =>
+    (_userId: string, materialId: number, status: string) =>
       of(TRACKED.map((item) => (item.id === materialId ? { ...item, status } : item))),
   );
   libraryMock.setFavorite.mockImplementation(
-    (_userId: string, materialId: string, favorite: boolean) =>
+    (_userId: string, materialId: number, favorite: boolean) =>
       of(TRACKED.map((item) => (item.id === materialId ? { ...item, favorite } : item))),
   );
-  libraryMock.removeTracked.mockImplementation((_userId: string, materialId: string) =>
+  libraryMock.removeTracked.mockImplementation((_userId: string, materialId: number) =>
     of(TRACKED.filter((item) => item.id !== materialId)),
   );
   libraryMock.setUnitProgress.mockImplementation(
-    (userId: string, materialId: string, unitId: string, status: TrackingStatus) => {
+    (userId: string, materialId: number, unitId: number, status: TrackingStatus) => {
       void userId;
       void unitId;
       return of(
@@ -123,7 +123,7 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
       );
     },
   );
-  libraryMock.reorderTrackedItem.mockImplementation((_userId: string, orderedIds: string[]) =>
+  libraryMock.reorderTrackedItem.mockImplementation((_userId: string, orderedIds: number[]) =>
     of(orderedIds.map((id) => TRACKED.find((item) => item.id === id)!)),
   );
   libraryMock.clearUnitProgress.mockImplementation(() => of(TRACKED));
@@ -278,7 +278,7 @@ describe('TrackedEventsPage', () => {
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 'material-episode-i', 'Completed');
+    expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 21, 'Completed');
   });
 
   it('removes an item when Remove From Library is selected in the status select', async () => {
@@ -287,7 +287,7 @@ describe('TrackedEventsPage', () => {
     select.value = 'remove';
     select.dispatchEvent(new Event('change'));
 
-    expect(mocks.libraryMock.removeTracked).toHaveBeenCalledWith('user-padme', 'material-episode-i');
+    expect(mocks.libraryMock.removeTracked).toHaveBeenCalledWith('user-padme', 21);
   });
 
   it('shows grouped units for unit-based items instead of a flat status select', async () => {
@@ -309,9 +309,9 @@ describe('TrackedEventsPage', () => {
 
     expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith(
       'user-padme',
-      'material-episode-ii',
+      22,
       'Completed',
-      'season-1',
+      101,
     );
   });
 
@@ -325,8 +325,8 @@ describe('TrackedEventsPage', () => {
 
     expect(mocks.libraryMock.clearUnitProgress).toHaveBeenCalledWith(
       'user-padme',
-      'material-episode-ii',
-      'season-1',
+      22,
+      101,
     );
     expect(mocks.libraryMock.removeTracked).not.toHaveBeenCalled();
   });

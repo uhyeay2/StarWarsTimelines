@@ -1,6 +1,6 @@
 export interface ApiSpecies {
-  id: string;
+  id: number;
   name: string;
-  homePlanetId: string | null;
+  homePlanetId: number | null;
   homePlanetName: string | null;
 }

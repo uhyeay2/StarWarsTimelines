@@ -6,7 +6,6 @@ describe('UnitEditForm', () => {
   function create(): ComponentFixture<UnitEditForm> {
     const fixture = TestBed.createComponent(UnitEditForm);
     fixture.componentRef.setInput('unitType', 'Episode');
-    fixture.componentRef.setInput('groupNumber', 1);
     fixture.componentRef.setInput('number', 4);
     fixture.componentRef.setInput('title', 'A New Hope');
     return fixture;
@@ -25,7 +24,8 @@ describe('UnitEditForm', () => {
 
     const el = fixture.nativeElement;
     expect((el.querySelector('[name="unitEditType"]') as HTMLSelectElement).value).toBe('Episode');
-    expect((el.querySelector('[name="unitEditGroup"]') as HTMLInputElement).value).toBe('1');
+    const parentSelect = el.querySelector('[name="unitEditParent"]') as HTMLSelectElement;
+    expect(parentSelect.selectedOptions[0]?.textContent?.trim()).toBe('Top level');
     expect((el.querySelector('[name="unitEditNumber"]') as HTMLInputElement).value).toBe('4');
     expect((el.querySelector('[name="unitEditTitle"]') as HTMLInputElement).value).toBe(
       'A New Hope',

@@ -175,7 +175,7 @@ export class TimelineEventsService {
    * @returns An observable that completes when the cache is updated.
    * @throws {TimelineError} When the reload fails with a non-transient error.
    */
-  reloadEvent(eventId: string): Observable<void> {
+  reloadEvent(eventId: number): Observable<void> {
     return this.http.get<TimelineEventDto>(`${BASE}/${eventId}`).pipe(
       retry({
         count: MAX_RETRIES,
@@ -281,7 +281,7 @@ export class TimelineEventsService {
    *
    * @param eventId  The ID of the event to remove.
    */
-  private removeEventFromCache(eventId: string): void {
+  private removeEventFromCache(eventId: number): void {
     const current = this.eventsCache.data();
     if (current === null) {
       return;

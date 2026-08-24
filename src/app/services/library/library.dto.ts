@@ -27,13 +27,12 @@ import { Medium } from '../../models/medium';
  * tracks content inside it, and untracked branches are omitted entirely.
  */
 export interface LibraryUnitDto {
-  id: string;
+  id: number;
   unitType: number;
-  groupNumber: number | null;
   number: number;
   title: string | null;
   status: number | null;
-  parentUnitId?: string | null;
+  parentUnitId?: number | null;
   units?: readonly LibraryUnitDto[];
 }
 
@@ -49,7 +48,7 @@ export interface LibraryUnitDto {
  * paths (only tracked containers appear, each carrying its children nested).
  */
 export interface LibraryItemDto {
-  sourceMaterialId: string;
+  sourceMaterialId: number;
   title: string;
   medium: number;
   canonType: number;
@@ -65,7 +64,7 @@ export interface LibraryItemDto {
  * to the user's library.
  */
 export interface AddMaterialRequest {
-  sourceMaterialId: string;
+  sourceMaterialId: number;
   status?: number;
 }
 
@@ -75,7 +74,7 @@ export interface AddMaterialRequest {
  */
 export interface UpdateStatusRequest {
   status: number;
-  unitId?: string;
+  unitId?: number;
 }
 
 /**
@@ -102,7 +101,7 @@ export interface UpdateUnitProgressRequest {
  * library ordering.
  */
 export interface ReorderRequest {
-  orderedSourceMaterialIds: string[];
+  orderedSourceMaterialIds: number[];
 }
 
 // ─── Catalog material (add-tracked helper) ──────────────────────────────────
@@ -114,7 +113,7 @@ export interface ReorderRequest {
  * the `id` is sent to the server.
  */
 export interface CatalogMaterial {
-  id: string;
+  id: number;
   title: string;
   medium: Medium;
 }

@@ -2,40 +2,66 @@ import { Medium } from './medium';
 import { UnitType } from './unit-type';
 
 export interface SourceMaterialUnit {
-  id?: string;
+  id?: number;
   unitType: UnitType;
-  groupNumber?: number;
   number: number;
-  title?: string;
+  /** Published unit title, or `null`/`undefined` when untitled. */
+  title?: string | null;
+  /** The container unit (season/volume/book/collection) this unit nests inside. */
+  parentUnitId?: number | null;
 }
 
 export interface SourceMaterial {
   title: string;
   medium: Medium;
-  sourceId?: string;
+  sourceId?: number;
   unit?: SourceMaterialUnit;
 }
 
-export function sourceUnitLabel(unit: SourceMaterialUnit): string {
+/**
+ * Returns true for container unit types that act as group headers.
+ */
+export function isContainerUnitType(unitType: UnitType): boolean {
+  return unitType === 'Season' || unitType === 'Volume' || unitType === 'Book';
+}
+
+/**
+ * Builds a label for the container a unit nests inside, e.g.
+ * `"Season 2"` for an episode whose parent season carries number 2.
+ *
+ * @param parent  The resolved container unit, or `undefined` when unknown.
+ * @returns The group prefix such as `Season 2`, or `undefined`.
+ */
+function containerPrefix(parent: SourceMaterialUnit | undefined): string | undefined {
+  if (parent === undefined) {
+    return undefined;
+  }
+  switch (parent.unitType) {
+    case 'Season':
+      return `Season ${parent.number}`;
+    case 'Volume':
+      return `Volume ${parent.number}`;
+    case 'Book':
+      return `Book ${parent.number}`;
+    case 'Collection':
+      return `Collection ${parent.number}`;
+    default:
+      return `${parent.unitType} ${parent.number}`;
+  }
+}
+
+export function sourceUnitLabel(
+  unit: SourceMaterialUnit,
+  parent?: SourceMaterialUnit,
+): string {
+  const prefix = containerPrefix(parent);
   let base: string;
   switch (unit.unitType) {
     case 'Episode':
-      base =
-        unit.groupNumber === undefined
-          ? `Episode ${unit.number}`
-          : `Season ${unit.groupNumber} · Episode ${unit.number}`;
+      base = prefix === undefined ? `Episode ${unit.number}` : `${prefix} · Episode ${unit.number}`;
       break;
     case 'Issue':
-      base =
-        unit.groupNumber === undefined
-          ? `Issue ${unit.number}`
-          : `Volume ${unit.groupNumber} · Issue ${unit.number}`;
-      break;
-    case 'Volume':
-      base = `Volume ${unit.number}`;
-      break;
-    case 'Season':
-      base = `Season ${unit.number}`;
+      base = prefix === undefined ? `Issue ${unit.number}` : `${prefix} · Issue ${unit.number}`;
       break;
     case 'Chapter':
       base = `Chapter ${unit.number}`;
@@ -43,19 +69,14 @@ export function sourceUnitLabel(unit: SourceMaterialUnit): string {
     case 'Level':
       base = `Level ${unit.number}`;
       break;
-    case 'Collection':
-      base = `Collection ${unit.number}`;
-      break;
-    case 'Book':
-      base =
-        unit.groupNumber === undefined
-          ? `Book ${unit.number}`
-          : `Collection ${unit.groupNumber} · Book ${unit.number}`;
+    default:
+      base = `${unit.unitType} ${unit.number}`;
       break;
   }
   return unit.title ? `${base}: ${unit.title}` : base;
 }
 
+/** The container kind ("Season" / "Volume") a child unit type groups under. */
 export function sourceGroupName(unitType: UnitType): string | undefined {
   switch (unitType) {
     case 'Episode':
@@ -69,14 +90,16 @@ export function sourceGroupName(unitType: UnitType): string | undefined {
   }
 }
 
-export function sourceUnitDetail(unit: SourceMaterialUnit | undefined): string | undefined {
-  if (unit === undefined) {
-    return undefined;
-  }
+export function sourceUnitDetail(
+  unit: SourceMaterialUnit,
+  parent?: SourceMaterialUnit,
+): string | undefined {
+  const prefix = containerPrefix(parent);
   switch (unit.unitType) {
     case 'Episode':
     case 'Issue': {
-      const base = unit.unitType === 'Episode' ? `Episode ${unit.number}` : `Issue ${unit.number}`;
+      const noun = unit.unitType === 'Episode' ? 'Episode' : 'Issue';
+      const base = prefix === undefined ? `${noun} ${unit.number}` : `${prefix} · ${noun} ${unit.number}`;
       return unit.title ? `${base}: ${unit.title}` : base;
     }
     case 'Chapter':

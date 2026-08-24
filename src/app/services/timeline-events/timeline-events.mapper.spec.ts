@@ -10,13 +10,13 @@ import {
   mapTimelineEvent,
 } from './timeline-events.mapper';
 
-function named(id: string, name: string): { id: string; name: string } {
+function named(id: number, name: string): { id: number; name: string } {
   return { id, name };
 }
 
 function eventDto(partial: Partial<TimelineEventDto> = {}): TimelineEventDto {
   return {
-    id: 'ev-1',
+    id: 1,
     title: 'Battle of Yavin',
     description: 'The Death Star is destroyed.',
     yearStart: 0,
@@ -24,7 +24,7 @@ function eventDto(partial: Partial<TimelineEventDto> = {}): TimelineEventDto {
     sequence: 1,
     sourceMaterials: [
       {
-        sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+        sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 },
         sourceMaterialUnit: null,
       },
     ],
@@ -48,44 +48,44 @@ describe('canonFromApiCode', () => {
 
 describe('type guards', () => {
   it('validates named entities strictly', () => {
-    expect(isValidNamedEntityDto(named('x', 'Luke'))).toBe(true);
+    expect(isValidNamedEntityDto(named(7, 'Luke'))).toBe(true);
     expect(isValidNamedEntityDto(null)).toBe(false);
-    expect(isValidNamedEntityDto({ id: '', name: 'Luke' })).toBe(false);
-    expect(isValidNamedEntityDto({ id: 'x', name: '' })).toBe(false);
+    expect(isValidNamedEntityDto({ id: 0, name: 'Luke' })).toBe(true);
+    expect(isValidNamedEntityDto({ id: 7, name: '' })).toBe(false);
   });
 
   it('validates source material DTOs', () => {
     expect(
-      isValidSourceMaterialDto({ id: 'm', title: 'T', medium: 0, canonType: 0 }),
+      isValidSourceMaterialDto({ id: 10, title: 'T', medium: 0, canonType: 0 }),
     ).toBe(true);
     expect(isValidSourceMaterialDto(null)).toBe(false);
-    expect(isValidSourceMaterialDto({ id: 'm', title: 'T' })).toBe(false);
-    expect(isValidSourceMaterialDto({ id: 'm', title: 'T', medium: 'Movie', canonType: 0 })).toBe(
+    expect(isValidSourceMaterialDto({ id: 10, title: 'T' })).toBe(false);
+    expect(isValidSourceMaterialDto({ id: 10, title: 'T', medium: 'Movie', canonType: 0 })).toBe(
       false,
     );
   });
 
   it('validates source material unit DTOs', () => {
-    expect(isValidSourceMaterialUnitDto({ id: 'u', unitType: 0, number: 1 })).toBe(true);
+    expect(isValidSourceMaterialUnitDto({ id: 50, unitType: 0, number: 1 })).toBe(true);
     expect(isValidSourceMaterialUnitDto(null)).toBe(false);
-    expect(isValidSourceMaterialUnitDto({ id: '', unitType: 0, number: 1 })).toBe(false);
+    expect(isValidSourceMaterialUnitDto({ id: null, unitType: 0, number: 1 })).toBe(false);
   });
 
   it('validates source material links and their optional units', () => {
-    const material = { id: 'm', title: 'T', medium: 0, canonType: 0 };
+    const material = { id: 10, title: 'T', medium: 0, canonType: 0 };
     expect(
       isValidSourceMaterialLinkDto({ sourceMaterial: material, sourceMaterialUnit: null }),
     ).toBe(true);
     expect(
       isValidSourceMaterialLinkDto({
         sourceMaterial: material,
-        sourceMaterialUnit: { id: 'u', unitType: 0, groupNumber: null, number: 1, title: null },
+        sourceMaterialUnit: { id: 51, unitType: 0, parentUnitId: null, number: 1, title: null },
       }),
     ).toBe(true);
     expect(
       isValidSourceMaterialLinkDto({
         sourceMaterial: material,
-        sourceMaterialUnit: { id: '', unitType: 0, number: 1 },
+        sourceMaterialUnit: { id: null, unitType: 0, number: 1 },
       }),
     ).toBe(false);
     expect(isValidSourceMaterialLinkDto({ sourceMaterial: null, sourceMaterialUnit: null })).toBe(
@@ -107,11 +107,11 @@ describe('type guards', () => {
 describe('mapEventSource', () => {
   it('maps codes and nested material/unit into the domain shape', () => {
     const source = mapEventSource({
-      sourceMaterial: { id: 'mat-9', title: 'Heir to the Empire', medium: 1, canonType: 1 },
+      sourceMaterial: { id: 90, title: 'Heir to the Empire', medium: 1, canonType: 1 },
       sourceMaterialUnit: {
-        id: 'u5',
+        id: 55,
         unitType: 4,
-        groupNumber: 2,
+        parentUnitId: 71,
         number: 7,
         title: 'Crazy Like a Wookiee',
       },
@@ -120,11 +120,11 @@ describe('mapEventSource', () => {
     expect(source.canon).toEqual(['Legends']);
     expect(source.title).toBe('Heir to the Empire');
     expect(source.medium).toBe('Book');
-    expect(source.sourceId).toBe('mat-9');
+    expect(source.sourceId).toBe(90);
     expect(source.unit).toEqual({
-      id: 'u5',
+      id: 55,
       unitType: 'Volume',
-      groupNumber: 2,
+      parentUnitId: 71,
       number: 7,
       title: 'Crazy Like a Wookiee',
     });
@@ -132,7 +132,7 @@ describe('mapEventSource', () => {
 
   it('omits the unit when the link has none', () => {
     const source = mapEventSource({
-      sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+      sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 },
       sourceMaterialUnit: null,
     });
 
@@ -152,7 +152,7 @@ describe('mapTimelineEvent', () => {
     expect(mapped.sources[0]).toMatchObject({
       title: 'A New Hope',
       medium: 'Movie',
-      sourceId: 'mat-1',
+      sourceId: 10,
       canon: ['Canon'],
     });
     expect(mapped.sources[0].unit).toBeUndefined();
@@ -163,18 +163,18 @@ describe('mapTimelineEvent', () => {
       eventDto({
         sourceMaterials: [
           {
-            sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 },
+            sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 },
             sourceMaterialUnit: null,
           },
           {
-            sourceMaterial: { id: 'mat-2', title: 'Heir to the Empire', medium: 1, canonType: 1 },
+            sourceMaterial: { id: 20, title: 'Heir to the Empire', medium: 1, canonType: 1 },
             sourceMaterialUnit: null,
           },
         ],
       }),
     );
 
-    expect(mapped.sources.map((source) => source.sourceId)).toEqual(['mat-1', 'mat-2']);
+    expect(mapped.sources.map((source) => source.sourceId)).toEqual([10, 20]);
     expect(mapped.canon).toEqual(['Canon', 'Legends']);
   });
 
@@ -183,17 +183,17 @@ describe('mapTimelineEvent', () => {
       eventDto({
         sourceMaterials: [
           {
-            sourceMaterial: { id: 'mat-3', title: 'Darth Vader (2017)', medium: 2, canonType: 1 },
+            sourceMaterial: { id: 30, title: 'Darth Vader (2017)', medium: 2, canonType: 1 },
             sourceMaterialUnit: {
-              id: 'u1',
+              id: 61,
               unitType: 3,
-              groupNumber: 1,
+              parentUnitId: 81,
               number: 1,
               title: 'Force Storm, Part 1',
             },
           },
           {
-            sourceMaterial: { id: 'mat-4', title: 'A New Hope', medium: 0, canonType: 0 },
+            sourceMaterial: { id: 40, title: 'A New Hope', medium: 0, canonType: 0 },
             sourceMaterialUnit: null,
           },
         ],
@@ -208,22 +208,22 @@ describe('mapTimelineEvent', () => {
     const mapped = mapTimelineEvent({
       ...eventDto(),
       sourceMaterials: [
-        { sourceMaterial: { id: 'mat-1', title: 'A New Hope', medium: 0, canonType: 0 }, sourceMaterialUnit: null },
+        { sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 }, sourceMaterialUnit: null },
         { broken: true },
         null,
       ],
     } as unknown as TimelineEventDto);
 
     expect(mapped.sources).toHaveLength(1);
-    expect(mapped.sources[0].sourceId).toBe('mat-1');
+    expect(mapped.sources[0].sourceId).toBe(10);
   });
 
   it('discards malformed entities while mapping names', () => {
     const mapped = mapTimelineEvent({
       ...eventDto(),
-      characters: [named('c1', 'Luke'), null],
-      locations: [named('l1', 'Yavin 4'), { broken: true }],
-      vehicles: [named('v1', 'X-wing')],
+      characters: [named(7, 'Luke'), null],
+      locations: [named(8, 'Yavin 4'), { broken: true }],
+      vehicles: [named(9, 'X-wing')],
     } as TimelineEventDto);
 
     expect(mapped.characters).toEqual(['Luke']);

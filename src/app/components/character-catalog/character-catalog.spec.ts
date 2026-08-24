@@ -10,15 +10,15 @@ const LOCATIONS_URL = '/api/locations';
 const SPECIES_URL = '/api/species';
 
 type BioFields = {
-  id: string;
+  id: number;
   name: string;
-  planetBornOnId?: string | null;
+  planetBornOnId?: number | null;
   planetBornOnName?: string | null;
   yearOfBirthEarliest?: number | null;
   yearOfBirthLatest?: number | null;
   yearOfDeathEarliest?: number | null;
   yearOfDeathLatest?: number | null;
-  speciesId?: string | null;
+  speciesId?: number | null;
   speciesName?: string | null;
 };
 
@@ -29,13 +29,13 @@ function flushInitialFetch(
 ): void {
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush(characters);
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([
-    { id: 'loc-1', name: 'Tatooine' },
-    { id: 'loc-2', name: 'Coruscant' },
-    { id: 'loc-3', name: 'Naboo' },
+    { id: 11, name: 'Tatooine' },
+    { id: 12, name: 'Coruscant' },
+    { id: 13, name: 'Naboo' },
   ]);
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush([
-    { id: 'sp-1', name: 'Human', homePlanetId: null, homePlanetName: null },
-    { id: 'sp-2', name: 'Wookiee', homePlanetId: null, homePlanetName: null },
+    { id: 3, name: 'Human', homePlanetId: null, homePlanetName: null },
+    { id: 4, name: 'Wookiee', homePlanetId: null, homePlanetName: null },
   ]);
 }
 
@@ -103,9 +103,9 @@ describe('CharacterCatalog', () => {
       yearOfDeathLatest: null,
       speciesId: null,
     });
-    post.flush({ id: 'char-1', name: 'BD-1' });
+    post.flush({ id: 7, name: 'BD-1' });
 
-    loadCharacters([{ id: 'char-1', name: 'BD-1' }]);
+    loadCharacters([{ id: 7, name: 'BD-1' }]);
 
     expect(component.newName()).toBe('');
     expect(fixture.nativeElement.textContent).toContain('BD-1');
@@ -113,8 +113,8 @@ describe('CharacterCatalog', () => {
 
   it('creates a character with a full biography', () => {
     component.newName.set('Grogu');
-    component.newSpeciesId.set('sp-2');
-    component.newPlanetBornOnId.set('loc-1');
+    component.newSpeciesId.set(4);
+    component.newPlanetBornOnId.set(11);
     component.newBirthFrom.set(-41);
     component.newBirthTo.set(-41);
     component.newDeathFrom.set(12);
@@ -125,18 +125,18 @@ describe('CharacterCatalog', () => {
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(CHARACTERS_URL));
     expect(post.request.body).toEqual({
       name: 'Grogu',
-      planetBornOnId: 'loc-1',
+      planetBornOnId: 11,
       yearOfBirthEarliest: -41,
       yearOfBirthLatest: -41,
       yearOfDeathEarliest: 12,
       yearOfDeathLatest: 15,
-      speciesId: 'sp-2',
+      speciesId: 4,
     });
-    post.flush({ id: 'char-2', name: 'Grogu' });
+    post.flush({ id: 8, name: 'Grogu' });
 
     loadCharacters([
       {
-        id: 'char-2',
+        id: 8,
         name: 'Grogu',
         planetBornOnName: 'Tatooine',
         yearOfBirthEarliest: -41,
@@ -148,7 +148,7 @@ describe('CharacterCatalog', () => {
     ]);
 
     expect(component.items()[0]).toEqual({
-      id: 'char-2',
+      id: 8,
       name: 'Grogu',
       planetBornOnName: 'Tatooine',
       yearOfBirthEarliest: -41,
@@ -196,52 +196,52 @@ describe('CharacterCatalog', () => {
   it('edits a character biography and reloads the list', () => {
     loadCharacters([
       {
-        id: 'char-3',
+        id: 9,
         name: 'Palpatine',
-        planetBornOnId: 'loc-3',
+        planetBornOnId: 13,
         planetBornOnName: 'Naboo',
         yearOfBirthEarliest: -88,
         yearOfBirthLatest: -84,
         yearOfDeathEarliest: 4,
         yearOfDeathLatest: 35,
-        speciesId: 'sp-1',
+        speciesId: 3,
         speciesName: 'Human',
       },
     ]);
     const original = {
-      id: 'char-3',
+      id: 9,
       name: 'Palpatine',
-      planetBornOnId: 'loc-3',
+      planetBornOnId: 13,
       planetBornOnName: 'Naboo',
       yearOfBirthEarliest: -88,
       yearOfBirthLatest: -84,
       yearOfDeathEarliest: 4,
       yearOfDeathLatest: 35,
-      speciesId: 'sp-1',
+      speciesId: 3,
       speciesName: 'Human',
     };
 
     component.beginEdit(original);
     component.editName.set('Emperor Palpatine');
-    component.editPlanetBornOnId.set('loc-2');
+    component.editPlanetBornOnId.set(12);
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${CHARACTERS_URL}/char-3`));
+    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${CHARACTERS_URL}/9`));
     expect(put.request.body).toEqual({
       name: 'Emperor Palpatine',
-      planetBornOnId: 'loc-2',
+      planetBornOnId: 12,
       yearOfBirthEarliest: -88,
       yearOfBirthLatest: -84,
       yearOfDeathEarliest: 4,
       yearOfDeathLatest: 35,
-      speciesId: 'sp-1',
+      speciesId: 3,
     });
-    put.flush({ id: 'char-3', name: 'Emperor Palpatine' });
+    put.flush({ id: 9, name: 'Emperor Palpatine' });
 
     loadCharacters([
       {
-        id: 'char-3',
+        id: 9,
         name: 'Emperor Palpatine',
         planetBornOnName: 'Coruscant',
         yearOfBirthEarliest: -88,
@@ -260,25 +260,25 @@ describe('CharacterCatalog', () => {
   it('offers the unknown option in dropdowns when editing a character that has values, so values can be cleared', () => {
     loadCharacters([
       {
-        id: 'char-3',
+        id: 9,
         name: 'Luke',
-        planetBornOnId: 'loc-1',
+        planetBornOnId: 11,
         planetBornOnName: 'Tatooine',
         yearOfBirthEarliest: -19,
         yearOfBirthLatest: -19,
-        speciesId: 'sp-1',
+        speciesId: 3,
         speciesName: 'Human',
       },
     ]);
 
     component.beginEdit({
-      id: 'char-3',
+      id: 9,
       name: 'Luke',
-      planetBornOnId: 'loc-1',
+      planetBornOnId: 11,
       planetBornOnName: 'Tatooine',
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
-      speciesId: 'sp-1',
+      speciesId: 3,
       speciesName: 'Human',
     });
     fixture.detectChanges();
@@ -289,70 +289,74 @@ describe('CharacterCatalog', () => {
     const planetSelect = fixture.nativeElement.querySelector(
       'select[name="editPlanetBornOnId"]',
     ) as HTMLSelectElement;
-    expect(Array.from(speciesSelect.options).some((o) => o.value === '')).toBe(true);
-    expect(Array.from(planetSelect.options).some((o) => o.value === '')).toBe(true);
+    expect(
+      Array.from(speciesSelect.options).some((o) => o.textContent?.trim() === 'Unknown'),
+    ).toBe(true);
+    expect(
+      Array.from(planetSelect.options).some((o) => o.textContent?.trim() === 'Unknown'),
+    ).toBe(true);
   });
 
   it('prefills the edit form with the stored biography and sends the full payload when saving', () => {
     loadCharacters([
       {
-        id: 'char-3',
+        id: 9,
         name: 'Luke',
-        planetBornOnId: 'loc-1',
+        planetBornOnId: 11,
         planetBornOnName: 'Tatooine',
         yearOfBirthEarliest: -19,
         yearOfBirthLatest: -19,
-        speciesId: 'sp-1',
+        speciesId: 3,
         speciesName: 'Human',
       },
     ]);
 
     component.beginEdit({
-      id: 'char-3',
+      id: 9,
       name: 'Luke',
-      planetBornOnId: 'loc-1',
+      planetBornOnId: 11,
       planetBornOnName: 'Tatooine',
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
-      speciesId: 'sp-1',
+      speciesId: 3,
       speciesName: 'Human',
     });
     fixture.detectChanges();
 
     component.saveEdit();
 
-    const http = httpMock.expectOne((req) => req.method === 'PUT' && req.url.includes('/characters/char-3'));
+    const http = httpMock.expectOne((req) => req.method === 'PUT' && req.url.includes('/characters/9'));
     expect(http.request.body).toEqual({
       name: 'Luke',
-      planetBornOnId: 'loc-1',
+      planetBornOnId: 11,
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
       yearOfDeathEarliest: null,
       yearOfDeathLatest: null,
-      speciesId: 'sp-1',
+      speciesId: 3,
     });
-    http.flush({ id: 'char-3', name: 'Luke' });
+    http.flush({ id: 9, name: 'Luke' });
     // The auto-refetch triggered by the mutation must also be flushed.
     httpMock
       .expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL))
       .flush([
         {
-          id: 'char-3',
+          id: 9,
           name: 'Luke',
-          planetBornOnId: 'loc-1',
+          planetBornOnId: 11,
           planetBornOnName: 'Tatooine',
           yearOfBirthEarliest: -19,
           yearOfBirthLatest: -19,
-          speciesId: 'sp-1',
+          speciesId: 3,
           speciesName: 'Human',
         },
       ]);
   });
 
   it('requires a name when saving an edit', () => {
-    loadCharacters([{ id: 'char-1', name: 'Old' }]);
+    loadCharacters([{ id: 7, name: 'Old' }]);
 
-    component.beginEdit({ id: 'char-1', name: 'Old' });
+    component.beginEdit({ id: 7, name: 'Old' });
     component.editName.set('   ');
     fixture.detectChanges();
     component.saveEdit();
@@ -362,15 +366,15 @@ describe('CharacterCatalog', () => {
   });
 
   it('deletes a character after inline confirmation', () => {
-    loadCharacters([{ id: 'char-1', name: 'Delete me' }]);
+    loadCharacters([{ id: 7, name: 'Delete me' }]);
 
-    component.requestDelete({ id: 'char-1', name: 'Delete me' });
+    component.requestDelete({ id: 7, name: 'Delete me' });
     fixture.detectChanges();
-    expect(component.confirmDeleteId()).toBe('char-1');
+    expect(component.confirmDeleteId()).toBe(7);
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${CHARACTERS_URL}/char-1`));
+    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${CHARACTERS_URL}/7`));
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadCharacters([]);
@@ -380,9 +384,9 @@ describe('CharacterCatalog', () => {
   });
 
   it('surfaces the conflict message when deleting a linked character', () => {
-    loadCharacters([{ id: 'char-1', name: 'Linked' }]);
+    loadCharacters([{ id: 7, name: 'Linked' }]);
 
-    component.requestDelete({ id: 'char-1', name: 'Linked' });
+    component.requestDelete({ id: 7, name: 'Linked' });
     component.confirmDelete();
 
     httpMock
@@ -396,34 +400,34 @@ describe('CharacterCatalog', () => {
     expect(component.actionError()).toBe(
       'Character is linked to one or more timeline events and cannot be deleted.',
     );
-    expect(component.confirmDeleteId()).toBe('char-1');
+    expect(component.confirmDeleteId()).toBe(7);
   });
 
   it('filters items by search term', () => {
     loadCharacters([
-      { id: 'char-1', name: 'Luke Skywalker' },
-      { id: 'char-2', name: 'Leia Organa' },
-      { id: 'char-3', name: 'Yoda' },
+      { id: 7, name: 'Luke Skywalker' },
+      { id: 8, name: 'Leia Organa' },
+      { id: 9, name: 'Yoda' },
     ]);
 
     component.searchTerm.set('leia');
     fixture.detectChanges();
 
-    expect(component.filteredItems()).toEqual([{ id: 'char-2', name: 'Leia Organa' }]);
+    expect(component.filteredItems()).toEqual([{ id: 8, name: 'Leia Organa' }]);
     expect(fixture.nativeElement.textContent).not.toContain('Yoda');
   });
 
   it('shows no details line for characters without biographical data', () => {
-    loadCharacters([{ id: 'char-9', name: 'BD-1' }]);
+    loadCharacters([{ id: 77, name: 'BD-1' }]);
 
-    expect(component.detailLine({ id: 'char-9', name: 'BD-1' })).toBeNull();
+    expect(component.detailLine({ id: 77, name: 'BD-1' })).toBeNull();
     expect(fixture.nativeElement.querySelector('.character-meta')).toBeNull();
   });
 
   it('hides admin actions for non-admin users', () => {
     fixture.componentRef.setInput('isAdmin', false);
     fixture.detectChanges();
-    loadCharacters([{ id: 'char-1', name: 'Human' }]);
+    loadCharacters([{ id: 7, name: 'Human' }]);
 
     expect(fixture.nativeElement.querySelector('.character-actions')).toBeNull();
     expect(fixture.nativeElement.querySelector('.character-add')).toBeNull();

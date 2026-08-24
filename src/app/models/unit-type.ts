@@ -26,3 +26,19 @@ export function unitTypeFromApiCode(code: number): UnitType {
 export function unitTypeToApiCode(unitType: UnitType): number {
   return UNIT_TYPES.indexOf(unitType);
 }
+
+/**
+ * Returns whether a unit type acts as a container for other units
+ * (seasons, volumes, books) or a top-level collection grouping them.
+ *
+ * @param unitType  The unit type to check.
+ * @returns `true` for Season, Volume, Book, and Collection.
+ */
+export function isContainerOrCollectionUnit(unitType: UnitType): boolean {
+  return (
+    unitType === 'Season' ||
+    unitType === 'Volume' ||
+    unitType === 'Book' ||
+    unitType === 'Collection'
+  );
+}

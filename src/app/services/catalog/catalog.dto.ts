@@ -15,7 +15,7 @@
  * enums.
  */
 export interface SourceMaterialDto {
-  id: string;
+  id: number;
   title: string;
   medium: number;
   canonType: number;
@@ -29,11 +29,10 @@ export interface SourceMaterialDto {
  * or is `null` for top-level units.
  */
 export interface SourceMaterialUnitDto {
-  id: string;
-  sourceMaterialId: string;
+  id: number;
+  sourceMaterialId: number;
   unitType: number;
-  groupNumber: number | null;
   number: number;
   title: string | null;
-  parentUnitId: string | null;
+  parentUnitId: number | null;
 }

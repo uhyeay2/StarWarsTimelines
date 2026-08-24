@@ -13,11 +13,11 @@ import { TimelineError, TimelineErrorCode } from '../../models/timeline/timeline
 import { TimelineEventsService } from './timeline-events.service';
 
 const EVENTS_URL = `${environment.apiBaseUrl}/api/timeline-events`;
-const EPISODE_ONE = '00000000-0000-0000-0000-000000000001';
+const EPISODE_ONE = 100;
 
 const EVENT_DTO = [
   {
-    id: 'the-invasion-of-naboo',
+    id: 1,
     title: 'The Invasion of Naboo',
     description: 'The Trade Federation blockades and invades Naboo.',
     yearStart: -32,
@@ -32,17 +32,17 @@ const EVENT_DTO = [
           canonType: 2,
         },
         sourceMaterialUnit: {
-          id: 'unit-1',
+          id: 201,
           unitType: 0,
-          groupNumber: 1,
+          parentUnitId: null,
           number: 1,
           title: 'The Phantom Menace',
         },
       },
     ],
-    characters: [{ id: 'c-1', name: 'Darth Maul' }, { id: 'c-2', name: 'Qui-Gon Jinn' }],
-    locations: [{ id: 'l-1', name: 'Naboo' }],
-    vehicles: [{ id: 'v-1', name: 'Sith Infiltrator' }],
+    characters: [{ id: 7, name: 'Darth Maul' }, { id: 8, name: 'Qui-Gon Jinn' }],
+    locations: [{ id: 12, name: 'Naboo' }],
+    vehicles: [{ id: 15, name: 'Sith Infiltrator' }],
   },
 ];
 
@@ -74,7 +74,7 @@ describe('TimelineEventsService', () => {
       const events = await promise;
       expect(events).toEqual([
         {
-          id: 'the-invasion-of-naboo',
+          id: 1,
           canon: ['Canon', 'Legends'],
           title: 'The Invasion of Naboo',
           description: 'The Trade Federation blockades and invades Naboo.',
@@ -85,9 +85,8 @@ describe('TimelineEventsService', () => {
               sourceId: EPISODE_ONE,
               canon: ['Canon', 'Legends'],
               unit: {
-                id: 'unit-1',
+                id: 201,
                 unitType: 'Episode',
-                groupNumber: 1,
                 number: 1,
                 title: 'The Phantom Menace',
               },
@@ -112,7 +111,7 @@ describe('TimelineEventsService', () => {
             ...EVENT_DTO[0].sourceMaterials,
             {
               sourceMaterial: {
-                id: '00000000-0000-0000-0000-000000000002',
+                id: 110,
                 title: 'Heir to the Empire',
                 medium: 1,
                 canonType: 1,
@@ -153,7 +152,7 @@ describe('TimelineEventsService', () => {
       await promise;
 
       expect(service.events()).toEqual([
-        expect.objectContaining({ id: 'the-invasion-of-naboo' }),
+        expect.objectContaining({ id: 1 }),
       ]);
       expect(service.loading()).toBe(false);
       expect(service.error()).toBeNull();
@@ -170,7 +169,7 @@ describe('TimelineEventsService', () => {
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
       expect(service.events()).toEqual([
-        expect.objectContaining({ id: 'the-invasion-of-naboo' }),
+        expect.objectContaining({ id: 1 }),
       ]);
     });
 
@@ -208,7 +207,7 @@ describe('TimelineEventsService', () => {
 
       const events = await promise;
       expect(events).toHaveLength(1);
-      expect(events[0].id).toBe('the-invasion-of-naboo');
+      expect(events[0].id).toBe(1);
     });
 
     it('returns empty array when all DTOs are malformed', async () => {
@@ -224,8 +223,8 @@ describe('TimelineEventsService', () => {
       httpMock.expectOne(EVENTS_URL).flush([
         {
           ...EVENT_DTO[0],
-          characters: [{ id: 'c-1', name: '' }],
-          locations: [{ id: 'l-1', name: 'Naboo' }],
+          characters: [{ id: 7, name: '' }],
+          locations: [{ id: 12, name: 'Naboo' }],
         },
       ]);
 
@@ -321,7 +320,7 @@ describe('TimelineEventsService', () => {
       const retryReq = httpMock.expectOne(EVENTS_URL);
       retryReq.flush(EVENT_DTO);
 
-      expect(result).toEqual([expect.objectContaining({ id: 'the-invasion-of-naboo' })]);
+      expect(result).toEqual([expect.objectContaining({ id: 1 })]);
 
       vi.useRealTimers();
     });
@@ -342,7 +341,7 @@ describe('TimelineEventsService', () => {
       const retryReq = httpMock.expectOne(EVENTS_URL);
       retryReq.flush(EVENT_DTO);
 
-      expect(result).toEqual([expect.objectContaining({ id: 'the-invasion-of-naboo' })]);
+      expect(result).toEqual([expect.objectContaining({ id: 1 })]);
 
       vi.useRealTimers();
     });
@@ -392,7 +391,7 @@ describe('TimelineEventsService', () => {
     it('clears the cache and re-fetches', () => {
       service.getEvents();
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
-      expect(service.events()).toEqual([expect.objectContaining({ id: 'the-invasion-of-naboo' })]);
+      expect(service.events()).toEqual([expect.objectContaining({ id: 1 })]);
 
       service.invalidate();
       expect(service.events()).toBeNull();
@@ -414,8 +413,8 @@ describe('TimelineEventsService', () => {
         title: 'Updated: The Invasion of Naboo',
       };
 
-      const promise = firstValueFrom(service.reloadEvent('the-invasion-of-naboo'));
-      const req = httpMock.expectOne(`${EVENTS_URL}/the-invasion-of-naboo`);
+      const promise = firstValueFrom(service.reloadEvent(1));
+      const req = httpMock.expectOne(`${EVENTS_URL}/1`);
       expect(req.request.method).toBe('GET');
       req.flush(updatedDto);
 
@@ -430,9 +429,9 @@ describe('TimelineEventsService', () => {
       service.getEvents();
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
-      const promise = firstValueFrom(service.reloadEvent('the-invasion-of-naboo'));
+      const promise = firstValueFrom(service.reloadEvent(1));
       httpMock
-        .expectOne(`${EVENTS_URL}/the-invasion-of-naboo`)
+        .expectOne(`${EVENTS_URL}/1`)
         .flush('Not Found', { status: 404, statusText: 'Not Found' });
 
       await expect(promise).rejects.toMatchObject({
@@ -446,9 +445,9 @@ describe('TimelineEventsService', () => {
       service.getEvents();
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
-      const promise = firstValueFrom(service.reloadEvent('the-invasion-of-naboo'));
+      const promise = firstValueFrom(service.reloadEvent(1));
       httpMock
-        .expectOne(`${EVENTS_URL}/the-invasion-of-naboo`)
+        .expectOne(`${EVENTS_URL}/1`)
         .flush({ id: '', title: null });
 
       await expect(promise).rejects.toMatchObject({
@@ -457,7 +456,7 @@ describe('TimelineEventsService', () => {
 
       // Original cache should remain unchanged
       expect(service.events()).toEqual([
-        expect.objectContaining({ id: 'the-invasion-of-naboo' }),
+        expect.objectContaining({ id: 1 }),
       ]);
     });
 
@@ -467,14 +466,14 @@ describe('TimelineEventsService', () => {
       service.getEvents();
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
-      const promise = firstValueFrom(service.reloadEvent('the-invasion-of-naboo'));
+      const promise = firstValueFrom(service.reloadEvent(1));
 
-      const firstReq = httpMock.expectOne(`${EVENTS_URL}/the-invasion-of-naboo`);
+      const firstReq = httpMock.expectOne(`${EVENTS_URL}/1`);
       firstReq.flush('Service Unavailable', { status: 503, statusText: 'Service Unavailable' });
 
       await vi.advanceTimersByTimeAsync(1000);
 
-      const retryReq = httpMock.expectOne(`${EVENTS_URL}/the-invasion-of-naboo`);
+      const retryReq = httpMock.expectOne(`${EVENTS_URL}/1`);
       retryReq.flush(EVENT_DTO[0]);
 
       await promise;
@@ -485,8 +484,8 @@ describe('TimelineEventsService', () => {
     });
 
     it('does nothing when cache is empty', async () => {
-      const promise = firstValueFrom(service.reloadEvent('the-invasion-of-naboo'));
-      httpMock.expectOne(`${EVENTS_URL}/the-invasion-of-naboo`).flush(EVENT_DTO[0]);
+      const promise = firstValueFrom(service.reloadEvent(1));
+      httpMock.expectOne(`${EVENTS_URL}/1`).flush(EVENT_DTO[0]);
 
       await promise;
 

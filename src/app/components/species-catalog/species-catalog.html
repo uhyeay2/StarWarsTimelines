@@ -15,9 +15,9 @@
         <label class="species-field species-field--planet">
           <span>Home planet</span>
           <select name="newHomePlanetId" [(ngModel)]="newHomePlanetId">
-            <option value="">No home planet</option>
+            <option [ngValue]="noPlanet">No home planet</option>
             @for (location of sortedLocations(); track location.id) {
-              <option [value]="location.id">{{ location.name }}</option>
+              <option [ngValue]="location.id">{{ location.name }}</option>
             }
           </select>
         </label>
@@ -46,9 +46,9 @@
             <form class="species-edit" (ngSubmit)="saveEdit()">
               <input name="editName" [(ngModel)]="editName" aria-label="Renamed species" />
               <select name="editHomePlanetId" [(ngModel)]="editHomePlanetId" aria-label="Home planet">
-                <option value="">No home planet</option>
+                <option [ngValue]="noPlanet">No home planet</option>
                 @for (location of sortedLocations(); track location.id) {
-                  <option [value]="location.id">{{ location.name }}</option>
+                  <option [ngValue]="location.id">{{ location.name }}</option>
                 }
               </select>
               <button class="btn btn-sm" type="submit" [disabled]="savingId() === item.id">

@@ -11,8 +11,8 @@ const LOCATIONS_URL = '/api/locations';
 /** Flushes the two initial GETs fired by ngOnInit. */
 function flushInitialFetch(
   httpMock: HttpTestingController,
-  species: { id: string; name: string; homePlanetId: string | null; homePlanetName: string | null }[] = [],
-  locations: { id: string; name: string }[] = [],
+  species: { id: number; name: string; homePlanetId: number | null; homePlanetName: string | null }[] = [],
+  locations: { id: number; name: string }[] = [],
 ): void {
   httpMock
     .expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL))
@@ -42,7 +42,7 @@ describe('SpeciesCatalog', () => {
     catalogService = TestBed.inject(CatalogService);
     fixture.detectChanges();
 
-    flushInitialFetch(httpMock, [], [{ id: 'loc-1', name: 'Tatooine' }, { id: 'loc-2', name: 'Coruscant' }]);
+    flushInitialFetch(httpMock, [], [{ id: 11, name: 'Tatooine' }, { id: 12, name: 'Coruscant' }]);
     fixture.detectChanges();
   });
 
@@ -51,7 +51,7 @@ describe('SpeciesCatalog', () => {
   });
 
   /** Triggers a species re-fetch and flushes it with the given items. */
-  function loadSpecies(items: { id: string; name: string; homePlanetId: string | null; homePlanetName: string | null }[]): void {
+  function loadSpecies(items: { id: number; name: string; homePlanetId: number | null; homePlanetName: string | null }[]): void {
     catalogService.invalidateEntity('species');
     httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush(items);
     fixture.detectChanges();
@@ -78,26 +78,26 @@ describe('SpeciesCatalog', () => {
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(SPECIES_URL));
     expect(post.request.body).toEqual({ name: 'Twi\u2019lek', homePlanetId: null });
-    post.flush({ id: 'sp-1', name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null });
+    post.flush({ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null });
 
-    loadSpecies([{ id: 'sp-1', name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
 
     expect(component.newName()).toBe('');
-    expect(component.items()).toEqual([{ id: 'sp-1', name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
+    expect(component.items()).toEqual([{ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
     expect(fixture.nativeElement.textContent).toContain('Twi\u2019lek');
   });
 
   it('creates a species with a home planet', () => {
     component.newName.set('Togruta');
-    component.newHomePlanetId.set('loc-1');
+    component.newHomePlanetId.set(11);
     fixture.detectChanges();
     component.add();
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(SPECIES_URL));
-    expect(post.request.body).toEqual({ name: 'Togruta', homePlanetId: 'loc-1' });
-    post.flush({ id: 'sp-2', name: 'Togruta', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' });
+    expect(post.request.body).toEqual({ name: 'Togruta', homePlanetId: 11 });
+    post.flush({ id: 4, name: 'Togruta', homePlanetId: 11, homePlanetName: 'Tatooine' });
 
-    loadSpecies([{ id: 'sp-2', name: 'Togruta', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' }]);
+    loadSpecies([{ id: 4, name: 'Togruta', homePlanetId: 11, homePlanetName: 'Tatooine' }]);
 
     expect(fixture.nativeElement.textContent).toContain('Home: Tatooine');
   });
@@ -116,56 +116,56 @@ describe('SpeciesCatalog', () => {
   });
 
   it('edits a species name and home planet, then reloads the list', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Old', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' }]);
+    loadSpecies([{ id: 3, name: 'Old', homePlanetId: 11, homePlanetName: 'Tatooine' }]);
 
-    component.beginEdit({ id: 'sp-1', name: 'Old', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' });
+    component.beginEdit({ id: 3, name: 'Old', homePlanetId: 11, homePlanetName: 'Tatooine' });
     component.editName.set('New');
-    component.editHomePlanetId.set('loc-2');
+    component.editHomePlanetId.set(12);
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${SPECIES_URL}/sp-1`));
-    expect(put.request.body).toEqual({ name: 'New', homePlanetId: 'loc-2' });
-    put.flush({ id: 'sp-1', name: 'New', homePlanetId: 'loc-2', homePlanetName: 'Coruscant' });
+    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${SPECIES_URL}/3`));
+    expect(put.request.body).toEqual({ name: 'New', homePlanetId: 12 });
+    put.flush({ id: 3, name: 'New', homePlanetId: 12, homePlanetName: 'Coruscant' });
 
-    loadSpecies([{ id: 'sp-1', name: 'New', homePlanetId: 'loc-2', homePlanetName: 'Coruscant' }]);
+    loadSpecies([{ id: 3, name: 'New', homePlanetId: 12, homePlanetName: 'Coruscant' }]);
 
     expect(component.editId()).toBeNull();
     expect(component.items()[0].homePlanetName).toBe('Coruscant');
   });
 
   it('offers the no-planet option when editing a species that has a planet, so it can be cleared', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Zabrak', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' }]);
+    loadSpecies([{ id: 3, name: 'Zabrak', homePlanetId: 11, homePlanetName: 'Tatooine' }]);
 
-    component.beginEdit({ id: 'sp-1', name: 'Zabrak', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' });
+    component.beginEdit({ id: 3, name: 'Zabrak', homePlanetId: 11, homePlanetName: 'Tatooine' });
     fixture.detectChanges();
 
     const select = fixture.nativeElement.querySelector('select[name="editHomePlanetId"]') as HTMLSelectElement;
-    const options = Array.from(select.options).map((o: HTMLOptionElement) => o.value);
-    expect(options).toContain('');
+    const options = Array.from(select.options).map((o: HTMLOptionElement) => o.textContent?.trim());
+    expect(options).toContain('No home planet');
   });
 
   it('sends a null home planet to clear the stored value', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Zabrak', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' }]);
+    loadSpecies([{ id: 3, name: 'Zabrak', homePlanetId: 11, homePlanetName: 'Tatooine' }]);
 
-    component.beginEdit({ id: 'sp-1', name: 'Zabrak', homePlanetId: 'loc-1', homePlanetName: 'Tatooine' });
-    component.editHomePlanetId.set('');
+    component.beginEdit({ id: 3, name: 'Zabrak', homePlanetId: 11, homePlanetName: 'Tatooine' });
+    component.editHomePlanetId.set(0);
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${SPECIES_URL}/sp-1`));
+    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${SPECIES_URL}/3`));
     expect(put.request.body).toEqual({ name: 'Zabrak', homePlanetId: null });
-    put.flush({ id: 'sp-1', name: 'Zabrak', homePlanetId: null, homePlanetName: null });
+    put.flush({ id: 3, name: 'Zabrak', homePlanetId: null, homePlanetName: null });
 
-    loadSpecies([{ id: 'sp-1', name: 'Zabrak', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Zabrak', homePlanetId: null, homePlanetName: null }]);
 
     expect(component.items()[0].homePlanetName).toBeNull();
   });
 
   it('requires a name when saving an edit', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Old', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Old', homePlanetId: null, homePlanetName: null }]);
 
-    component.beginEdit({ id: 'sp-1', name: 'Old', homePlanetId: null, homePlanetName: null });
+    component.beginEdit({ id: 3, name: 'Old', homePlanetId: null, homePlanetName: null });
     component.editName.set('   ');
     fixture.detectChanges();
     component.saveEdit();
@@ -175,16 +175,16 @@ describe('SpeciesCatalog', () => {
   });
 
   it('deletes a species after inline confirmation', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Delete me', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Delete me', homePlanetId: null, homePlanetName: null }]);
 
-    component.requestDelete({ id: 'sp-1', name: 'Delete me', homePlanetId: null, homePlanetName: null });
+    component.requestDelete({ id: 3, name: 'Delete me', homePlanetId: null, homePlanetName: null });
     fixture.detectChanges();
-    expect(component.confirmDeleteId()).toBe('sp-1');
+    expect(component.confirmDeleteId()).toBe(3);
     expect(fixture.nativeElement.textContent).toContain('Delete \u201CDelete me\u201D');
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${SPECIES_URL}/sp-1`));
+    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${SPECIES_URL}/3`));
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadSpecies([]);
@@ -194,9 +194,9 @@ describe('SpeciesCatalog', () => {
   });
 
   it('cancels an in-progress delete', () => {
-    loadSpecies([{ id: 'sp-1', name: 'Keep me', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Keep me', homePlanetId: null, homePlanetName: null }]);
 
-    component.requestDelete({ id: 'sp-1', name: 'Keep me', homePlanetId: null, homePlanetName: null });
+    component.requestDelete({ id: 3, name: 'Keep me', homePlanetId: null, homePlanetName: null });
     component.cancelDelete();
 
     expect(component.confirmDeleteId()).toBeNull();
@@ -205,15 +205,15 @@ describe('SpeciesCatalog', () => {
 
   it('filters items by search term', () => {
     loadSpecies([
-      { id: 'sp-1', name: 'Human', homePlanetId: null, homePlanetName: null },
-      { id: 'sp-2', name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null },
-      { id: 'sp-3', name: 'Wookiee', homePlanetId: null, homePlanetName: null },
+      { id: 3, name: 'Human', homePlanetId: null, homePlanetName: null },
+      { id: 4, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null },
+      { id: 5, name: 'Wookiee', homePlanetId: null, homePlanetName: null },
     ]);
 
     component.searchTerm.set('twi');
     fixture.detectChanges();
 
-    expect(component.filteredItems()).toEqual([{ id: 'sp-2', name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
+    expect(component.filteredItems()).toEqual([{ id: 4, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
     expect(fixture.nativeElement.textContent).toContain('Twi\u2019lek');
     expect(fixture.nativeElement.textContent).not.toContain('Wookiee');
   });
@@ -221,7 +221,7 @@ describe('SpeciesCatalog', () => {
   it('hides admin actions for non-admin users', () => {
     fixture.componentRef.setInput('isAdmin', false);
     fixture.detectChanges();
-    loadSpecies([{ id: 'sp-1', name: 'Human', homePlanetId: null, homePlanetName: null }]);
+    loadSpecies([{ id: 3, name: 'Human', homePlanetId: null, homePlanetName: null }]);
 
     expect(fixture.nativeElement.querySelector('.species-actions')).toBeNull();
     expect(fixture.nativeElement.querySelector('.species-add')).toBeNull();

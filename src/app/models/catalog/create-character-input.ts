@@ -18,7 +18,7 @@ export interface CreateCharacterInput {
   /** The character's display name. */
   name: string;
   /** ID of the planet the character was born on, or `null` when unknown. */
-  planetBornOnId?: string | null;
+  planetBornOnId?: number | null;
   /** Chronologically earliest birth year, or `null` when unknown. */
   yearOfBirthEarliest?: number | null;
   /** Chronologically latest birth year, or `null` when unknown. */
@@ -28,5 +28,5 @@ export interface CreateCharacterInput {
   /** Chronologically latest death year, or `null` when unknown. */
   yearOfDeathLatest?: number | null;
   /** ID of the character's species, or `null` when unknown. */
-  speciesId?: string | null;
+  speciesId?: number | null;
 }

@@ -63,7 +63,7 @@ export function isValidNamedEntityDto(dto: unknown): dto is NamedEntityDto {
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
+    typeof d['id'] === 'number' &&
     typeof d['name'] === 'string' && (d['name'] as string).length > 0
   );
 }
@@ -81,7 +81,7 @@ export function isValidSourceMaterialDto(dto: unknown): dto is EventSourceMateri
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
+    typeof d['id'] === 'number' &&
     typeof d['title'] === 'string' &&
     typeof d['medium'] === 'number' &&
     typeof d['canonType'] === 'number'
@@ -93,7 +93,7 @@ export function isValidSourceMaterialDto(dto: unknown): dto is EventSourceMateri
  * {@link EventSourceMaterialUnitDto}.
  *
  * Checks for the presence and correct type of every mandatory field.
- * `null`-able fields (`groupNumber`, `title`) are not validated beyond
+ * `null`-able fields (`title`, `parentUnitId`) are not validated beyond
  * type since `null` is a valid value for them.
  *
  * @param dto  The value to validate.
@@ -105,7 +105,7 @@ export function isValidSourceMaterialUnitDto(dto: unknown): dto is EventSourceMa
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
+    typeof d['id'] === 'number' &&
     typeof d['unitType'] === 'number' &&
     typeof d['number'] === 'number'
   );
@@ -148,7 +148,7 @@ export function isValidTimelineEventDto(dto: unknown): dto is TimelineEventDto {
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
+    typeof d['id'] === 'number' &&
     typeof d['title'] === 'string' &&
     typeof d['description'] === 'string' &&
     typeof d['yearStart'] === 'number' &&
@@ -185,9 +185,9 @@ export function mapEventSource(link: EventSourceMaterialLinkDto): EventSource {
       ? {
           id: unit.id,
           unitType: unitTypeFromApiCode(unit.unitType),
-          groupNumber: unit.groupNumber ?? undefined,
           number: unit.number,
           title: unit.title ?? undefined,
+          parentUnitId: unit.parentUnitId ?? undefined,
         }
       : undefined,
   };

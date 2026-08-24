@@ -160,7 +160,7 @@ export class TrackedEventsPage {
    * @param itemId  The source material ID.
    * @param status  The new tracking status.
    */
-  setStatus(itemId: string, status: TrackingStatus): void {
+  setStatus(itemId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -190,7 +190,7 @@ export class TrackedEventsPage {
    *
    * @param itemId  The source material ID to remove.
    */
-  removeTracked(itemId: string): void {
+  removeTracked(itemId: number): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -207,7 +207,7 @@ export class TrackedEventsPage {
    * @param unitId      The unit ID to update.
    * @param status      The new tracking status.
    */
-  setGroupStatus(materialId: string, unitId: string, status: TrackingStatus): void {
+  setGroupStatus(materialId: number, unitId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -225,7 +225,7 @@ export class TrackedEventsPage {
    * @param materialId  The source material ID.
    * @param unitId      The unit ID whose progress should be cleared.
    */
-  clearGroupProgress(materialId: string, unitId: string): void {
+  clearGroupProgress(materialId: number, unitId: number): void {
     const userId = this.userId();
     if (!userId) {
       return;
@@ -242,7 +242,7 @@ export class TrackedEventsPage {
    * @param unitId      The unit ID to update.
    * @param status      The new tracking status for the unit.
    */
-  setUnitProgress(materialId: string, unitId: string, status: TrackingStatus): void {
+  setUnitProgress(materialId: number, unitId: number, status: TrackingStatus): void {
     const userId = this.userId();
     if (!userId) {
       return;

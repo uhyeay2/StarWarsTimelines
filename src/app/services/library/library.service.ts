@@ -166,11 +166,11 @@ export class LibraryService {
     return `${BASE}/${userId}/source-materials`;
   }
 
-  private urlForMaterial(userId: string, materialId: string): string {
+  private urlForMaterial(userId: string, materialId: number): string {
     return `${this.urlFor(userId)}/${materialId}`;
   }
 
-  private urlForUnit(userId: string, materialId: string, unitId: string): string {
+  private urlForUnit(userId: string, materialId: number, unitId: number): string {
     return `${this.urlForMaterial(userId, materialId)}/units/${unitId}`;
   }
 
@@ -218,7 +218,7 @@ export class LibraryService {
    * @param materialId The source material ID to reload.
    * @returns An observable of the updated library items.
    */
-  private reloadMaterial(userId: string, materialId: string): Observable<readonly LibraryItem[]> {
+  private reloadMaterial(userId: string, materialId: number): Observable<readonly LibraryItem[]> {
     return this.http.get<LibraryItemDto>(this.urlForMaterial(userId, materialId)).pipe(
       map(mapLibraryItem),
       switchMap((updatedItem) => {
@@ -305,7 +305,7 @@ export class LibraryService {
   private mutateAndReload<T>(
     mutation$: Observable<T>,
     userId: string,
-    materialId: string | null,
+    materialId: number | null,
     fallback: string,
     context: string,
     meta?: Record<string, unknown>,
@@ -446,9 +446,9 @@ export class LibraryService {
    */
   setStatus(
     userId: string,
-    materialId: string,
+    materialId: number,
     status: TrackingStatus,
-    unitId?: string,
+    unitId?: number,
   ): Observable<readonly LibraryItem[]> {
     const body: UpdateStatusRequest = {
       status: statusToApiCode(status),
@@ -476,7 +476,7 @@ export class LibraryService {
    */
   setFavorite(
     userId: string,
-    materialId: string,
+    materialId: number,
     favorite: boolean,
   ): Observable<readonly LibraryItem[]> {
     const body: UpdateFavoriteRequest = { isFavorite: favorite };
@@ -499,7 +499,7 @@ export class LibraryService {
    * @param materialId The source material ID to remove.
    * @returns An observable of the refreshed library after the removal.
    */
-  removeTracked(userId: string, materialId: string): Observable<readonly LibraryItem[]> {
+  removeTracked(userId: string, materialId: number): Observable<readonly LibraryItem[]> {
     return this.mutateAndReload(
       this.http.delete<void>(this.urlForMaterial(userId, materialId)),
       userId,
@@ -525,8 +525,8 @@ export class LibraryService {
    */
   setUnitProgress(
     userId: string,
-    materialId: string,
-    unitId: string,
+    materialId: number,
+    unitId: number,
     status: TrackingStatus,
   ): Observable<readonly LibraryItem[]> {
     const body: UpdateUnitProgressRequest = { status: statusToApiCode(status) };
@@ -554,8 +554,8 @@ export class LibraryService {
    */
   clearUnitProgress(
     userId: string,
-    materialId: string,
-    unitId: string,
+    materialId: number,
+    unitId: number,
   ): Observable<readonly LibraryItem[]> {
     return this.mutateAndReload(
       this.http.delete<void>(this.urlForUnit(userId, materialId, unitId)),
@@ -578,7 +578,7 @@ export class LibraryService {
    */
   reorderTrackedItem(
     userId: string,
-    orderedSourceMaterialIds: readonly string[],
+    orderedSourceMaterialIds: readonly number[],
   ): Observable<readonly LibraryItem[]> {
     const body: ReorderRequest = { orderedSourceMaterialIds: [...orderedSourceMaterialIds] };
     return this.mutateAndReload(

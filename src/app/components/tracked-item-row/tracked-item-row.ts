@@ -5,11 +5,10 @@ import { isContainerUnit } from '../../models/tracking-selection';
 import { UnitType } from '../../models/unit-type';
 
 interface UnitGroup {
-  groupNumber: number;
   groupTitle: string;
   unitType: UnitType;
   units: readonly LibraryUnit[];
-  containerId: string;
+  containerId: number;
 }
 
 @Component({
@@ -34,8 +33,8 @@ export class TrackedItemRow {
   readonly dragOver = output<DragEvent>();
   readonly dragEnd = output<void>();
   readonly drop = output<void>();
-  readonly groupStatusChange = output<{ unitId: string; status: TrackingStatus }>();
-  readonly groupRemove = output<{ unitId: string }>();
+  readonly groupStatusChange = output<{ unitId: number; status: TrackingStatus }>();
+  readonly groupRemove = output<{ unitId: number }>();
 
   readonly hasGroupUnits = computed(() => {
     const units = this.item().units ?? [];
@@ -58,15 +57,9 @@ export class TrackedItemRow {
     const containersToDisplay = trackedContainers.length > 0 ? trackedContainers : containerUnits;
 
     return containersToDisplay.map((container): UnitGroup => {
-      const children = detailUnits.filter(
-        (u) =>
-          (u.parentUnitId
-            ? u.parentUnitId === container.id
-            : u.groupNumber === container.number),
-      );
+      const children = detailUnits.filter((u) => u.parentUnitId === container.id);
       const label = container.title ?? `${container.unitType} ${container.number}`;
       return {
-        groupNumber: container.number,
         groupTitle: label,
         unitType: container.unitType,
         units: children,
@@ -112,7 +105,7 @@ export class TrackedItemRow {
     }
   }
 
-  onGroupStatusChange(containerId: string, event: Event): void {
+  onGroupStatusChange(containerId: number, event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (value === 'remove') {
       // Removing a season/volume clears only that unit's progress, not the

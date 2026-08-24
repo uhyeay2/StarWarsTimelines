@@ -25,7 +25,7 @@ import { LibraryItemDto, LibraryUnitDto } from './library.dto';
  * {@link LibraryUnitDto}.
  *
  * Checks for the presence and correct type of every mandatory field.
- * `null`-able fields (`groupNumber`, `title`, `status`, `parentUnitId`) are
+ * `null`-able fields (`title`, `status`, `parentUnitId`) are
  * not validated beyond type since `null` is a valid value for them.
  *
  * @param dto  The value to validate.
@@ -37,7 +37,7 @@ export function isValidUnitDto(dto: unknown): dto is LibraryUnitDto {
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'string' && (d['id'] as string).length > 0 &&
+    typeof d['id'] === 'number' &&
     typeof d['unitType'] === 'number' &&
     typeof d['number'] === 'number' &&
     (d['status'] === null || typeof d['status'] === 'number')
@@ -63,7 +63,7 @@ export function isValidItemDto(dto: unknown): dto is LibraryItemDto {
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['sourceMaterialId'] === 'string' && (d['sourceMaterialId'] as string).length > 0 &&
+    typeof d['sourceMaterialId'] === 'number' &&
     typeof d['title'] === 'string' &&
     typeof d['medium'] === 'number' &&
     typeof d['canonType'] === 'number' &&
@@ -79,10 +79,10 @@ export function isValidItemDto(dto: unknown): dto is LibraryItemDto {
  * Maps a single {@link LibraryUnitDto} to a domain-level {@link LibraryUnit}.
  *
  * Numeric `unitType` and `status` codes are converted to string unions.
- * `null` fields for `groupNumber`, `title`, and `parentUnitId` are mapped to
- * `undefined`; a `null` `status` maps to `null` (untracked). Nested children
- * (`dto.units`) are intentionally ignored here — use {@link mapUnitTree} when
- * the wire format nests children beneath their container.
+ * A `null` `title` maps to `undefined`; a `null` `status` maps to `null`
+ * (untracked). Nested children (`dto.units`) are intentionally ignored here —
+ * use {@link mapUnitTree} when the wire format nests children beneath their
+ * container.
  *
  * @param dto  The raw unit DTO with numeric enum codes.
  * @returns The mapped unit with string-union `unitType`.
@@ -91,7 +91,6 @@ export function mapLibraryUnit(dto: LibraryUnitDto): LibraryUnit {
   return {
     id: dto.id,
     unitType: unitTypeFromApiCode(dto.unitType),
-    groupNumber: dto.groupNumber ?? undefined,
     number: dto.number,
     title: dto.title ?? undefined,
     parentUnitId: dto.parentUnitId ?? undefined,

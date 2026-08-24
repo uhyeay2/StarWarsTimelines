@@ -5,8 +5,8 @@ import { ApiSpecies } from '../../models/api-species';
 import { runOperation } from '../../utils/async-operation';
 import { filterByName } from '../../utils/text-search';
 
-/** Sentinel select value representing "no home planet selected". */
-const NO_PLANET = '';
+/** Sentinel select value representing "no home planet selected"; catalog ids start at 1. */
+const NO_PLANET = 0;
 
 @Component({
   selector: 'app-species-catalog',
@@ -33,18 +33,21 @@ export class SpeciesCatalog implements OnInit {
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
+  /** "No home planet" select sentinel, exposed for `[ngValue]` template bindings. */
+  protected readonly noPlanet = NO_PLANET;
+
   readonly newName = signal('');
   readonly newHomePlanetId = signal(NO_PLANET);
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
-  readonly editId = signal<string | null>(null);
+  readonly editId = signal<number | null>(null);
   readonly editName = signal('');
   readonly editHomePlanetId = signal(NO_PLANET);
-  readonly savingId = signal<string | null>(null);
+  readonly savingId = signal<number | null>(null);
 
-  readonly confirmDeleteId = signal<string | null>(null);
-  readonly deletingId = signal<string | null>(null);
+  readonly confirmDeleteId = signal<number | null>(null);
+  readonly deletingId = signal<number | null>(null);
   readonly actionError = signal<string | null>(null);
 
   ngOnInit(): void {

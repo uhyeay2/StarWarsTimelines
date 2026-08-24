@@ -3,6 +3,15 @@ import { FormsModule } from '@angular/forms';
 import { UNIT_TYPES, UnitType } from '../../models/unit-type';
 
 /**
+ * A candidate container unit (season/volume/book/collection) offered in the
+ * parent-unit dropdown of the unit edit form.
+ */
+export interface ParentUnitOption {
+  id: number;
+  label: string;
+}
+
+/**
  * Inline edit form for a source material unit (admin catalog view).
  *
  * Two-way binds the editable unit fields to the host's signals via model
@@ -22,10 +31,13 @@ export class UnitEditForm {
   /** Unit type being edited. */
   readonly unitType = model<UnitType>('Episode');
 
-  /** Group (season/volume) number, or null when ungrouped. */
-  readonly groupNumber = model<number | null>(null);
+  /** Candidate container units this unit can nest inside. */
+  readonly parentOptions = input<readonly ParentUnitOption[]>([]);
 
-  /** Unit number within its group. */
+  /** The selected container unit's ID, or null when top level. */
+  readonly parentUnitId = model<number | null>(null);
+
+  /** Unit number within its parent scope. */
   readonly number = model<number | null>(null);
 
   /** Optional unit title. */

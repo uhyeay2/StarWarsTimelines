@@ -31,7 +31,7 @@ import { STORAGE_KEYS, StorageService } from './storage.service';
 export interface CatalogEvent {
   entity: string;
   type: 'created' | 'updated' | 'deleted';
-  id?: string;
+  id?: number;
 }
 
 /**

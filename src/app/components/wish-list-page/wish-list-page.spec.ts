@@ -12,21 +12,21 @@ const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé A
 
 const TRACKED: LibraryItem[] = [
   {
-    id: 'material-episode-i',
+    id: 21,
     title: 'Star Wars: Episode I - The Phantom Menace',
     medium: 'Movie',
     status: 'Completed',
     favorite: true,
   },
   {
-    id: 'material-episode-ix',
+    id: 22,
     title: 'Star Wars: Episode IX - The Rise of Skywalker',
     medium: 'Movie',
     status: 'Wish Listed',
     favorite: false,
   },
   {
-    id: 'material-darth-plagueis',
+    id: 23,
     title: 'Darth Plagueis',
     medium: 'Book',
     status: 'Wish Listed',
@@ -68,7 +68,11 @@ async function setup(
     reorderTrackedItem: vi.fn(),
   };
   libraryMock.ensureTracked.mockImplementation(() => undefined);
-  libraryMock.reorderTrackedItem.mockImplementation((_userId: string, orderedIds: string[]) =>
+  libraryMock.setStatus.mockImplementation(() => of(undefined));
+  libraryMock.removeTracked.mockImplementation(() => of(undefined));
+  libraryMock.setUnitProgress.mockImplementation(() => of(undefined));
+  libraryMock.clearUnitProgress.mockImplementation(() => of(undefined));
+  libraryMock.reorderTrackedItem.mockImplementation((_userId: string, orderedIds: number[]) =>
     of(orderedIds.map((id) => items.find((item) => item.id === id)!)),
   );
 
@@ -129,9 +133,9 @@ describe('WishListPage', () => {
     upButton.click();
 
     expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      'material-episode-i',
-      'material-darth-plagueis',
-      'material-episode-ix',
+      21,
+      23,
+      22,
     ]);
   });
 
@@ -142,9 +146,9 @@ describe('WishListPage', () => {
     downButton.click();
 
     expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      'material-episode-i',
-      'material-darth-plagueis',
-      'material-episode-ix',
+      21,
+      23,
+      22,
     ]);
   });
 
@@ -156,9 +160,9 @@ describe('WishListPage', () => {
     rows[0].dispatchEvent(new Event('drop', { bubbles: true }));
 
     expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      'material-episode-i',
-      'material-darth-plagueis',
-      'material-episode-ix',
+      21,
+      23,
+      22,
     ]);
   });
 
@@ -171,7 +175,7 @@ describe('WishListPage', () => {
 
     expect(libraryMock.setStatus).toHaveBeenCalledWith(
       'user-padme',
-      'material-episode-ix',
+      22,
       'In progress',
     );
   });

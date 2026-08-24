@@ -68,7 +68,7 @@
       <!-- ─── End Source Chips ────────────────────────────────────────── -->
 
       @for (source of item.sources; track trackSource(source)) {
-        @if (sourceUnitDetail(source.unit); as detail) {
+        @if (sourceDetail(source); as detail) {
           <span class="event-source-unit">{{ detail }}</span>
         }
 

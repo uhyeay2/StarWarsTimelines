@@ -27,13 +27,13 @@ describe('CatalogService', () => {
       const request = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
       request.flush([
         {
-          id: '00000000-0000-0000-0000-000000000004',
+          id: 10,
           title: 'Star Wars: Episode IV - A New Hope',
           medium: 0,
           canonType: 0,
         },
         {
-          id: '00000000-0000-0000-0000-000000000006',
+          id: 12,
           title: 'Star Wars: Episode V - The Empire Strikes Back',
           medium: 0,
           canonType: 2,
@@ -42,13 +42,13 @@ describe('CatalogService', () => {
 
       expect(service.sourceMaterials()).toEqual([
         {
-          id: '00000000-0000-0000-0000-000000000004',
+          id: 10,
           title: 'Star Wars: Episode IV - A New Hope',
           medium: 'Movie',
           canonType: 'Canon',
         },
         {
-          id: '00000000-0000-0000-0000-000000000006',
+          id: 12,
           title: 'Star Wars: Episode V - The Empire Strikes Back',
           medium: 'Movie',
           canonType: 'Canon & Legends',
@@ -60,7 +60,7 @@ describe('CatalogService', () => {
       service.fetchSourceMaterials();
 
       const request = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
-      request.flush([{ id: '00000000-0000-0000-0000-000000000001', title: 'Unknown', medium: 99, canonType: 0 }]);
+      request.flush([{ id: 1, title: 'Unknown', medium: 99, canonType: 0 }]);
 
       expect(service.sourceMaterialsError()).toBe('Failed to load source materials');
       expect(service.sourceMaterials()).toBeNull();
@@ -72,10 +72,10 @@ describe('CatalogService', () => {
       service.fetchCharacters();
 
       const request = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-      request.flush([{ id: '00000000-0000-0000-0000-100000000001', name: 'Luke Skywalker' }]);
+      request.flush([{ id: 7, name: 'Luke Skywalker' }]);
 
       expect(service.characters()).toEqual([
-        { id: '00000000-0000-0000-0000-100000000001', name: 'Luke Skywalker' },
+        { id: 7, name: 'Luke Skywalker' },
       ]);
     });
   });
@@ -85,10 +85,10 @@ describe('CatalogService', () => {
       service.fetchLocations();
 
       const request = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/locations'));
-      request.flush([{ id: '00000000-0000-0000-0000-200000000001', name: 'Tatooine' }]);
+      request.flush([{ id: 12, name: 'Tatooine' }]);
 
       expect(service.locations()).toEqual([
-        { id: '00000000-0000-0000-0000-200000000001', name: 'Tatooine' },
+        { id: 12, name: 'Tatooine' },
       ]);
     });
   });
@@ -98,36 +98,36 @@ describe('CatalogService', () => {
       service.fetchVehicles();
 
       const request = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/vehicles'));
-      request.flush([{ id: '00000000-0000-0000-0000-300000000001', name: 'Millennium Falcon' }]);
+      request.flush([{ id: 15, name: 'Millennium Falcon' }]);
 
       expect(service.vehicles()).toEqual([
-        { id: '00000000-0000-0000-0000-300000000001', name: 'Millennium Falcon' },
+        { id: 15, name: 'Millennium Falcon' },
       ]);
     });
   });
 
   describe('getUnitCache', () => {
     it('fetches units and maps the numeric unit type', () => {
-      const cache = service.getUnitCache('00000000-0000-0000-0000-000000000012');
+      const cache = service.getUnitCache(30);
       cache.fetch();
 
       const request = httpMock.expectOne(
-        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000012/units'),
+        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/30/units'),
       );
       request.flush([
         {
-          id: '00000000-0000-0000-0000-500000000025',
-          sourceMaterialId: '00000000-0000-0000-0000-000000000012',
+          id: 101,
+          sourceMaterialId: 30,
           unitType: 0,
-          groupNumber: 1,
+          parentUnitId: null,
           number: 1,
           title: 'Chapter 1: The Mandalorian',
         },
         {
-          id: '00000000-0000-0000-0000-500000000037',
-          sourceMaterialId: '00000000-0000-0000-0000-000000000019',
+          id: 102,
+          sourceMaterialId: 40,
           unitType: 1,
-          groupNumber: null,
+          parentUnitId: null,
           number: 2,
           title: null,
         },
@@ -135,18 +135,18 @@ describe('CatalogService', () => {
 
       expect(cache.data()).toEqual([
         {
-          id: '00000000-0000-0000-0000-500000000025',
-          sourceMaterialId: '00000000-0000-0000-0000-000000000012',
+          id: 101,
+          sourceMaterialId: 30,
           unitType: 'Episode',
-          groupNumber: 1,
+          parentUnitId: null,
           number: 1,
           title: 'Chapter 1: The Mandalorian',
         },
         {
-          id: '00000000-0000-0000-0000-500000000037',
-          sourceMaterialId: '00000000-0000-0000-0000-000000000019',
+          id: 102,
+          sourceMaterialId: 40,
           unitType: 'Chapter',
-          groupNumber: null,
+          parentUnitId: null,
           number: 2,
           title: null,
         },
@@ -158,7 +158,7 @@ describe('CatalogService', () => {
     it('posts the name-only payload and auto-invalidates the characters cache', () => {
       service.fetchCharacters();
       const listReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-      listReq.flush([{ id: 'existing', name: 'Existing' }]);
+      listReq.flush([{ id: 5, name: 5 }]);
 
       let created: unknown;
       service.createCharacter({ name: 'Luke Skywalker' }).subscribe((c) => (created = c));
@@ -173,10 +173,10 @@ describe('CatalogService', () => {
         yearOfDeathLatest: null,
         speciesId: null,
       });
-      request.flush({ id: '00000000-0000-0000-0000-100000000099', name: 'Luke Skywalker' });
+      request.flush({ id: 99, name: 'Luke Skywalker' });
 
       expect(created).toEqual({
-        id: '00000000-0000-0000-0000-100000000099',
+        id: 99,
         name: 'Luke Skywalker',
       });
 
@@ -190,24 +190,24 @@ describe('CatalogService', () => {
       service
         .createCharacter({
           name: 'Grogu',
-          planetBornOnId: 'loc-1',
+          planetBornOnId: 12,
           yearOfBirthEarliest: -41,
           yearOfBirthLatest: -41,
-          speciesId: 'sp-2',
+          speciesId: 2,
         })
         .subscribe();
 
       const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/characters'));
       expect(request.request.body).toEqual({
         name: 'Grogu',
-        planetBornOnId: 'loc-1',
+        planetBornOnId: 12,
         yearOfBirthEarliest: -41,
         yearOfBirthLatest: -41,
         yearOfDeathEarliest: null,
         yearOfDeathLatest: null,
-        speciesId: 'sp-2',
+        speciesId: 2,
       });
-      request.flush({ id: 'char-1', name: 'Grogu' });
+      request.flush({ id: 8, name: 'Grogu' });
 
       // Cache invalidation triggers an immediate re-fetch.
       const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
@@ -217,24 +217,24 @@ describe('CatalogService', () => {
 
   describe('updateCharacter', () => {
     it('puts the full payload and auto-invalidates the characters cache', () => {
-      service.updateCharacter('00000000-0000-0000-0000-100000000001', {
+      service.updateCharacter(7, {
         name: 'New name',
-        planetBornOnId: 'loc-1',
+        planetBornOnId: 12,
         yearOfDeathEarliest: 4,
         yearOfDeathLatest: 5,
       }).subscribe();
 
-      const request = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/characters/00000000-0000-0000-0000-100000000001'));
+      const request = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/characters/7'));
       expect(request.request.body).toEqual({
         name: 'New name',
-        planetBornOnId: 'loc-1',
+        planetBornOnId: 12,
         yearOfBirthEarliest: null,
         yearOfBirthLatest: null,
         yearOfDeathEarliest: 4,
         yearOfDeathLatest: 5,
         speciesId: null,
       });
-      request.flush({ id: '00000000-0000-0000-0000-100000000001', name: 'New name' });
+      request.flush({ id: 7, name: 'New name' });
 
       // Cache was invalidated and re-fetched
       const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
@@ -245,9 +245,9 @@ describe('CatalogService', () => {
 
   describe('deleteCharacter', () => {
     it('deletes and auto-invalidates the characters cache', () => {
-      service.deleteCharacter('00000000-0000-0000-0000-100000000001').subscribe();
+      service.deleteCharacter(7).subscribe();
 
-      const request = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/characters/00000000-0000-0000-0000-100000000001'));
+      const request = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/characters/7'));
       request.flush(null, { status: 204, statusText: 'No Content' });
 
       // Cache was invalidated and re-fetched
@@ -258,7 +258,7 @@ describe('CatalogService', () => {
 
     it('surfaces the problem detail when deleting a referenced character', () => {
       let caughtError: unknown;
-      service.deleteCharacter('00000000-0000-0000-0000-100000000001').subscribe({
+      service.deleteCharacter(7).subscribe({
         error: (err) => (caughtError = err),
       });
 
@@ -274,7 +274,7 @@ describe('CatalogService', () => {
 
     it('wraps a 404 as CatalogError with code not-found', () => {
       let caughtError: unknown;
-      service.deleteCharacter('00000000-0000-0000-0000-999999999999').subscribe({
+      service.deleteCharacter(888).subscribe({
         error: (err) => (caughtError = err),
       });
 
@@ -290,7 +290,7 @@ describe('CatalogService', () => {
 
     it('wraps a 500 as CatalogError with code network-error', () => {
       let caughtError: unknown;
-      service.deleteCharacter('00000000-0000-0000-0000-100000000001').subscribe({
+      service.deleteCharacter(7).subscribe({
         error: (err) => (caughtError = err),
       });
 
@@ -311,7 +311,7 @@ describe('CatalogService', () => {
 
       const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/source-materials'));
       expect(request.request.body).toEqual({ title: 'Ahsoka', medium: 4, canonType: 0 });
-      request.flush({ id: '00000000-0000-0000-0000-000000000099', title: 'Ahsoka', medium: 4, canonType: 0 });
+      request.flush({ id: 90, title: 'Ahsoka', medium: 4, canonType: 0 });
 
       // Cache was invalidated and re-fetched
       const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
@@ -323,16 +323,16 @@ describe('CatalogService', () => {
   describe('updateSourceMaterial', () => {
     it('puts with mapped enum codes and auto-invalidates the cache', () => {
       service
-        .updateSourceMaterial('00000000-0000-0000-0000-000000000099', {
+        .updateSourceMaterial(90, {
           title: 'Ahsoka S2',
           medium: 'Live Action Show',
           canonType: 'Legends',
         })
         .subscribe();
 
-      const request = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000099'));
+      const request = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/90'));
       expect(request.request.body).toEqual({ title: 'Ahsoka S2', medium: 4, canonType: 1 });
-      request.flush({ id: '00000000-0000-0000-0000-000000000099', title: 'Ahsoka S2', medium: 4, canonType: 1 });
+      request.flush({ id: 90, title: 'Ahsoka S2', medium: 4, canonType: 1 });
 
       // Cache was invalidated and re-fetched
       const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
@@ -343,31 +343,31 @@ describe('CatalogService', () => {
 
   describe('createSourceMaterialUnit', () => {
     it('posts with mapped unit type and auto-invalidates the unit cache', () => {
-      const cache = service.getUnitCache('00000000-0000-0000-0000-000000000012');
+      const cache = service.getUnitCache(30);
 
       service
-        .createSourceMaterialUnit('00000000-0000-0000-0000-000000000012', {
+        .createSourceMaterialUnit(30, {
           unitType: 'Episode',
-          groupNumber: 2,
+          parentUnitId: null,
           number: 9,
           title: null,
         })
         .subscribe();
 
-      const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000012/units'));
-      expect(request.request.body).toEqual({ unitType: 0, groupNumber: 2, number: 9, title: null });
+      const request = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/30/units'));
+      expect(request.request.body).toEqual({ unitType: 0, parentUnitId: null, number: 9, title: null });
       request.flush({
-        id: '00000000-0000-0000-0000-500000000099',
-        sourceMaterialId: '00000000-0000-0000-0000-000000000012',
+        id: 109,
+        sourceMaterialId: 30,
         unitType: 0,
-        groupNumber: 2,
+        parentUnitId: null,
         number: 9,
         title: null,
       });
 
       // Unit cache was invalidated and re-fetched
       const refetchReq = httpMock.expectOne(
-        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000012/units'),
+        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/30/units'),
       );
       refetchReq.flush([]);
       expect(cache.data()).toEqual([]);
@@ -376,9 +376,9 @@ describe('CatalogService', () => {
     it('wraps a duplicate unit number conflict as DuplicateEntityError', () => {
       let caughtError: unknown;
       service
-        .createSourceMaterialUnit('00000000-0000-0000-0000-000000000012', {
+        .createSourceMaterialUnit(30, {
           unitType: 'Episode',
-          groupNumber: 1,
+          parentUnitId: null,
           number: 9,
           title: null,
         })
@@ -400,20 +400,20 @@ describe('CatalogService', () => {
 
   describe('deleteSourceMaterialUnit', () => {
     it('deletes and auto-invalidates the unit cache', () => {
-      const cache = service.getUnitCache('00000000-0000-0000-0000-000000000012');
+      const cache = service.getUnitCache(30);
 
       service
-        .deleteSourceMaterialUnit('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-500000000099')
+        .deleteSourceMaterialUnit(30, 109)
         .subscribe();
 
       const request = httpMock.expectOne(
-        (r) => r.method === 'DELETE' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000012/units/00000000-0000-0000-0000-500000000099'),
+        (r) => r.method === 'DELETE' && r.url.endsWith('/api/source-materials/30/units/109'),
       );
       request.flush(null, { status: 204, statusText: 'No Content' });
 
       // Unit cache was invalidated and re-fetched
       const refetchReq = httpMock.expectOne(
-        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/00000000-0000-0000-0000-000000000012/units'),
+        (r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/30/units'),
       );
       refetchReq.flush([]);
       expect(cache.data()).toEqual([]);
@@ -424,8 +424,8 @@ describe('CatalogService', () => {
     it('invalidates the characters cache on characters event', () => {
       service.fetchCharacters();
       const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-      req.flush([{ id: '1', name: 'Luke' }]);
-      expect(service.characters()).toEqual([{ id: '1', name: 'Luke' }]);
+      req.flush([{ id: 7, name: 'Luke' }]);
+      expect(service.characters()).toEqual([{ id: 7, name: 'Luke' }]);
 
       service.invalidateEntity('characters');
 
@@ -435,62 +435,62 @@ describe('CatalogService', () => {
     });
 
     it('invalidates all unit caches on source-material-units event without ID', () => {
-      const cache = service.getUnitCache('mat-1');
+      const cache = service.getUnitCache(50);
       cache.fetch();
-      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
-      req.flush([{ id: 'u1', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: null, number: 1, title: null }]);
+      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
+      req.flush([{ id: 203, sourceMaterialId: 50, unitType: 0, parentUnitId: null, number: 1, title: null }]);
       expect(cache.data()!.length).toBe(1);
 
       service.invalidateEntity('source-material-units');
 
-      const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
+      const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
       refetchReq.flush([]);
       expect(cache.data()).toEqual([]);
     });
 
     it('invalidates only the affected unit cache when a unit ID is provided', () => {
-      const cache1 = service.getUnitCache('mat-1');
+      const cache1 = service.getUnitCache(50);
       cache1.fetch();
-      const req1 = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
-      req1.flush([{ id: 'unit-a', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: null, number: 1, title: null }]);
+      const req1 = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
+      req1.flush([{ id: 201, sourceMaterialId: 50, unitType: 0, parentUnitId: null, number: 1, title: null }]);
 
-      const cache2 = service.getUnitCache('mat-2');
+      const cache2 = service.getUnitCache(60);
       cache2.fetch();
-      const req2 = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-2/units'));
-      req2.flush([{ id: 'unit-b', sourceMaterialId: 'mat-2', unitType: 0, groupNumber: null, number: 1, title: null }]);
+      const req2 = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/60/units'));
+      req2.flush([{ id: 202, sourceMaterialId: 60, unitType: 0, parentUnitId: null, number: 1, title: null }]);
 
       expect(cache1.data()!.length).toBe(1);
       expect(cache2.data()!.length).toBe(1);
 
-      service.invalidateEntity('source-material-units', 'unit-a');
+      service.invalidateEntity('source-material-units', 201);
 
       // Only cache1 should be invalidated
-      const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
+      const refetchReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
       refetchReq.flush([]);
       expect(cache1.data()).toEqual([]);
 
       // cache2 should remain untouched
-      httpMock.expectNone((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-2/units'));
+      httpMock.expectNone((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/60/units'));
       expect(cache2.data()!.length).toBe(1);
     });
 
     it('does nothing for a unit ID not found in any loaded cache', () => {
-      const cache = service.getUnitCache('mat-1');
+      const cache = service.getUnitCache(50);
       cache.fetch();
-      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
-      req.flush([{ id: 'unit-a', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: null, number: 1, title: null }]);
+      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
+      req.flush([{ id: 201, sourceMaterialId: 50, unitType: 0, parentUnitId: null, number: 1, title: null }]);
 
-      service.invalidateEntity('source-material-units', 'unit-unknown');
+      service.invalidateEntity('source-material-units', 999);
 
       httpMock.expectNone((r) => r.method === 'GET' && r.url.includes('/units'));
       expect(cache.data()!.length).toBe(1);
     });
 
     it('invalidates the specific unit cache on source-materials event with ID', () => {
-      const cache = service.getUnitCache('mat-1');
+      const cache = service.getUnitCache(50);
       cache.fetch();
-      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
-      req.flush([{ id: 'u1', sourceMaterialId: 'mat-1', unitType: 0, groupNumber: null, number: 1, title: null }]);
+      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
+      req.flush([{ id: 203, sourceMaterialId: 50, unitType: 0, parentUnitId: null, number: 1, title: null }]);
       expect(cache.data()!.length).toBe(1);
 
       // Also load source materials
@@ -498,14 +498,14 @@ describe('CatalogService', () => {
       const smReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
       smReq.flush([]);
 
-      service.invalidateEntity('source-materials', 'mat-1');
+      service.invalidateEntity('source-materials', 50);
 
       // Source materials collection should be invalidated
       const smRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'));
       smRefetch.flush([]);
 
       // The specific unit cache should also be invalidated
-      const unitRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/mat-1/units'));
+      const unitRefetch = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/50/units'));
       unitRefetch.flush([]);
       expect(cache.data()).toEqual([]);
     });
@@ -520,7 +520,7 @@ describe('CatalogService', () => {
     it('invalidates all caches', () => {
       service.fetchCharacters();
       const charReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'));
-      charReq.flush([{ id: '1', name: 'Luke' }]);
+      charReq.flush([{ id: 7, name: 'Luke' }]);
 
       service.fetchLocations();
       const locReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/locations'));
@@ -536,7 +536,7 @@ describe('CatalogService', () => {
 
       service.fetchSpecies();
       const speciesReq = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
-      speciesReq.flush([{ id: '1', name: 'Human', homePlanetId: null, homePlanetName: null }]);
+      speciesReq.flush([{ id: 3, name: 'Human', homePlanetId: null, homePlanetName: null }]);
 
       service.invalidateAll();
 

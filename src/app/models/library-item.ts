@@ -10,17 +10,16 @@ import { UnitType } from './unit-type';
  * without a parent sit directly under the source material.
  */
 export interface LibraryUnit {
-  id: string;
+  id: number;
   unitType: UnitType;
-  groupNumber?: number;
   number: number;
   title?: string;
-  parentUnitId?: string | null;
+  parentUnitId?: number | null;
   status: TrackingStatus | null;
 }
 
 export interface LibraryItem {
-  id: string;
+  id: number;
   title: string;
   medium: Medium;
   /**

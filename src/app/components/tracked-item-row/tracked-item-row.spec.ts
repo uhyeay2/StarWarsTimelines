@@ -4,7 +4,7 @@ import { TrackingStatus } from '../../models/tracking-status';
 import { TrackedItemRow } from './tracked-item-row';
 
 const ITEM: LibraryItem = {
-  id: 'material-episode-iv',
+  id: 10,
   title: 'Star Wars: Episode IV - A New Hope',
   medium: 'Movie',
   status: 'Completed',
@@ -12,57 +12,57 @@ const ITEM: LibraryItem = {
 };
 
 const UNIT_ITEM: LibraryItem = {
-  id: 'material-episode-ii',
+  id: 20,
   title: 'Star Wars: Episode II - Attack of the Clones',
   medium: 'Movie',
   status: null,
   favorite: false,
   units: [
-    { id: 'season-1', unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
-    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', parentUnitId: 'season-1', status: 'Completed' },
-    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', parentUnitId: 'season-1', status: null },
+    { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+    { id: 201, unitType: 'Episode', number: 1, title: 'Attack of the Clones', parentUnitId: 101, status: 'Completed' },
+    { id: 202, unitType: 'Episode', number: 2, title: 'Sneak Preview', parentUnitId: 101, status: null },
   ],
 };
 
 const UNIT_ITEM_WITHOUT_SEASONS: LibraryItem = {
-  id: 'material-episode-ii',
+  id: 20,
   title: 'Star Wars: Episode II - Attack of the Clones',
   medium: 'Movie',
   status: 'In progress',
   favorite: false,
   units: [
-    { id: 'unit-1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Attack of the Clones', status: 'Completed' },
-    { id: 'unit-2', unitType: 'Episode', groupNumber: 1, number: 2, title: 'Sneak Preview', status: null },
+    { id: 211, unitType: 'Episode', number: 1, title: 'Attack of the Clones', status: 'Completed' },
+    { id: 212, unitType: 'Episode', number: 2, title: 'Sneak Preview', status: null },
   ],
 };
 
 const UNIT_ITEM_MULTI_SEASON: LibraryItem = {
-  id: 'material-rebels',
+  id: 80,
   title: 'Star Wars: Rebels',
   medium: 'Live Action Show',
   status: null,
   favorite: false,
   units: [
-    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
-    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', status: null },
-    { id: 's3-container', unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
-    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Pilot', parentUnitId: 's1-container', status: 'Completed' },
-    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'The Disappeared', parentUnitId: 's2-container', status: null },
-    { id: 'e3', unitType: 'Episode', groupNumber: 3, number: 1, title: 'Future Heroes', parentUnitId: 's3-container', status: 'Completed' },
+    { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+    { id: 102, unitType: 'Season', number: 2, title: 'Season 2', status: null },
+    { id: 103, unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
+    { id: 111, unitType: 'Episode', number: 1, title: 'Pilot', parentUnitId: 101, status: 'Completed' },
+    { id: 112, unitType: 'Episode', number: 1, title: 'The Disappeared', parentUnitId: 102, status: null },
+    { id: 113, unitType: 'Episode', number: 1, title: 'Future Heroes', parentUnitId: 103, status: 'Completed' },
   ],
 };
 
 const UNIT_ITEM_NO_TRACKED_SEASONS: LibraryItem = {
-  id: 'material-mandalorian',
+  id: 31,
   title: 'The Mandalorian',
   medium: 'Live Action Show',
   status: 'Wish Listed',
   favorite: false,
   units: [
-    { id: 's1-container', unitType: 'Season', number: 1, title: 'Season 1', status: null },
-    { id: 's2-container', unitType: 'Season', number: 2, title: 'Season 2', status: null },
-    { id: 'e1', unitType: 'Episode', groupNumber: 1, number: 1, title: 'Chapter 1', parentUnitId: 's1-container', status: null },
-    { id: 'e2', unitType: 'Episode', groupNumber: 2, number: 1, title: 'Chapter 2', parentUnitId: 's2-container', status: null },
+    { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: null },
+    { id: 102, unitType: 'Season', number: 2, title: 'Season 2', status: null },
+    { id: 111, unitType: 'Episode', number: 1, title: 'Chapter 1', parentUnitId: 101, status: null },
+    { id: 112, unitType: 'Episode', number: 1, title: 'Chapter 2', parentUnitId: 102, status: null },
   ],
 };
 
@@ -222,12 +222,12 @@ describe('TrackedItemRow', () => {
     component.statusChange.subscribe((status) => emissions.push({ status }));
     component.remove.subscribe(() => emissions.push({ removed: true }));
     fixture.componentRef.setInput('item', {
-      id: 'material-chapter-test',
+      id: 40,
       title: 'Test Chapter Material',
       medium: 'Book',
       status: 'In progress',
       favorite: false,
-      units: [{ id: 'unit-1', unitType: 'Chapter', number: 1, title: 'The Menace', status: null }],
+      units: [{ id: 501, unitType: 'Chapter', number: 1, title: 'The Menace', status: null }],
     });
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -251,20 +251,20 @@ describe('TrackedItemRow', () => {
   it('emits groupStatusChange when the season status select changes', () => {
     fixture.componentRef.setInput('item', UNIT_ITEM);
     fixture.detectChanges();
-    const emissions: { unitId: string; status: TrackingStatus }[] = [];
+    const emissions: { unitId: number; status: TrackingStatus }[] = [];
     component.groupStatusChange.subscribe((value) => emissions.push(value));
 
     const groupSelect = fixture.nativeElement.querySelector('select.group-status-select') as HTMLSelectElement;
     groupSelect.value = 'Completed';
     groupSelect.dispatchEvent(new Event('change'));
 
-    expect(emissions).toEqual([{ unitId: 'season-1', status: 'Completed' }]);
+    expect(emissions).toEqual([{ unitId: 101, status: 'Completed' }]);
   });
 
   it('emits groupRemove (not remove) when a season select chooses "Remove From Library"', () => {
     fixture.componentRef.setInput('item', UNIT_ITEM);
     fixture.detectChanges();
-    const removals: { unitId: string }[] = [];
+    const removals: { unitId: number }[] = [];
     let materialRemovals = 0;
     component.groupRemove.subscribe((value) => removals.push(value));
     component.remove.subscribe(() => materialRemovals++);
@@ -273,7 +273,7 @@ describe('TrackedItemRow', () => {
     groupSelect.value = 'remove';
     groupSelect.dispatchEvent(new Event('change'));
 
-    expect(removals).toEqual([{ unitId: 'season-1' }]);
+    expect(removals).toEqual([{ unitId: 101 }]);
     expect(materialRemovals).toBe(0);
   });
 

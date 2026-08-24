@@ -6,7 +6,7 @@ import { ApiSourceMaterialUnit } from '../../models/api-source-material-unit';
 import { CANON_TYPES, CanonType } from '../../models/canon-type';
 import { CreateSourceMaterialUnitInput } from '../../models/catalog/create-source-material-unit-input';
 import { MEDIA, Medium } from '../../models/medium';
-import { UNIT_TYPES, UnitType } from '../../models/unit-type';
+import { UNIT_TYPES, UnitType, isContainerOrCollectionUnit } from '../../models/unit-type';
 import { TrackingStatus } from '../../models/tracking-status';
 import {
   findTrackedItem,
@@ -20,13 +20,13 @@ import { CatalogService } from '../../services/catalog/catalog.service';
 import { LibraryService } from '../../services/library/library.service';
 import { LibraryItem } from '../../models/library-item';
 import { TrackSelect } from '../track-select/track-select';
-import { UnitEditForm } from '../unit-edit-form/unit-edit-form';
+import { UnitEditForm, ParentUnitOption } from '../unit-edit-form/unit-edit-form';
 import { runOperation } from '../../utils/async-operation';
 import { addedTo, removedFrom, removedWithPrefix, toggledIn } from '../../utils/set-operations';
 
 interface UnitKey {
-  materialId: string;
-  unitId: string;
+  materialId: number;
+  unitId: number;
 }
 
 /** Returns true for container unit types that act as group headers. */
@@ -34,15 +34,15 @@ function isContainerType(unitType: UnitType): boolean {
   return unitType === 'Season' || unitType === 'Volume' || unitType === 'Book';
 }
 
-/** A season/volume/book group rendered in the non-admin expanded view. */
+/** A season/volume/book group rendered in the expanded views. */
 interface MaterialDisplayGroup {
   /** Stable key used for expand/collapse state. */
   expandKey: string;
-  /** The Season/Volume/Book container unit id, or null when synthesized from group numbers. */
-  containerId: string | null;
+  /** The Season/Volume/Book container unit id, or null for ungrouped leftovers. */
+  containerId: number | null;
   /** Header label for the group. */
   label: string;
-  /** Child units (episodes/issues) belonging to the group. */
+  /** Child units (episodes/issues/chapters) belonging to the group. */
   units: readonly ApiSourceMaterialUnit[];
 }
 
@@ -101,61 +101,37 @@ export class SourceMaterialCatalog implements OnInit {
   readonly adding = signal(false);
   readonly addError = signal<string | null>(null);
 
-  readonly editId = signal<string | null>(null);
+  readonly editId = signal<number | null>(null);
   readonly editTitle = signal('');
   readonly editMedium = signal<Medium>('Movie');
   readonly editCanonType = signal<CanonType>('Canon');
-  readonly savingId = signal<string | null>(null);
+  readonly savingId = signal<number | null>(null);
 
-  readonly confirmDeleteId = signal<string | null>(null);
-  readonly deletingId = signal<string | null>(null);
+  readonly confirmDeleteId = signal<number | null>(null);
+  readonly deletingId = signal<number | null>(null);
 
-  readonly expandedMaterialId = signal<string | null>(null);
+  readonly expandedMaterialId = signal<number | null>(null);
   /** Materials the user manually collapsed while they would otherwise be auto-expanded. */
-  readonly userCollapsedIds = signal(new Set<string>());
-  readonly unitsByMaterial = signal<Readonly<Record<string, readonly ApiSourceMaterialUnit[]>>>({});
+  readonly userCollapsedIds = signal(new Set<number>());
+  readonly unitsByMaterial = signal<Readonly<Record<number, readonly ApiSourceMaterialUnit[]>>>({});
   readonly unitsLoading = signal(false);
   readonly unitsError = signal<string | null>(null);
 
   readonly expandedSeasonKeys = signal(new Set<string>());
 
-  readonly materialsWithUnits = signal(new Set<string>());
+  readonly materialsWithUnits = signal(new Set<number>());
 
   readonly hasUnits = computed(() => {
     const known = this.materialsWithUnits();
-    const result: Record<string, boolean> = {};
+    const result: Record<number, boolean> = {};
     for (const material of this.materials()) {
       result[material.id] = known.has(material.id);
     }
     return result;
   });
 
-  readonly seasonGroups = computed(() => {
-    const result: Record<string, { groupNumber: number | null; groupTitle: string | null; units: readonly ApiSourceMaterialUnit[] }[]> = {};
-    for (const [materialId, units] of Object.entries(this.unitsByMaterial())) {
-      const grouped = new Map<number | null, { groupTitle: string | null; units: ApiSourceMaterialUnit[] }>();
-      for (const unit of units) {
-        const key = unit.groupNumber ?? null;
-        let entry = grouped.get(key);
-        if (!entry) {
-          entry = { groupTitle: null, units: [] };
-          grouped.set(key, entry);
-        }
-        entry.units.push(unit);
-      }
-      result[materialId] = [...grouped.entries()]
-        .map(([groupNumber, entry]) => ({ groupNumber, groupTitle: entry.groupTitle, units: entry.units }))
-        .sort((a, b) => {
-          const aKey = a.groupNumber ?? -1;
-          const bKey = b.groupNumber ?? -1;
-          return aKey - bKey;
-        });
-    }
-    return result;
-  });
-
   readonly displayStrategy = computed(() => {
-    const result: Record<string, 'grouped-season' | 'grouped-volume' | 'flat'> = {};
+    const result: Record<number, 'grouped-season' | 'grouped-volume' | 'flat'> = {};
     for (const material of this.materials()) {
       result[material.id] = this.getDisplayStrategy(material.medium);
     }
@@ -173,7 +149,7 @@ export class SourceMaterialCatalog implements OnInit {
   );
 
   /** Returns the tracked item for a material ID, or null if not tracked. */
-  getTrackedItem(materialId: string): LibraryItem | null {
+  getTrackedItem(materialId: number): LibraryItem | null {
     return findTrackedItem(this.trackedItems(), materialId);
   }
 
@@ -181,7 +157,7 @@ export class SourceMaterialCatalog implements OnInit {
    * Determines the tracking status options for a material.
    * Includes 'Remove From Library' when the material is already tracked.
    */
-  getTrackingOptions(materialId: string): readonly string[] {
+  getTrackingOptions(materialId: number): readonly string[] {
     return trackSelectOptions(this.getTrackedItem(materialId) !== null);
   }
 
@@ -189,7 +165,7 @@ export class SourceMaterialCatalog implements OnInit {
    * Determines the tracking status options for a specific group (season/volume) unit.
    * Includes 'Remove From Library' when that specific unit is already tracked.
    */
-  getGroupTrackingOptions(materialId: string, unitId: string): readonly string[] {
+  getGroupTrackingOptions(materialId: number, unitId: number): readonly string[] {
     return trackSelectOptions(groupUnitIsTracked(this.getTrackedItem(materialId), unitId));
   }
 
@@ -197,7 +173,7 @@ export class SourceMaterialCatalog implements OnInit {
    * Returns the currently tracked status for a material, or null when untracked.
    * Used to preselect the material-level tracking dropdown.
    */
-  getMaterialCurrentStatus(materialId: string): TrackingStatus | null {
+  getMaterialCurrentStatus(materialId: number): TrackingStatus | null {
     return materialTrackingStatus(this.getTrackedItem(materialId));
   }
 
@@ -207,20 +183,20 @@ export class SourceMaterialCatalog implements OnInit {
    * (showing the "Track..." placeholder). Derivation is scoped to this
    * container's children only so sibling seasons never influence the result.
    */
-  getGroupCurrentStatus(materialId: string, unitId: string): TrackingStatus | null {
+  getGroupCurrentStatus(materialId: number, unitId: number): TrackingStatus | null {
     return groupTrackingStatus(this.getTrackedItem(materialId), unitId);
   }
 
   readonly newUnitType = signal<UnitType>('Episode');
-  readonly newUnitGroup = signal<number | null>(null);
+  readonly newUnitParent = signal<number | null>(null);
   readonly newUnitNumber = signal<number | null>(null);
   readonly newUnitTitle = signal('');
-  readonly addingUnitFor = signal<string | null>(null);
+  readonly addingUnitFor = signal<number | null>(null);
   readonly unitAddError = signal<string | null>(null);
 
   readonly unitEditKey = signal<UnitKey | null>(null);
   readonly unitEditType = signal<UnitType>('Episode');
-  readonly unitEditGroup = signal<number | null>(null);
+  readonly unitEditParent = signal<number | null>(null);
   readonly unitEditNumber = signal<number | null>(null);
   readonly unitEditTitle = signal('');
   readonly unitSavingKey = signal<UnitKey | null>(null);
@@ -277,7 +253,7 @@ export class SourceMaterialCatalog implements OnInit {
     }, 50);
   }
 
-  private pollMaterialProbe(materialId: string): void {
+  private pollMaterialProbe(materialId: number): void {
     const probePoll = setInterval(() => {
       const cache = this.catalogService.getUnitCache(materialId);
       if (cache.loading()) {
@@ -405,7 +381,7 @@ export class SourceMaterialCatalog implements OnInit {
     });
   }
 
-  toggleUnits(materialId: string): void {
+  toggleUnits(materialId: number): void {
     if (this.shouldShowUnits(materialId)) {
       if (this.expandedMaterialId() === materialId) {
         this.expandedMaterialId.set(null);
@@ -422,21 +398,21 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   /** Returns true if the material's unit section is currently visible. */
-  isMaterialExpanded(materialId: string): boolean {
+  isMaterialExpanded(materialId: number): boolean {
     return this.shouldShowUnits(materialId);
   }
 
-  private clearSeasonKeys(materialId: string): void {
+  private clearSeasonKeys(materialId: number): void {
     this.expandedSeasonKeys.update(removedWithPrefix(`${materialId}:`));
   }
 
-  addUnit(materialId: string): void {
+  addUnit(materialId: number): void {
     if (this.addingUnitFor()) {
       return;
     }
     const input = this.buildUnitInput(
       this.newUnitType(),
-      this.newUnitGroup(),
+      this.newUnitParent(),
       this.newUnitNumber(),
       this.newUnitTitle(),
     );
@@ -455,7 +431,7 @@ export class SourceMaterialCatalog implements OnInit {
       onSuccess: (created) => {
         if (created) {
           this.newUnitType.set('Episode');
-          this.newUnitGroup.set(null);
+          this.newUnitParent.set(null);
           this.newUnitNumber.set(null);
           this.newUnitTitle.set('');
           this.materialsWithUnits.update((set) => addedTo(set, materialId));
@@ -465,11 +441,11 @@ export class SourceMaterialCatalog implements OnInit {
     });
   }
 
-  beginUnitEdit(materialId: string, unit: ApiSourceMaterialUnit): void {
+  beginUnitEdit(materialId: number, unit: ApiSourceMaterialUnit): void {
     this.actionError.set(null);
     this.unitEditKey.set({ materialId, unitId: unit.id });
     this.unitEditType.set(unit.unitType);
-    this.unitEditGroup.set(unit.groupNumber);
+    this.unitEditParent.set(unit.parentUnitId);
     this.unitEditNumber.set(unit.number);
     this.unitEditTitle.set(unit.title ?? '');
   }
@@ -486,7 +462,7 @@ export class SourceMaterialCatalog implements OnInit {
     }
     const input = this.buildUnitInput(
       this.unitEditType(),
-      this.unitEditGroup(),
+      this.unitEditParent(),
       this.unitEditNumber(),
       this.unitEditTitle(),
     );
@@ -512,7 +488,7 @@ export class SourceMaterialCatalog implements OnInit {
     });
   }
 
-  requestUnitDelete(materialId: string, unit: ApiSourceMaterialUnit): void {
+  requestUnitDelete(materialId: number, unit: ApiSourceMaterialUnit): void {
     this.actionError.set(null);
     this.unitConfirmDeleteKey.set({ materialId, unitId: unit.id });
   }
@@ -551,59 +527,73 @@ export class SourceMaterialCatalog implements OnInit {
   };
 
   /**
-   * Builds the season/volume/book groups shown in the non-admin expanded view.
-   *
-   * Uses explicit container units (Season/Volume/Book) as group headers when
-   * present, matching child units by `parentUnitId` first and falling back to
-   * the container's number or group number. Otherwise, synthesizes groups
-   * from the child units' own group numbers (e.g. episodes tagged with a
-   * season number but no explicit Season unit).
+   * Candidate container units (seasons/volumes/books/collections) a unit of
+   * the given material can nest inside, for the parent dropdowns.
    */
-  getDisplayGroups(materialId: string): readonly MaterialDisplayGroup[] {
+  parentOptionsFor(materialId: number): readonly ParentUnitOption[] {
+    const units = this.unitsByMaterial()[materialId] ?? [];
+    return units
+      .filter((u) => isContainerOrCollectionUnit(u.unitType))
+      .map((u) => ({ id: u.id, label: this.groupUnitLabel(u) }));
+  }
+
+  /**
+   * Builds the season/volume/book groups shown in the expanded views.
+   *
+   * Uses explicit container units (Season/Volume/Book) as group headers,
+   * matching child units by `parentUnitId`. Units whose parent link is
+   * missing or dangling are collected into a trailing "ungrouped" group.
+   * Materials without any container units show their units flat.
+   */
+  getDisplayGroups(materialId: number): readonly MaterialDisplayGroup[] {
     const units = this.unitsByMaterial()[materialId] ?? [];
     const containers = units.filter((u) => isContainerType(u.unitType));
     const details = units.filter(
       (u) => !isContainerType(u.unitType) && u.unitType !== 'Collection',
     );
 
-    if (containers.length > 0) {
-      return containers.map((container) => ({
-        expandKey: container.id,
-        containerId: container.id,
-        label: this.groupUnitLabel(container),
-        units: details.filter(
-          (u) =>
-            (u.parentUnitId
-              ? u.parentUnitId === container.id
-              : (container.number !== null && u.groupNumber === container.number) ||
-                (container.groupNumber !== null && u.groupNumber === container.groupNumber)),
-        ),
-      }));
+    if (containers.length === 0) {
+      if (details.length === 0) {
+        return [];
+      }
+      const noun = details.some((u) => u.unitType === 'Issue')
+        ? 'Volume'
+        : details.some((u) => u.unitType === 'Episode')
+          ? 'Season'
+          : undefined;
+      return [
+        {
+          expandKey: 'ungrouped',
+          containerId: null,
+          label: noun === undefined ? 'All units' : `All ${noun}s`,
+          units: [...units].sort((a, b) => a.number - b.number),
+        },
+      ];
     }
 
-    const noun = details.some((u) => u.unitType === 'Issue') ? 'Volume' : 'Season';
-    const byGroup = new Map<number | null, ApiSourceMaterialUnit[]>();
-    for (const unit of details) {
-      const key = unit.groupNumber ?? null;
-      const list = byGroup.get(key);
-      if (list) {
-        list.push(unit);
-      } else {
-        byGroup.set(key, [unit]);
-      }
-    }
-    return [...byGroup.entries()]
-      .sort((a, b) => (a[0] ?? -1) - (b[0] ?? -1))
-      .map(([groupNumber, groupUnits]) => ({
-        expandKey: groupNumber === null ? 'ungrouped' : String(groupNumber),
-        containerId: null,
-        label: groupNumber === null ? `All ${noun}s` : `${noun} ${groupNumber}`,
-        units: groupUnits,
+    const containerIds = new Set(containers.map((c) => c.id));
+    const groups: MaterialDisplayGroup[] = containers
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((container) => ({
+        expandKey: String(container.id),
+        containerId: container.id,
+        label: this.groupUnitLabel(container),
+        units: details.filter((u) => u.parentUnitId === container.id),
       }));
+
+    const orphans = details.filter(
+      (u) => u.parentUnitId === null || u.parentUnitId === undefined ||
+        !containerIds.has(u.parentUnitId),
+    );
+    if (orphans.length > 0) {
+      groups.push({ expandKey: 'ungrouped', containerId: null, label: 'Ungrouped', units: orphans });
+    }
+    return groups;
   }
 
   /** Returns true if the material should show units in expanded view. */
-  shouldShowUnits(materialId: string): boolean {
+  shouldShowUnits(materialId: number): boolean {
     if (this.userCollapsedIds().has(materialId)) {
       return false;
     }
@@ -615,34 +605,22 @@ export class SourceMaterialCatalog implements OnInit {
    * tracking dropdowns are visible without an extra click.
    */
   readonly autoExpandedMaterialIds = computed(() => {
-    if (this.isAdmin()) return new Set<string>();
-    const ids = new Set<string>();
+    if (this.isAdmin()) return new Set<number>();
+    const ids = new Set<number>();
     for (const [mid, unitList] of Object.entries(this.unitsByMaterial())) {
-      if (this.hasDisplayGroups(mid, unitList)) {
-        ids.add(mid);
+      if (this.hasDisplayGroups(unitList)) {
+        ids.add(Number(mid));
       }
     }
     return ids;
   });
 
   /** Returns true if the material's units render as season/volume/book groups. */
-  private hasDisplayGroups(materialId: string, units: readonly ApiSourceMaterialUnit[]): boolean {
-    if (units.some((u) => isContainerType(u.unitType))) {
-      return true;
-    }
-    if (!this.isGroupedMedium(materialId)) {
-      return false;
-    }
-    const groupNumbers = new Set(
-      units
-        .filter((u) => !isContainerType(u.unitType))
-        .map((u) => u.groupNumber)
-        .filter((g): g is number => g !== null),
-    );
-    return groupNumbers.size > 0;
+  private hasDisplayGroups(units: readonly ApiSourceMaterialUnit[]): boolean {
+    return units.some((u) => isContainerType(u.unitType));
   }
 
-  private isGroupedMedium(materialId: string): boolean {
+  private isGroupedMedium(materialId: number): boolean {
     const material = this.materials().find((m) => m.id === materialId);
     return (
       material?.medium === 'Comic' ||
@@ -656,18 +634,16 @@ export class SourceMaterialCatalog implements OnInit {
    * (e.g. chapters inside books), meaning tracking happens per container
    * rather than at the title level.
    */
-  materialTracksViaContainers(materialId: string): boolean {
+  materialTracksViaContainers(materialId: number): boolean {
     const units = this.catalogService.getUnitCache(materialId).data() ?? [];
     if (units.length === 0) {
       return false;
     }
     const ids = new Set(units.map((u) => u.id));
-    return units.some(
-      (u) => u.parentUnitId != null && u.parentUnitId !== '' && ids.has(u.parentUnitId),
-    );
+    return units.some((u) => u.parentUnitId != null && ids.has(u.parentUnitId));
   }
 
-  isAutoExpanded(materialId: string): boolean {
+  isAutoExpanded(materialId: number): boolean {
     return this.autoExpandedMaterialIds().has(materialId);
   }
 
@@ -676,7 +652,7 @@ export class SourceMaterialCatalog implements OnInit {
    * If status is 'remove', removes the item from the library;
    * otherwise, adds or updates the tracked item with the given status.
    */
-  onTrackMaterial(materialId: string, status: string): void {
+  onTrackMaterial(materialId: number, status: string): void {
     this.doTrackMaterial(materialId, status);
   }
 
@@ -685,11 +661,11 @@ export class SourceMaterialCatalog implements OnInit {
    * If status is 'remove', removes the unit's progress;
    * otherwise, sets the unit's status.
    */
-  onTrackGroupUnit(materialId: string, unitId: string, status: string): void {
+  onTrackGroupUnit(materialId: number, unitId: number, status: string): void {
     this.doTrackGroupUnit(materialId, unitId, status);
   }
 
-  private doTrackMaterial(materialId: string, status: string): void {
+  private doTrackMaterial(materialId: number, status: string): void {
     const userId = this.currentUser()?.id;
     if (!userId) return;
 
@@ -715,7 +691,7 @@ export class SourceMaterialCatalog implements OnInit {
       .subscribe();
   }
 
-  private doTrackGroupUnit(materialId: string, unitId: string, status: string): void {
+  private doTrackGroupUnit(materialId: number, unitId: number, status: string): void {
     const userId = this.currentUser()?.id;
     if (!userId) return;
 
@@ -748,23 +724,15 @@ export class SourceMaterialCatalog implements OnInit {
       .subscribe();
   }
 
-  groupLabel(groupNumber: number | null, groupTitle: string | null, strategy: string): string {
-    if (strategy === 'grouped-volume') {
-      const title = groupTitle ? `: ${groupTitle}` : '';
-      return `Volume ${groupNumber ?? ''}${title}`;
-    }
-    return groupNumber !== null ? `Season ${groupNumber}` : 'Ungrouped';
-  }
-
-  seasonKey(materialId: string, groupKey: number | string | null): string {
+  seasonKey(materialId: number, groupKey: number | string | null): string {
     return `${materialId}:${groupKey}`;
   }
 
-  isSeasonExpanded(materialId: string, groupKey: number | string | null): boolean {
+  isSeasonExpanded(materialId: number, groupKey: number | string | null): boolean {
     return this.expandedSeasonKeys().has(this.seasonKey(materialId, groupKey));
   }
 
-  toggleSeason(materialId: string, groupKey: number | string | null): void {
+  toggleSeason(materialId: number, groupKey: number | string | null): void {
     const key = this.seasonKey(materialId, groupKey);
     this.expandedSeasonKeys.update((set) => toggledIn(set, key));
   }
@@ -791,7 +759,7 @@ export class SourceMaterialCatalog implements OnInit {
 
   private buildUnitInput(
     unitType: UnitType,
-    groupNumber: number | null,
+    parentUnitId: number | null,
     number: number | null,
     title: string,
   ): CreateSourceMaterialUnitInput | null {
@@ -801,13 +769,13 @@ export class SourceMaterialCatalog implements OnInit {
     const trimmedTitle = title.trim();
     return {
       unitType,
-      groupNumber,
+      parentUnitId,
       number,
       title: trimmedTitle || null,
     };
   }
 
-  private loadUnits(materialId: string): void {
+  private loadUnits(materialId: number): void {
     this.unitsLoading.set(true);
     this.unitsError.set(null);
     const cache = this.catalogService.getUnitCache(materialId);
@@ -848,7 +816,7 @@ export class SourceMaterialCatalog implements OnInit {
     }, 50);
   }
 
-  private collapseMaterial(materialId: string): void {
+  private collapseMaterial(materialId: number): void {
     this.userCollapsedIds.update((set) => removedFrom(set, materialId));
     if (this.expandedMaterialId() === materialId) {
       this.expandedMaterialId.set(null);

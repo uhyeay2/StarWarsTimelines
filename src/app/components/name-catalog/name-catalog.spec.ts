@@ -40,7 +40,7 @@ describe('NameCatalog', () => {
   });
 
   /** Triggers a new fetch and flushes it with the given items. */
-  function loadLocations(items: { id: string; name: string }[]): void {
+  function loadLocations(items: { id: number; name: string }[]): void {
     catalogService.invalidateEntity('locations');
     httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush(items);
     fixture.detectChanges();
@@ -67,15 +67,15 @@ describe('NameCatalog', () => {
 
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/locations'));
     expect(post.request.body).toEqual({ name: 'Naboo' });
-    post.flush({ id: 'loc-naboo', name: 'Naboo' });
+    post.flush({ id: 12, name: 'Naboo' });
 
     // Mutation auto-invalidates the cache → re-fetch fires automatically.
     catalogService.fetchLocations();
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([{ id: 'loc-naboo', name: 'Naboo' }]);
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([{ id: 12, name: 'Naboo' }]);
     fixture.detectChanges();
 
     expect(component.newName()).toBe('');
-    expect(component.items()).toEqual([{ id: 'loc-naboo', name: 'Naboo' }]);
+    expect(component.items()).toEqual([{ id: 12, name: 'Naboo' }]);
     expect(fixture.nativeElement.textContent).toContain('Naboo');
   });
 
@@ -94,27 +94,27 @@ describe('NameCatalog', () => {
   });
 
   it('edits an existing location and reloads the list', () => {
-    loadLocations([{ id: 'loc-1', name: 'Old' }]);
+    loadLocations([{ id: 11, name: 'Old' }]);
 
-    component.beginEdit({ id: 'loc-1', name: 'Old' });
+    component.beginEdit({ id: 11, name: 'Old' });
     component.editName.set('New name');
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/locations/loc-1'));
+    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/locations/11'));
     expect(put.request.body).toEqual({ name: 'New name' });
-    put.flush({ id: 'loc-1', name: 'New name' });
+    put.flush({ id: 11, name: 'New name' });
 
-    loadLocations([{ id: 'loc-1', name: 'New name' }]);
+    loadLocations([{ id: 11, name: 'New name' }]);
 
     expect(component.editId()).toBeNull();
-    expect(component.items()).toEqual([{ id: 'loc-1', name: 'New name' }]);
+    expect(component.items()).toEqual([{ id: 11, name: 'New name' }]);
   });
 
   it('requires a name when saving an edit', () => {
-    loadLocations([{ id: 'loc-1', name: 'Old' }]);
+    loadLocations([{ id: 11, name: 'Old' }]);
 
-    component.beginEdit({ id: 'loc-1', name: 'Old' });
+    component.beginEdit({ id: 11, name: 'Old' });
     component.editName.set('   ');
     fixture.detectChanges();
     component.saveEdit();
@@ -124,16 +124,16 @@ describe('NameCatalog', () => {
   });
 
   it('deletes a location after inline confirmation', () => {
-    loadLocations([{ id: 'loc-1', name: 'Delete me' }]);
+    loadLocations([{ id: 11, name: 'Delete me' }]);
 
-    component.requestDelete({ id: 'loc-1', name: 'Delete me' });
+    component.requestDelete({ id: 11, name: 'Delete me' });
     fixture.detectChanges();
-    expect(component.confirmDeleteId()).toBe('loc-1');
+    expect(component.confirmDeleteId()).toBe(11);
     expect(fixture.nativeElement.textContent).toContain('Delete \u201CDelete me\u201D');
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/locations/loc-1'));
+    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/locations/11'));
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadLocations([]);
@@ -143,9 +143,9 @@ describe('NameCatalog', () => {
   });
 
   it('surfaces the conflict message when deleting a linked location', () => {
-    loadLocations([{ id: 'loc-1', name: 'Linked' }]);
+    loadLocations([{ id: 11, name: 'Linked' }]);
 
-    component.requestDelete({ id: 'loc-1', name: 'Linked' });
+    component.requestDelete({ id: 11, name: 'Linked' });
     component.confirmDelete();
 
     httpMock
@@ -160,13 +160,13 @@ describe('NameCatalog', () => {
       'Location is linked to one or more timeline events and cannot be deleted.',
     );
     expect(fixture.nativeElement.textContent).toContain('timeline events');
-    expect(component.confirmDeleteId()).toBe('loc-1');
+    expect(component.confirmDeleteId()).toBe(11);
   });
 
   it('cancels an in-progress delete', () => {
-    loadLocations([{ id: 'loc-1', name: 'Keep me' }]);
+    loadLocations([{ id: 11, name: 'Keep me' }]);
 
-    component.requestDelete({ id: 'loc-1', name: 'Keep me' });
+    component.requestDelete({ id: 11, name: 'Keep me' });
     component.cancelDelete();
 
     expect(component.confirmDeleteId()).toBeNull();
@@ -175,21 +175,21 @@ describe('NameCatalog', () => {
 
   it('filters items by search term', () => {
     loadLocations([
-      { id: 'loc-1', name: 'Luke Skywalker' },
-      { id: 'loc-2', name: 'Leia Organa' },
-      { id: 'loc-3', name: 'Yoda' },
+      { id: 11, name: 'Luke Skywalker' },
+      { id: 12, name: 'Leia Organa' },
+      { id: 13, name: 'Yoda' },
     ]);
 
     component.searchTerm.set('leia');
     fixture.detectChanges();
 
-    expect(component.filteredItems()).toEqual([{ id: 'loc-2', name: 'Leia Organa' }]);
+    expect(component.filteredItems()).toEqual([{ id: 12, name: 'Leia Organa' }]);
     expect(fixture.nativeElement.textContent).toContain('Leia Organa');
     expect(fixture.nativeElement.textContent).not.toContain('Luke Skywalker');
   });
 
   it('shows a no-results message when the search matches nothing', () => {
-    loadLocations([{ id: 'loc-1', name: 'Yoda' }]);
+    loadLocations([{ id: 11, name: 'Yoda' }]);
 
     component.searchTerm.set('Vader');
     fixture.detectChanges();
@@ -200,8 +200,8 @@ describe('NameCatalog', () => {
 
   it('clears the search to show all items again', () => {
     loadLocations([
-      { id: 'loc-1', name: 'Luke' },
-      { id: 'loc-2', name: 'Yoda' },
+      { id: 11, name: 'Luke' },
+      { id: 12, name: 'Yoda' },
     ]);
 
     component.searchTerm.set('Luke');
@@ -214,10 +214,10 @@ describe('NameCatalog', () => {
   });
 
   it('search is case-insensitive', () => {
-    loadLocations([{ id: 'loc-1', name: 'Chewbacca' }]);
+    loadLocations([{ id: 11, name: 'Chewbacca' }]);
 
     component.searchTerm.set('CHEWBACCA');
 
-    expect(component.filteredItems()).toEqual([{ id: 'loc-1', name: 'Chewbacca' }]);
+    expect(component.filteredItems()).toEqual([{ id: 11, name: 'Chewbacca' }]);
   });
 });

@@ -14,7 +14,7 @@
  */
 export interface NamedEntityDto {
   /** Server-assigned unique identifier. */
-  readonly id: string;
+  readonly id: number;
   /** Display name of the entity. */
   readonly name: string;
 }
@@ -27,7 +27,7 @@ export interface NamedEntityDto {
  */
 export interface EventSourceMaterialDto {
   /** Server-assigned unique identifier. */
-  readonly id: string;
+  readonly id: number;
   /** Title of the source material. */
   readonly title: string;
   /** Numeric index into the server-side `Medium` enum. */
@@ -43,15 +43,15 @@ export interface EventSourceMaterialDto {
  */
 export interface EventSourceMaterialUnitDto {
   /** Server-assigned unique identifier. */
-  readonly id: string;
+  readonly id: number;
   /** Numeric index into the server-side `UnitType` enum. */
   readonly unitType: number;
-  /** Group number (e.g. season or volume), or `null` if not applicable. */
-  readonly groupNumber: number | null;
-  /** Sequential number within the group (e.g. episode or issue number). */
+  /** Sequential number within its parent scope (e.g. episode or issue number). */
   readonly number: number;
   /** Optional title of the unit (e.g. episode title). */
   readonly title: string | null;
+  /** Container unit this unit nests inside, or `null` for top-level units. */
+  readonly parentUnitId: number | null;
 }
 
 /**
@@ -74,7 +74,7 @@ export interface EventSourceMaterialLinkDto {
  */
 export interface TimelineEventDto {
   /** Server-assigned unique identifier. */
-  readonly id: string;
+  readonly id: number;
   /** Display title of the event. */
   readonly title: string;
   /** Narrative description of the event. */
