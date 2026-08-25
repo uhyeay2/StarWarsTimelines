@@ -79,9 +79,7 @@ export function materialTrackingStatus(item: LibraryItem | null): TrackingStatus
  */
 export function groupUnitIsTracked(item: LibraryItem | null, unitId: number): boolean {
   const units = item?.units ?? [];
-  return units.some(
-    (u) => (u.id === unitId || u.parentUnitId === unitId) && u.status !== null,
-  );
+  return units.some((u) => (u.id === unitId || u.parentUnitId === unitId) && u.status !== null);
 }
 
 /**
@@ -99,7 +97,10 @@ export function groupUnitIsTracked(item: LibraryItem | null, unitId: number): bo
  * @param unitId  The container unit ID.
  * @returns The derived {@link TrackingStatus}, or `null`.
  */
-export function groupTrackingStatus(item: LibraryItem | null, unitId: number): TrackingStatus | null {
+export function groupTrackingStatus(
+  item: LibraryItem | null,
+  unitId: number,
+): TrackingStatus | null {
   const units = item?.units ?? [];
   const container = units.find((u) => u.id === unitId);
   if (!container) {

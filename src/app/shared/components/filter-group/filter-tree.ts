@@ -10,7 +10,10 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { collectTreeLeaves, FilterTreeNode } from '../../../features/timeline/models/timeline-filters';
+import {
+  collectTreeLeaves,
+  FilterTreeNode,
+} from '../../../features/timeline/models/timeline-filters';
 
 @Directive({
   selector: '[appIndeterminate]',

@@ -97,7 +97,9 @@ describe('matchesFacetFilters', () => {
         },
       ],
     };
-    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20:77'] })).toBe(true);
+    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20:77'] })).toBe(
+      true,
+    );
   });
 
   it('rejects a season source key that does not match the event season', () => {
@@ -113,16 +115,18 @@ describe('matchesFacetFilters', () => {
         },
       ],
     };
-    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20:22'] })).toBe(false);
-    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20'] })).toBe(false);
+    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20:22'] })).toBe(
+      false,
+    );
+    expect(matchesFacetFilters(seasonEvent, { ...createEmptyFilters(), sources: ['20'] })).toBe(
+      false,
+    );
   });
 
   it('matches an ungrouped event by its source id key', () => {
     const event: TimelineEvent = {
       ...EVENT,
-      sources: [
-        { title: 'A New Hope', medium: 'Movie', canon: ['Canon'], sourceId: 10 },
-      ],
+      sources: [{ title: 'A New Hope', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
     };
     expect(matchesFacetFilters(event, { ...createEmptyFilters(), sources: ['10'] })).toBe(true);
   });
@@ -191,12 +195,12 @@ describe('matchesFacetFilters', () => {
         },
       ],
     };
-    expect(
-      matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u74'] }),
-    ).toBe(true);
-    expect(
-      matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u78'] }),
-    ).toBe(false);
+    expect(matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u74'] })).toBe(
+      true,
+    );
+    expect(matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23:u78'] })).toBe(
+      false,
+    );
     expect(matchesFacetFilters(bookEvent, { ...createEmptyFilters(), sources: ['23'] })).toBe(
       false,
     );
@@ -216,12 +220,10 @@ describe('matchesFacetFilters', () => {
         { title: 'Shatterpoint', medium: 'Book' as const, canon: ['Legends'], sourceId: 50 },
       ],
     };
-    expect(
-      matchesFacetFilters(dualEvent, { ...createEmptyFilters(), sources: ['50'] }),
-    ).toBe(true);
-    expect(
-      matchesFacetFilters(dualEvent, { ...createEmptyFilters(), sources: ['60'] }),
-    ).toBe(false);
+    expect(matchesFacetFilters(dualEvent, { ...createEmptyFilters(), sources: ['50'] })).toBe(true);
+    expect(matchesFacetFilters(dualEvent, { ...createEmptyFilters(), sources: ['60'] })).toBe(
+      false,
+    );
   });
 });
 
@@ -333,15 +335,11 @@ describe('collectFacetOptions', () => {
     const options = collectFacetOptions([
       {
         ...EVENT,
-        sources: [
-          { title: 'The Phantom Menace', medium: 'Movie', canon: [], sourceId: 70 },
-        ],
+        sources: [{ title: 'The Phantom Menace', medium: 'Movie', canon: [], sourceId: 70 }],
       },
       {
         ...EVENT,
-        sources: [
-          { title: 'A New Hope', medium: 'Movie', canon: [], sourceId: 10 },
-        ],
+        sources: [{ title: 'A New Hope', medium: 'Movie', canon: [], sourceId: 10 }],
       },
     ]);
     expect(options.sources).toEqual([

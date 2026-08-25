@@ -34,7 +34,9 @@ describe('NavDropdown', () => {
 
   it('renders one menu item per option', () => {
     const items = Array.from(
-      fixture.nativeElement.querySelectorAll('a.nav-dropdown-item') as NodeListOf<HTMLAnchorElement>,
+      fixture.nativeElement.querySelectorAll(
+        'a.nav-dropdown-item',
+      ) as NodeListOf<HTMLAnchorElement>,
     );
     expect(items.map((a) => a.textContent?.trim())).toEqual([
       'Canon',
@@ -51,9 +53,7 @@ describe('NavDropdown', () => {
   });
 
   it('deep-links the toggle from the last-viewed filter', () => {
-    const toggle = fixture.nativeElement.querySelector(
-      '.nav-dropdown-toggle',
-    ) as HTMLAnchorElement;
+    const toggle = fixture.nativeElement.querySelector('.nav-dropdown-toggle') as HTMLAnchorElement;
     expect(toggle.getAttribute('href')).toContain('/timeline?view=Canon');
   });
 });

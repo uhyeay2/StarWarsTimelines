@@ -16,10 +16,7 @@ describe('LocationService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(LocationService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -103,20 +100,21 @@ describe('LocationService', () => {
   describe('error handling', () => {
     it('throws EntityInUseError on 409', async () => {
       const promise = firstValueFrom(service.deleteLocation(1));
-      httpMock.expectOne(`${BASE}/1`).flush(
-        { detail: 'Location is referenced by events' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      httpMock
+        .expectOne(`${BASE}/1`)
+        .flush(
+          { detail: 'Location is referenced by events' },
+          { status: 409, statusText: 'Conflict' },
+        );
 
       await expect(promise).rejects.toBeInstanceOf(EntityInUseError);
     });
 
     it('throws CatalogError with code not-found on 404', async () => {
       const promise = firstValueFrom(service.deleteLocation(999));
-      httpMock.expectOne(`${BASE}/999`).flush(
-        { detail: 'Location not found' },
-        { status: 404, statusText: 'Not Found' },
-      );
+      httpMock
+        .expectOne(`${BASE}/999`)
+        .flush({ detail: 'Location not found' }, { status: 404, statusText: 'Not Found' });
 
       const err = await promise.catch((e) => e);
       expect(err).toBeInstanceOf(CatalogError);

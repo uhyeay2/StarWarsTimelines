@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { ApiSourceMaterial } from '../../../../shared/models/api-source-material';
@@ -293,7 +301,12 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   requestStartCollection(materialId: number): void {
-    this.conversion.requestStartCollection(materialId, this.actionError, () => this.materials(), () => this.closeAllPopups());
+    this.conversion.requestStartCollection(
+      materialId,
+      this.actionError,
+      () => this.materials(),
+      () => this.closeAllPopups(),
+    );
   }
 
   cancelStartCollection(): void {
@@ -301,7 +314,12 @@ export class SourceMaterialCatalog implements OnInit {
   }
 
   submitStartCollection(payload: StartCollectionPayload): void {
-    this.conversion.submitStartCollection(payload, this.actionError, () => this.materials(), () => this.closeAllPopups());
+    this.conversion.submitStartCollection(
+      payload,
+      this.actionError,
+      () => this.materials(),
+      () => this.closeAllPopups(),
+    );
   }
 
   requestConvert(material: ApiSourceMaterial): void {
@@ -368,7 +386,9 @@ export class SourceMaterialCatalog implements OnInit {
 
   // ─── Tracking delegations ─────────────────────────────────────────────
 
-  getTrackedItem(materialId: number): import('../../../../shared/models/library-item').LibraryItem | null {
+  getTrackedItem(
+    materialId: number,
+  ): import('../../../../shared/models/library-item').LibraryItem | null {
     return this.tracking.getTrackedItem(materialId);
   }
 
@@ -380,11 +400,16 @@ export class SourceMaterialCatalog implements OnInit {
     return this.tracking.getGroupTrackingOptions(materialId, unitId);
   }
 
-  getMaterialCurrentStatus(materialId: number): import('../../../../shared/models/tracking-status').TrackingStatus | null {
+  getMaterialCurrentStatus(
+    materialId: number,
+  ): import('../../../../shared/models/tracking-status').TrackingStatus | null {
     return this.tracking.getMaterialCurrentStatus(materialId);
   }
 
-  getGroupCurrentStatus(materialId: number, unitId: number): import('../../../../shared/models/tracking-status').TrackingStatus | null {
+  getGroupCurrentStatus(
+    materialId: number,
+    unitId: number,
+  ): import('../../../../shared/models/tracking-status').TrackingStatus | null {
     return this.tracking.getGroupCurrentStatus(materialId, unitId);
   }
 

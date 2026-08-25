@@ -2,11 +2,7 @@ import { MEDIA, Medium } from '../../../shared/models/medium';
 import { isContainerOrCollectionUnit } from '../../../shared/models/unit-type';
 import { sourceUnitLabel } from '../../../shared/models/source-material';
 import { EventSource, TimelineEvent } from './timeline-event';
-import {
-  FilterTreeNode,
-  TimelineFacetOptions,
-  simpleOption,
-} from './timeline-filters-types';
+import { FilterTreeNode, TimelineFacetOptions, simpleOption } from './timeline-filters-types';
 
 /**
  * Resolves the display label ("Season 1", "Volume 2") for a material's
@@ -56,7 +52,9 @@ function materialChildren(facet: MaterialFacet): FilterTreeNode[] {
     children.push({ value: facet.whole.value, label: `${facet.title} — Whole` });
   }
   const sourcePrefix = facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
-  for (const [containerId, container] of [...facet.containers.entries()].sort((a, b) => a[0] - b[0])) {
+  for (const [containerId, container] of [...facet.containers.entries()].sort(
+    (a, b) => a[0] - b[0],
+  )) {
     const value = `${sourcePrefix}:${containerId}`;
     const label = container.label ?? 'Group';
     if (container.issues.size > 0) {
@@ -204,8 +202,7 @@ export function collectFacetOptions(
       if (children.length === 0 && facet.whole !== undefined) {
         materialNodes.push(facet.whole);
       } else if (children.length > 0) {
-        const materialValue =
-          facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
+        const materialValue = facet.sourceId !== undefined ? String(facet.sourceId) : facet.title;
         materialNodes.push({ value: materialValue, label: facet.title, children });
       }
     }

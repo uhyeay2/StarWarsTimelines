@@ -111,8 +111,12 @@ describe('RegisterPage', () => {
   });
 
   it('toggles the password visibility', () => {
-    const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
-    const confirmInput = fixture.nativeElement.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+    const passwordInput = fixture.nativeElement.querySelector(
+      'input[name="password"]',
+    ) as HTMLInputElement;
+    const confirmInput = fixture.nativeElement.querySelector(
+      'input[name="confirmPassword"]',
+    ) as HTMLInputElement;
     expect(passwordInput.type).toBe('password');
     expect(confirmInput.type).toBe('password');
 
@@ -167,10 +171,12 @@ describe('RegisterPage', () => {
     fixture.detectChanges();
     component.submit();
 
-    httpMock.expectOne(REGISTER_URL).flush(
-      { detail: 'A user with this email address is already registered.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(REGISTER_URL)
+      .flush(
+        { detail: 'A user with this email address is already registered.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     await fixture.whenStable();
     fixture.detectChanges();
 

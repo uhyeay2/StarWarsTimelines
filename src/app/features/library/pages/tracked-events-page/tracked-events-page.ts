@@ -14,7 +14,15 @@
  * @see {@link LibraryService} for the backend API integration.
  */
 
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LibraryItem } from '../../../../shared/models/library-item';
 import { MEDIA, Medium } from '../../../../shared/models/medium';
@@ -91,9 +99,7 @@ export class TrackedEventsPage {
     if (selected.length === 0) {
       return this.tracked();
     }
-    return this.tracked().filter(
-      (item) => item.status !== null && selected.includes(item.status),
-    );
+    return this.tracked().filter((item) => item.status !== null && selected.includes(item.status));
   });
 
   /** Whether specific statuses are selected (as opposed to "All"). */

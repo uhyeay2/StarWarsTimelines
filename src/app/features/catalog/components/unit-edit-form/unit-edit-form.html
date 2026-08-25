@@ -1,14 +1,6 @@
 <form class="unit-edit" (ngSubmit)="save.emit()">
-  <input
-    name="unitEditNumber"
-    type="number"
-    min="1"
-    required
-    [(ngModel)]="number" />
-  <input
-    name="unitEditTitle"
-    [(ngModel)]="title"
-    placeholder="Title (optional)" />
+  <input name="unitEditNumber" type="number" min="1" required [(ngModel)]="number" />
+  <input name="unitEditTitle" [(ngModel)]="title" placeholder="Title (optional)" />
   <button class="btn btn-sm" type="submit" [disabled]="saving()">
     {{ saving() ? 'Saving…' : 'Save' }}
   </button>

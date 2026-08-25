@@ -14,7 +14,14 @@
  * @see {@link TimelineEventItem} for individual event card rendering.
  */
 
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
@@ -70,7 +77,6 @@ export class Timeline {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((params) => this.presenter.applyViewParam(params));
-
 
     effect(() => {
       this.presenter.sourceIds.set(this.sourceIds());

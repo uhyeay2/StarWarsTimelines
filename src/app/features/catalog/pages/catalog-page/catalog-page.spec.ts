@@ -73,7 +73,9 @@ describe('CatalogPage', () => {
   it('switches to the vehicles tab on click', () => {
     clickTab('Vehicles');
 
-    const vehiclesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/vehicles'));
+    const vehiclesRequest = httpMock.expectOne(
+      (r) => r.method === 'GET' && r.url.endsWith('/api/vehicles'),
+    );
     vehiclesRequest.flush([]);
     fixture.detectChanges();
 
@@ -86,9 +88,13 @@ describe('CatalogPage', () => {
   it('switches to the species tab on click', () => {
     clickTab('Species');
 
-    const speciesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
+    const speciesRequest = httpMock.expectOne(
+      (r) => r.method === 'GET' && r.url.endsWith('/api/species'),
+    );
     speciesRequest.flush([]);
-    const locationsRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/locations'));
+    const locationsRequest = httpMock.expectOne(
+      (r) => r.method === 'GET' && r.url.endsWith('/api/locations'),
+    );
     locationsRequest.flush([]);
     fixture.detectChanges();
 

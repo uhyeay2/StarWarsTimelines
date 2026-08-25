@@ -12,7 +12,8 @@
         name="search"
         type="search"
         placeholder="Search source materials…"
-        [(ngModel)]="searchTerm" />
+        [(ngModel)]="searchTerm"
+      />
     </label>
 
     @for (group of mediumGroups(); track group.medium) {
@@ -22,10 +23,14 @@
             type="button"
             class="medium-header-toggle"
             (click)="toggleMedium(group.medium)"
-            [attr.aria-expanded]="isMediumExpanded(group.medium)">
+            [attr.aria-expanded]="isMediumExpanded(group.medium)"
+          >
             <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
             <span class="medium-label">{{ group.medium }}</span>
-            <span class="medium-count">{{ group.materials.length }} {{ group.materials.length === 1 ? 'material' : 'materials' }}</span>
+            <span class="medium-count"
+              >{{ group.materials.length }}
+              {{ group.materials.length === 1 ? 'material' : 'materials' }}</span
+            >
           </button>
           @if (isAdmin()) {
             <button
@@ -33,7 +38,8 @@
               type="button"
               [disabled]="probeLoading()"
               [title]="'Add a ' + group.medium + ' source material'"
-              (click)="openAddMaterial(group.medium)">
+              (click)="openAddMaterial(group.medium)"
+            >
               + Add
             </button>
           }
@@ -47,18 +53,27 @@
                     <input
                       name="editTitle"
                       [(ngModel)]="editTitle"
-                      aria-label="Renamed source material" />
+                      aria-label="Renamed source material"
+                    />
                     <select name="editMedium" [(ngModel)]="editMedium" aria-label="Medium">
                       @for (medium of media; track medium) {
                         <option [value]="medium">{{ medium }}</option>
                       }
                     </select>
-                    <select name="editCanonType" [(ngModel)]="editCanonType" aria-label="Canon type">
+                    <select
+                      name="editCanonType"
+                      [(ngModel)]="editCanonType"
+                      aria-label="Canon type"
+                    >
                       @for (canonType of canonTypes; track canonType) {
                         <option [value]="canonType">{{ canonType }}</option>
                       }
                     </select>
-                    <button class="btn btn-sm" type="submit" [disabled]="savingId() === material.id">
+                    <button
+                      class="btn btn-sm"
+                      type="submit"
+                      [disabled]="savingId() === material.id"
+                    >
                       {{ savingId() === material.id ? 'Saving…' : 'Save' }}
                     </button>
                     <button class="btn btn-sm" type="button" (click)="cancelEdit()">Cancel</button>
@@ -66,18 +81,21 @@
                 } @else if (confirmDeleteId() === material.id) {
                   <div class="delete-prompt">
                     <p>
-                      Delete "{{ material.title }}"? This is blocked while it is referenced by a timeline
-                      event or a user library.
+                      Delete "{{ material.title }}"? This is blocked while it is referenced by a
+                      timeline event or a user library.
                     </p>
                     <div class="delete-actions">
                       <button
                         class="btn btn-sm btn-danger"
                         type="button"
                         [disabled]="deletingId() === material.id"
-                        (click)="confirmDelete()">
+                        (click)="confirmDelete()"
+                      >
                         {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
                       </button>
-                      <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
+                      <button class="btn btn-sm" type="button" (click)="cancelDelete()">
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 } @else {
@@ -92,7 +110,8 @@
                           class="source-expand"
                           [class.source-expand--open]="isMaterialExpanded(material.id)"
                           (click)="toggleUnits(material.id)"
-                          aria-label="Toggle units">
+                          aria-label="Toggle units"
+                        >
                           {{ isMaterialExpanded(material.id) ? '▾' : '▸' }}
                         </button>
                       } @else {
@@ -112,7 +131,8 @@
                             type="button"
                             [disabled]="probeLoading()"
                             title="Add a unit to this source material"
-                            (click)="onMaterialAddClick(group.medium, material)">
+                            (click)="onMaterialAddClick(group.medium, material)"
+                          >
                             + Add
                           </button>
                         }
@@ -121,7 +141,8 @@
                             class="btn btn-sm"
                             type="button"
                             title="Turn this standalone book into a collection of books"
-                            (click)="requestConvert(material)">
+                            (click)="requestConvert(material)"
+                          >
                             Convert to Collection
                           </button>
                         }
@@ -131,11 +152,16 @@
                         <button
                           class="btn btn-sm btn-danger"
                           type="button"
-                          (click)="requestDelete(material)">
+                          (click)="requestDelete(material)"
+                        >
                           Delete
                         </button>
                       </div>
-                    } @else if (group.medium === 'Movie' || group.medium === 'Video Game' || (group.medium === 'Book' && !materialTracksViaContainers(material.id))) {
+                    } @else if (
+                      group.medium === 'Movie' ||
+                      group.medium === 'Video Game' ||
+                      (group.medium === 'Book' && !materialTracksViaContainers(material.id))
+                    ) {
                       <!-- ═══════════════════════════════════════════════════════════════
                            NON-ADMIN: title-level tracking dropdown
                            Movies, Books, Games → track at title level
@@ -145,7 +171,8 @@
                         [label]="'Track ' + material.title"
                         [options]="getTrackingOptions(material.id)"
                         [currentStatus]="getMaterialCurrentStatus(material.id)"
-                        (statusChange)="onTrackMaterial(material.id, $event)" />
+                        (statusChange)="onTrackMaterial(material.id, $event)"
+                      />
                     }
                   </div>
 
@@ -165,26 +192,55 @@
                         @if (!isAdmin()) {
                           <!-- ─── Movies: no units to display ─── -->
                           @if (group.medium === 'Movie') {
-                          } @else if (group.medium === 'Comic' || group.medium === 'Live Action Show' || group.medium === 'Animated Show' || (group.medium === 'Book' && materialTracksViaContainers(material.id))) {
+                          } @else if (
+                            group.medium === 'Comic' ||
+                            group.medium === 'Live Action Show' ||
+                            group.medium === 'Animated Show' ||
+                            (group.medium === 'Book' && materialTracksViaContainers(material.id))
+                          ) {
                             <!-- Comics/Shows/Book collections: season/volume/book groups with tracking -->
-                            @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
+                            @for (
+                              displayGroup of getDisplayGroups(material.id);
+                              track displayGroup.expandKey
+                            ) {
                               <div class="group-track-section">
                                 <div class="track-group-row">
                                   <button
                                     type="button"
                                     class="season-header"
-                                    [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
-                                    (click)="toggleSeason(material.id, displayGroup.expandKey)">
-                                    <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                    [class.season-header--open]="
+                                      isSeasonExpanded(material.id, displayGroup.expandKey)
+                                    "
+                                    (click)="toggleSeason(material.id, displayGroup.expandKey)"
+                                  >
+                                    <span class="season-toggle">{{
+                                      isSeasonExpanded(material.id, displayGroup.expandKey)
+                                        ? '▾'
+                                        : '▸'
+                                    }}</span>
                                     <span class="season-label">{{ displayGroup.label }}</span>
                                   </button>
                                   @if (displayGroup.containerId !== null) {
                                     <app-track-select
                                       variant="group"
                                       [label]="'Track ' + displayGroup.label"
-                                      [options]="getGroupTrackingOptions(material.id, displayGroup.containerId)"
-                                      [currentStatus]="getGroupCurrentStatus(material.id, displayGroup.containerId)"
-                                      (statusChange)="onTrackGroupUnit(material.id, displayGroup.containerId, $event)" />
+                                      [options]="
+                                        getGroupTrackingOptions(
+                                          material.id,
+                                          displayGroup.containerId
+                                        )
+                                      "
+                                      [currentStatus]="
+                                        getGroupCurrentStatus(material.id, displayGroup.containerId)
+                                      "
+                                      (statusChange)="
+                                        onTrackGroupUnit(
+                                          material.id,
+                                          displayGroup.containerId,
+                                          $event
+                                        )
+                                      "
+                                    />
                                   }
                                 </div>
                                 @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
@@ -225,31 +281,60 @@
                               <ul class="unit-list">
                                 @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
                                   <li class="unit-item">
-                                    <ng-container *ngTemplateOutlet="adminUnitItem; context: { $implicit: unit, materialId: material.id }"></ng-container>
+                                    <ng-container
+                                      *ngTemplateOutlet="
+                                        adminUnitItem;
+                                        context: { $implicit: unit, materialId: material.id }
+                                      "
+                                    ></ng-container>
                                   </li>
                                 }
                               </ul>
                             }
                             @default {
                               <ul class="unit-list">
-                                @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
+                                @for (
+                                  displayGroup of getDisplayGroups(material.id);
+                                  track displayGroup.expandKey
+                                ) {
                                   <li class="season-group">
                                     <div class="track-group-row">
                                       <button
                                         type="button"
                                         class="season-header"
-                                        [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
-                                        (click)="toggleSeason(material.id, displayGroup.expandKey)">
-                                        <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                        [class.season-header--open]="
+                                          isSeasonExpanded(material.id, displayGroup.expandKey)
+                                        "
+                                        (click)="toggleSeason(material.id, displayGroup.expandKey)"
+                                      >
+                                        <span class="season-toggle">{{
+                                          isSeasonExpanded(material.id, displayGroup.expandKey)
+                                            ? '▾'
+                                            : '▸'
+                                        }}</span>
                                         <span class="season-label">{{ displayGroup.label }}</span>
-                                        <span class="season-count">{{ displayGroup.units.length }} {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span>
+                                        <span class="season-count"
+                                          >{{ displayGroup.units.length }}
+                                          {{
+                                            displayGroup.units.length === 1 ? 'unit' : 'units'
+                                          }}</span
+                                        >
                                       </button>
                                       @if (displayGroup.containerId !== null) {
                                         <button
                                           class="btn btn-sm container-add-button"
                                           type="button"
                                           [title]="'Add a unit inside ' + displayGroup.label"
-                                          (click)="openAddUnitPopup({ materialId: material.id, parentUnitId: displayGroup.containerId, childType: nestedChildTypeFor(displayGroup.containerType) })">
+                                          (click)="
+                                            openAddUnitPopup({
+                                              materialId: material.id,
+                                              parentUnitId: displayGroup.containerId,
+                                              childType: nestedChildTypeFor(
+                                                displayGroup.containerType
+                                              ),
+                                            })
+                                          "
+                                        >
                                           + Add
                                         </button>
                                       }
@@ -258,7 +343,15 @@
                                       <ul class="season-episodes">
                                         @for (unit of displayGroup.units; track unit.id) {
                                           <li class="unit-item">
-                                            <ng-container *ngTemplateOutlet="adminUnitItem; context: { $implicit: unit, materialId: material.id }"></ng-container>
+                                            <ng-container
+                                              *ngTemplateOutlet="
+                                                adminUnitItem;
+                                                context: {
+                                                  $implicit: unit,
+                                                  materialId: material.id,
+                                                }
+                                              "
+                                            ></ng-container>
                                           </li>
                                         }
                                       </ul>
@@ -280,7 +373,9 @@
       </div>
     }
     @if (searchTerm() && mediumGroups().length === 0 && materials().length > 0) {
-      <p class="form-status" role="status" aria-live="polite">No source materials match your search.</p>
+      <p class="form-status" role="status" aria-live="polite">
+        No source materials match your search.
+      </p>
     }
     @if (actionError()) {
       <p class="form-error" role="alert" aria-live="polite">{{ actionError() }}</p>
@@ -299,14 +394,16 @@
           [error]="addError()"
           [saving]="adding()"
           (save)="submitAddMaterial()"
-          (cancel)="cancelAddMaterial()" />
+          (cancel)="cancelAddMaterial()"
+        />
       }
 
       @if (bookChoiceMaterialId() !== null) {
         <app-book-choice-dialog
           (chooseChapter)="chooseBookChapter(bookChoiceMaterialId()!)"
           (chooseBook)="requestStartCollection(bookChoiceMaterialId()!)"
-          (cancel)="cancelBookChoice()" />
+          (cancel)="cancelBookChoice()"
+        />
       }
 
       @if (unitPopupContext(); as context) {
@@ -317,7 +414,8 @@
           [error]="unitAddError()"
           [saving]="addingUnitFor() === context.materialId"
           (save)="submitAddUnit()"
-          (cancel)="cancelAddUnit()" />
+          (cancel)="cancelAddUnit()"
+        />
       }
 
       @if (convertPopupMaterialId() !== null) {
@@ -326,7 +424,8 @@
           [error]="actionError()"
           [saving]="convertingId() === convertPopupMaterialId()"
           (convert)="submitConvert()"
-          (cancel)="cancelConvert()" />
+          (cancel)="cancelConvert()"
+        />
       }
 
       @if (startCollectionMaterialId() !== null) {
@@ -335,7 +434,8 @@
           [error]="actionError()"
           [saving]="startingCollectionFor() === startCollectionMaterialId()"
           (save)="submitStartCollection($event)"
-          (cancel)="cancelStartCollection()" />
+          (cancel)="cancelStartCollection()"
+        />
       }
     }
   }
@@ -347,21 +447,21 @@
         [(title)]="unitEditTitle"
         [saving]="unitSavingKey()?.unitId === unit.id"
         (save)="saveUnitEdit()"
-        (cancel)="cancelUnitEdit()" />
+        (cancel)="cancelUnitEdit()"
+      />
     } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
       <span class="unit-delete-prompt">
-        Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
-        timeline event or user progress.
+        Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a timeline event or
+        user progress.
         <button
           class="btn btn-sm btn-danger"
           type="button"
           [disabled]="unitDeletingKey()?.unitId === unit.id"
-          (click)="confirmUnitDelete()">
+          (click)="confirmUnitDelete()"
+        >
           {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
         </button>
-        <button class="btn btn-sm" type="button" (click)="cancelUnitDelete()">
-          Cancel
-        </button>
+        <button class="btn btn-sm" type="button" (click)="cancelUnitDelete()">Cancel</button>
       </span>
     } @else {
       <span class="unit-label">
@@ -369,16 +469,14 @@
         {{ unitLabel(unit) }}
       </span>
       <div class="unit-actions">
-        <button
-          class="btn btn-sm"
-          type="button"
-          (click)="beginUnitEdit(materialId, unit)">
+        <button class="btn btn-sm" type="button" (click)="beginUnitEdit(materialId, unit)">
           Edit
         </button>
         <button
           class="btn btn-sm btn-danger"
           type="button"
-          (click)="requestUnitDelete(materialId, unit)">
+          (click)="requestUnitDelete(materialId, unit)"
+        >
           Delete
         </button>
       </div>

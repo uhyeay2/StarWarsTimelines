@@ -3,7 +3,9 @@
     class="nav-dropdown-toggle"
     [routerLink]="toggleLink()"
     [queryParams]="toggleQueryParams() ?? null"
-    routerLinkActive="active">{{ label() }}</a>
+    routerLinkActive="active"
+    >{{ label() }}</a
+  >
   <div class="nav-dropdown-menu">
     <div class="nav-dropdown-panel" role="menu">
       @for (option of options(); track option.label) {
@@ -13,7 +15,9 @@
           [routerLink]="option.routerLink"
           [queryParams]="option.queryParams ?? null"
           [routerLinkActive]="highlightItems() ? 'active' : ''"
-          (keydown)="onKeydown($event)">{{ option.label }}</a>
+          (keydown)="onKeydown($event)"
+          >{{ option.label }}</a
+        >
       }
     </div>
   </div>

@@ -1,17 +1,18 @@
 <!-- ─── Known Timeline Page ─────────────────────────────────────────────── -->
 <section class="known-timeline-page">
-
   <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
   @if (!user()) {
-    <app-login-prompt>Log in to build your known timeline from your tracked events.</app-login-prompt>
-  <!-- ─── Known Timeline Layout (when logged in) ─────────────────────── -->
+    <app-login-prompt
+      >Log in to build your known timeline from your tracked events.</app-login-prompt
+    >
+    <!-- ─── Known Timeline Layout (when logged in) ─────────────────────── -->
   } @else {
     <div class="known-timeline-layout">
-
       <!-- ─── Status Filter Tabs ────────────────────────────────────── -->
       <app-status-filter
         [(selection)]="statusSelection"
-        label="Filter known timeline by tracking status" />
+        label="Filter known timeline by tracking status"
+      />
       <!-- ─── End Status Filter Tabs ────────────────────────────────── -->
 
       <!-- ─── Timeline Component ─────────────────────────────────────── -->
@@ -19,7 +20,8 @@
         [sourceIds]="consumedIds()"
         [trackedUnitScope]="trackedUnitScope()"
         [heading]="'Known Timeline'"
-        [description]="'Events from the source material you are watching, reading, or have finished. Add or adjust progress from My Tracked Events.'" />
+        [description]="'Events from the source material you are watching, reading, or have finished. Add or adjust progress from My Tracked Events.'"
+      />
       <!-- ─── End Timeline Component ─────────────────────────────────── -->
     </div>
   }

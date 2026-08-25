@@ -56,20 +56,18 @@ describe('AccountService', () => {
 
   it('surfaces a server error when the account cannot be loaded', async () => {
     const fetchPromise = firstValueFrom(service.getAccount('unknown-id'));
-    httpMock.expectOne(`${ACCOUNT_URL}/unknown-id`).flush(
-      { detail: 'No user with the requested identifier was found.' },
-      { status: 404, statusText: 'Not Found' },
-    );
+    httpMock
+      .expectOne(`${ACCOUNT_URL}/unknown-id`)
+      .flush(
+        { detail: 'No user with the requested identifier was found.' },
+        { status: 404, statusText: 'Not Found' },
+      );
 
-    await expect(fetchPromise).rejects.toThrow(
-      'No user with the requested identifier was found.',
-    );
+    await expect(fetchPromise).rejects.toThrow('No user with the requested identifier was found.');
   });
 
   it('updates the display name and stores the updated user', async () => {
-    const updatePromise = firstValueFrom(
-      service.updateDisplayName(PADME_ID, 'Queen Amidala'),
-    );
+    const updatePromise = firstValueFrom(service.updateDisplayName(PADME_ID, 'Queen Amidala'));
     const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/display-name`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ displayName: 'Queen Amidala' });
@@ -83,9 +81,7 @@ describe('AccountService', () => {
   });
 
   it('updates the email address and reports the unverified state', async () => {
-    const updatePromise = firstValueFrom(
-      service.updateEmail(PADME_ID, 'queen@example.com'),
-    );
+    const updatePromise = firstValueFrom(service.updateEmail(PADME_ID, 'queen@example.com'));
     const request = httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/email`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ email: 'queen@example.com' });
@@ -100,13 +96,13 @@ describe('AccountService', () => {
   });
 
   it('surfaces a server error when the email is already in use', async () => {
-    const updatePromise = firstValueFrom(
-      service.updateEmail(PADME_ID, 'taken@example.com'),
-    );
-    httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/email`).flush(
-      { detail: 'A user with this email address is already registered.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    const updatePromise = firstValueFrom(service.updateEmail(PADME_ID, 'taken@example.com'));
+    httpMock
+      .expectOne(`${ACCOUNT_URL}/${PADME_ID}/email`)
+      .flush(
+        { detail: 'A user with this email address is already registered.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
     await expect(updatePromise).rejects.toThrow(
       'A user with this email address is already registered.',
@@ -129,13 +125,13 @@ describe('AccountService', () => {
   });
 
   it('surfaces a server error when the current password is incorrect', async () => {
-    const updatePromise = firstValueFrom(
-      service.updatePassword(PADME_ID, 'wrong', 'noblequeen1'),
-    );
-    httpMock.expectOne(`${ACCOUNT_URL}/${PADME_ID}/password`).flush(
-      { detail: 'The current password is incorrect.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    const updatePromise = firstValueFrom(service.updatePassword(PADME_ID, 'wrong', 'noblequeen1'));
+    httpMock
+      .expectOne(`${ACCOUNT_URL}/${PADME_ID}/password`)
+      .flush(
+        { detail: 'The current password is incorrect.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
     await expect(updatePromise).rejects.toThrow('The current password is incorrect.');
   });

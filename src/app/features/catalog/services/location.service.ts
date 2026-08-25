@@ -43,12 +43,17 @@ export class LocationService {
    * @returns An observable of the created location.
    */
   createLocation(name: string): Observable<ApiLocation> {
-    return this.http
-      .post<ApiLocation>(`${CATALOG_API_BASE}/locations`, { name })
-      .pipe(
-        catchError(catalogErrorHandler('Unable to create the location. Please try again.', 'createLocation', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.post<ApiLocation>(`${CATALOG_API_BASE}/locations`, { name }).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to create the location. Please try again.',
+          'createLocation',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 
   /**
@@ -58,12 +63,17 @@ export class LocationService {
    * @returns An observable of the updated location.
    */
   updateLocation(id: number, name: string): Observable<ApiLocation> {
-    return this.http
-      .put<ApiLocation>(`${CATALOG_API_BASE}/locations/${id}`, { name })
-      .pipe(
-        catchError(catalogErrorHandler('Unable to update the location. Please try again.', 'updateLocation', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.put<ApiLocation>(`${CATALOG_API_BASE}/locations/${id}`, { name }).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to update the location. Please try again.',
+          'updateLocation',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 
   /**
@@ -72,11 +82,16 @@ export class LocationService {
    * @returns An observable that completes when the deletion is done.
    */
   deleteLocation(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${CATALOG_API_BASE}/locations/${id}`)
-      .pipe(
-        catchError(catalogErrorHandler('Unable to delete the location. Please try again.', 'deleteLocation', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.delete<void>(`${CATALOG_API_BASE}/locations/${id}`).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to delete the location. Please try again.',
+          'deleteLocation',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 }

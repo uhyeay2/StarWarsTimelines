@@ -10,7 +10,12 @@ import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog.dto';
 const BASE = `${environment.apiBaseUrl}/api/source-materials`;
 
 const MATERIAL_DTO: SourceMaterialDto = { id: 1, title: 'A New Hope', medium: 0, canonType: 0 };
-const MATERIAL = { id: 1, title: 'A New Hope', medium: 'Movie' as const, canonType: 'Canon' as const };
+const MATERIAL = {
+  id: 1,
+  title: 'A New Hope',
+  medium: 'Movie' as const,
+  canonType: 'Canon' as const,
+};
 
 const UNIT_DTO: SourceMaterialUnitDto = {
   id: 10,
@@ -35,10 +40,7 @@ describe('SourceMaterialService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(SourceMaterialService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -63,9 +65,9 @@ describe('SourceMaterialService', () => {
 
     it('maps medium code 1 to Book', () => {
       service.fetchSourceMaterials();
-      httpMock.expectOne(BASE).flush([
-        { id: 2, title: 'Heir to the Empire', medium: 1, canonType: 1 },
-      ]);
+      httpMock
+        .expectOne(BASE)
+        .flush([{ id: 2, title: 'Heir to the Empire', medium: 1, canonType: 1 }]);
 
       const item = service.sourceMaterials()![0]!;
       expect(item.medium).toBe('Book');
@@ -93,11 +95,13 @@ describe('SourceMaterialService', () => {
 
   describe('createSourceMaterial', () => {
     it('POSTs with enum-to-code mapping and returns mapped result', async () => {
-      const promise = firstValueFrom(service.createSourceMaterial({
-        title: 'The Empire Strikes Back',
-        medium: 'Movie',
-        canonType: 'Canon',
-      }));
+      const promise = firstValueFrom(
+        service.createSourceMaterial({
+          title: 'The Empire Strikes Back',
+          medium: 'Movie',
+          canonType: 'Canon',
+        }),
+      );
 
       const req = httpMock.expectOne(BASE);
       expect(req.request.method).toBe('POST');
@@ -119,11 +123,13 @@ describe('SourceMaterialService', () => {
 
   describe('updateSourceMaterial', () => {
     it('PUTs with enum-to-code mapping to the material URL', async () => {
-      const promise = firstValueFrom(service.updateSourceMaterial(1, {
-        title: 'A New Hope (Special Edition)',
-        medium: 'Movie',
-        canonType: 'Canon & Legends',
-      }));
+      const promise = firstValueFrom(
+        service.updateSourceMaterial(1, {
+          title: 'A New Hope (Special Edition)',
+          medium: 'Movie',
+          canonType: 'Canon & Legends',
+        }),
+      );
 
       const req = httpMock.expectOne(`${BASE}/1`);
       expect(req.request.method).toBe('PUT');
@@ -166,10 +172,12 @@ describe('SourceMaterialService', () => {
   describe('error handling', () => {
     it('throws EntityInUseError on material delete 409', async () => {
       const promise = firstValueFrom(service.deleteSourceMaterial(1));
-      httpMock.expectOne(`${BASE}/1`).flush(
-        { detail: 'Source material is referenced by events' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      httpMock
+        .expectOne(`${BASE}/1`)
+        .flush(
+          { detail: 'Source material is referenced by events' },
+          { status: 409, statusText: 'Conflict' },
+        );
 
       await expect(promise).rejects.toBeInstanceOf(EntityInUseError);
     });
@@ -183,10 +191,9 @@ describe('SourceMaterialService', () => {
           parentUnitId: null,
         }),
       );
-      httpMock.expectOne(`${BASE}/1/units`).flush(
-        { detail: 'Unit number already exists' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      httpMock
+        .expectOne(`${BASE}/1/units`)
+        .flush({ detail: 'Unit number already exists' }, { status: 409, statusText: 'Conflict' });
 
       const err = await promise.catch((e) => e);
       expect(err).toBeInstanceOf(DuplicateEntityError);
@@ -195,10 +202,9 @@ describe('SourceMaterialService', () => {
 
     it('throws CatalogError with code not-found on 404', async () => {
       const promise = firstValueFrom(service.deleteSourceMaterial(999));
-      httpMock.expectOne(`${BASE}/999`).flush(
-        { detail: 'Source material not found' },
-        { status: 404, statusText: 'Not Found' },
-      );
+      httpMock
+        .expectOne(`${BASE}/999`)
+        .flush({ detail: 'Source material not found' }, { status: 404, statusText: 'Not Found' });
 
       const err = await promise.catch((e) => e);
       expect(err).toBeInstanceOf(CatalogError);
@@ -230,9 +236,18 @@ describe('SourceMaterialService', () => {
     it('maps unitType numeric code to string union', () => {
       const cache = service.getUnitCache(1);
       cache.fetch();
-      httpMock.expectOne(`${BASE}/1/units`).flush([
-        { id: 10, sourceMaterialId: 1, unitType: 3, number: 1, title: 'Season 1', parentUnitId: null },
-      ]);
+      httpMock
+        .expectOne(`${BASE}/1/units`)
+        .flush([
+          {
+            id: 10,
+            sourceMaterialId: 1,
+            unitType: 3,
+            number: 1,
+            title: 'Season 1',
+            parentUnitId: null,
+          },
+        ]);
 
       expect(cache.data()![0]!.unitType).toBe('Season');
     });
@@ -260,8 +275,22 @@ describe('SourceMaterialService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ collectionTitle: 'Thrawn Trilogy' });
       req.flush([
-        { id: 20, sourceMaterialId: 1, unitType: 6, number: 1, title: 'Collection', parentUnitId: null },
-        { id: 21, sourceMaterialId: 1, unitType: 7, number: 1, title: 'Heir to the Empire', parentUnitId: 20 },
+        {
+          id: 20,
+          sourceMaterialId: 1,
+          unitType: 6,
+          number: 1,
+          title: 'Collection',
+          parentUnitId: null,
+        },
+        {
+          id: 21,
+          sourceMaterialId: 1,
+          unitType: 7,
+          number: 1,
+          title: 'Heir to the Empire',
+          parentUnitId: 20,
+        },
       ]);
 
       const units = await promise;

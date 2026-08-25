@@ -38,7 +38,14 @@ describe('App', () => {
     sessionStorage.setItem('starwars-timelines.token', 'token-value');
     sessionStorage.setItem(
       'starwars-timelines.user',
-      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
+      JSON.stringify({
+        id: 'user-padme',
+        username: 'padme',
+        displayName: 'Padmé Amidala',
+        email: 'padme@example.com',
+        emailVerified: true,
+        role: 'Standard',
+      }),
     );
 
     const fixture = TestBed.createComponent(App);

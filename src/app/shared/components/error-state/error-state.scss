@@ -22,7 +22,7 @@
 }
 
 .error-state-retry {
-    background: rgba($color-accent, 0.2);
+  background: rgba($color-accent, 0.2);
   border: 1px solid $color-accent-border;
   border-radius: $radius-pill;
   padding: 0.5rem 1.5rem;
@@ -33,6 +33,6 @@
   transition: background 0.15s ease;
 
   &:hover {
-  background: rgba($color-accent, 0.1);
+    background: rgba($color-accent, 0.1);
   }
 }

@@ -6,7 +6,8 @@
     [attr.aria-expanded]="open()"
     [attr.aria-label]="ariaLabel()"
     (click)="toggle()"
-    (keydown.escape)="close()">
+    (keydown.escape)="close()"
+  >
     <span class="ss-value">{{ selectedName() }}</span>
     <span class="ss-caret" aria-hidden="true">▾</span>
   </button>
@@ -20,7 +21,8 @@
         class="ss-search"
         placeholder="Type to search…"
         [(ngModel)]="query"
-        (keydown)="onSearchKeydown($event)" />
+        (keydown)="onSearchKeydown($event)"
+      />
       <ul class="ss-options" role="listbox">
         @for (option of entries(); track option.id) {
           <li
@@ -32,11 +34,11 @@
             [class.ss-option--active]="$index === activeIndex()"
             (click)="pick(option)"
             (keydown.enter)="pick(option)"
-            (pointerenter)="activeIndex.set($index)">
+            (pointerenter)="activeIndex.set($index)"
+          >
             {{ option.name }}
           </li>
-        }
-        @empty {
+        } @empty {
           <li class="ss-empty">No matches</li>
         }
       </ul>

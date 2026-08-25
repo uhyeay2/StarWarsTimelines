@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, HostListener, input, model, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 /** Payload emitted when the user saves the new collection. */

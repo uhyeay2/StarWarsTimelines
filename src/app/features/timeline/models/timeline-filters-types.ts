@@ -116,7 +116,9 @@ export function sourceFacetKey(source: EventSource): string {
   if (unit.parentUnitId !== undefined && unit.parentUnitId !== null) {
     const parentId = unit.parentUnitId;
     if (isContainerOrCollectionUnit(unit.unitType)) {
-      return unit.id !== undefined ? `${source.sourceId}:u${unit.id}` : `${source.sourceId}:${parentId}`;
+      return unit.id !== undefined
+        ? `${source.sourceId}:u${unit.id}`
+        : `${source.sourceId}:${parentId}`;
     }
     if (unit.unitType === 'Issue') {
       return `${source.sourceId}:${parentId}:${unit.id}`;
@@ -157,10 +159,16 @@ export function matchesFacetFilters(event: TimelineEvent, filters: TimelineFilte
   ) {
     return false;
   }
-  if (filters.locations.length > 0 && !filters.locations.every((l) => event.locations.includes(l))) {
+  if (
+    filters.locations.length > 0 &&
+    !filters.locations.every((l) => event.locations.includes(l))
+  ) {
     return false;
   }
-  if (filters.characters.length > 0 && !filters.characters.every((c) => event.characters.includes(c))) {
+  if (
+    filters.characters.length > 0 &&
+    !filters.characters.every((c) => event.characters.includes(c))
+  ) {
     return false;
   }
   if (filters.vehicles.length > 0 && !filters.vehicles.every((v) => event.vehicles.includes(v))) {

@@ -11,7 +11,15 @@
  * @see {@link LibraryService} for the backend API integration.
  */
 
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrackingStatus, STATUS_WISH_LISTED } from '../../../../shared/models/tracking-status';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -97,7 +105,8 @@ export class WishListPage {
     if (!userId) {
       return;
     }
-    this.libraryService.setStatus(userId, itemId, status)
+    this.libraryService
+      .setStatus(userId, itemId, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
@@ -148,7 +157,8 @@ export class WishListPage {
     if (!userId) {
       return;
     }
-    this.libraryService.removeTracked(userId, itemId)
+    this.libraryService
+      .removeTracked(userId, itemId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
@@ -165,7 +175,8 @@ export class WishListPage {
     if (!userId) {
       return;
     }
-    this.libraryService.setUnitProgress(userId, materialId, unitId, status)
+    this.libraryService
+      .setUnitProgress(userId, materialId, unitId, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }

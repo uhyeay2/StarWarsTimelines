@@ -108,7 +108,10 @@ export class CatalogEventService implements OnDestroy {
         if (!catalogEvent.entity) {
           return;
         }
-        this.logger.debug('[CatalogEventService] Received event', catalogEvent as unknown as Record<string, unknown>);
+        this.logger.debug(
+          '[CatalogEventService] Received event',
+          catalogEvent as unknown as Record<string, unknown>,
+        );
         this.invalidator.invalidateEntity(catalogEvent.entity, catalogEvent.id);
         this.eventsSubject.next(catalogEvent);
       } catch (err) {

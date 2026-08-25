@@ -92,9 +92,7 @@ describe('AuthService', () => {
 
   it('rejects invalid credentials', async () => {
     const loginPromise = firstValueFrom(service.login('padme', 'wrong'));
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpMock.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
 
     await expect(loginPromise).rejects.toThrow('Invalid username or password');
     expect(service.isLoggedIn()).toBe(false);
@@ -105,7 +103,10 @@ describe('AuthService', () => {
     httpMock
       .expectOne(LOGIN_URL)
       .flush(
-        { title: 'Email not verified', detail: 'Please verify your email address before logging in.' },
+        {
+          title: 'Email not verified',
+          detail: 'Please verify your email address before logging in.',
+        },
         { status: 401, statusText: 'Unauthorized' },
       );
 
@@ -155,10 +156,12 @@ describe('AuthService', () => {
         password: 'password123',
       }),
     );
-    httpMock.expectOne(REGISTER_URL).flush(
-      { detail: 'A user with this email address is already registered.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(REGISTER_URL)
+      .flush(
+        { detail: 'A user with this email address is already registered.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
     await expect(registerPromise).rejects.toThrow(
       'A user with this email address is already registered.',
@@ -177,14 +180,14 @@ describe('AuthService', () => {
 
   it('surfaces a server error for an invalid verification token', async () => {
     const verifyPromise = firstValueFrom(service.verifyEmail('bad-token'));
-    httpMock.expectOne(VERIFY_EMAIL_URL).flush(
-      { detail: 'The verification link is invalid or has expired.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(VERIFY_EMAIL_URL)
+      .flush(
+        { detail: 'The verification link is invalid or has expired.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
-    await expect(verifyPromise).rejects.toThrow(
-      'The verification link is invalid or has expired.',
-    );
+    await expect(verifyPromise).rejects.toThrow('The verification link is invalid or has expired.');
   });
 
   it('resends a verification email for the provided identifier', async () => {
@@ -199,10 +202,12 @@ describe('AuthService', () => {
 
   it('surfaces a server error when resending fails', async () => {
     const resendPromise = firstValueFrom(service.resendVerificationEmail('new-user'));
-    httpMock.expectOne(RESEND_VERIFICATION_URL).flush(
-      { detail: 'Unable to resend the verification email.' },
-      { status: 500, statusText: 'Internal Server Error' },
-    );
+    httpMock
+      .expectOne(RESEND_VERIFICATION_URL)
+      .flush(
+        { detail: 'Unable to resend the verification email.' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
 
     await expect(resendPromise).rejects.toThrow('Unable to resend the verification email.');
   });
@@ -260,7 +265,14 @@ describe('AuthService', () => {
     sessionStorage.setItem('starwars-timelines.token', TOKEN);
     sessionStorage.setItem(
       'starwars-timelines.user',
-      JSON.stringify({ id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
+      JSON.stringify({
+        id: 'user-padme',
+        username: 'padme',
+        displayName: 'Padmé Amidala',
+        email: 'padme@example.com',
+        emailVerified: true,
+        role: 'Standard',
+      }),
     );
 
     TestBed.resetTestingModule();

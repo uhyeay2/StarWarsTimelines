@@ -20,17 +20,15 @@
       <form class="settings-form" (ngSubmit)="updateDisplayName()" #displayNameForm="ngForm">
         <label class="settings-field">
           <span>Display name</span>
-          <input
-            name="displayName"
-            [(ngModel)]="displayName"
-            required
-            autocomplete="name" />
+          <input name="displayName" [(ngModel)]="displayName" required autocomplete="name" />
         </label>
         @if (displayNameError()) {
           <p class="settings-error" role="alert">{{ displayNameError() }}</p>
         }
         @if (displayNameSaved()) {
-          <p class="settings-success" role="status" aria-live="polite">Your display name was updated.</p>
+          <p class="settings-success" role="status" aria-live="polite">
+            Your display name was updated.
+          </p>
         }
         <button class="btn btn-lg btn-primary" type="submit" [disabled]="displayNameSaving()">
           {{ displayNameSaving() ? 'Saving…' : 'Save display name' }}
@@ -40,12 +38,7 @@
       <form class="settings-form" (ngSubmit)="updateEmail()" #emailForm="ngForm">
         <label class="settings-field">
           <span>Email</span>
-          <input
-            name="email"
-            type="email"
-            [(ngModel)]="email"
-            required
-            autocomplete="email" />
+          <input name="email" type="email" [(ngModel)]="email" required autocomplete="email" />
         </label>
         <p class="settings-email-status">
           @if (account.emailVerified) {
@@ -87,12 +80,14 @@
               [type]="showCurrentPassword() ? 'text' : 'password'"
               [(ngModel)]="currentPassword"
               required
-              autocomplete="current-password" />
+              autocomplete="current-password"
+            />
             <button
               type="button"
               class="password-toggle"
               [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'"
-              (click)="showCurrentPassword.set(!showCurrentPassword())">
+              (click)="showCurrentPassword.set(!showCurrentPassword())"
+            >
               {{ showCurrentPassword() ? 'Hide' : 'Show' }}
             </button>
           </div>
@@ -107,12 +102,14 @@
               [(ngModel)]="newPassword"
               required
               minlength="6"
-              autocomplete="new-password" />
+              autocomplete="new-password"
+            />
             <button
               type="button"
               class="password-toggle"
               [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
-              (click)="showNewPassword.set(!showNewPassword())">
+              (click)="showNewPassword.set(!showNewPassword())"
+            >
               {{ showNewPassword() ? 'Hide' : 'Show' }}
             </button>
           </div>
@@ -126,12 +123,14 @@
               [type]="showConfirmPassword() ? 'text' : 'password'"
               [(ngModel)]="confirmPassword"
               required
-              autocomplete="new-password" />
+              autocomplete="new-password"
+            />
             <button
               type="button"
               class="password-toggle"
               [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-              (click)="showConfirmPassword.set(!showConfirmPassword())">
+              (click)="showConfirmPassword.set(!showConfirmPassword())"
+            >
               {{ showConfirmPassword() ? 'Hide' : 'Show' }}
             </button>
           </div>
@@ -141,7 +140,9 @@
           <p class="settings-error" role="alert">{{ passwordError() }}</p>
         }
         @if (passwordSaved()) {
-          <p class="settings-success" role="status" aria-live="polite">Your password was changed.</p>
+          <p class="settings-success" role="status" aria-live="polite">
+            Your password was changed.
+          </p>
         }
         <button class="btn btn-lg btn-primary" type="submit" [disabled]="passwordSaving()">
           {{ passwordSaving() ? 'Saving…' : 'Change password' }}

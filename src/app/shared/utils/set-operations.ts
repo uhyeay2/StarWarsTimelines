@@ -21,9 +21,7 @@ export function toggledIn<T>(set: ReadonlySet<T>, value: T): Set<T> {
 }
 
 /** Builds an updater that drops every key starting with `prefix`. */
-export function removedWithPrefix(
-  prefix: string,
-): (set: ReadonlySet<string>) => Set<string> {
+export function removedWithPrefix(prefix: string): (set: ReadonlySet<string>) => Set<string> {
   return (set) => {
     const next = new Set(set);
     for (const key of next) {

@@ -43,12 +43,17 @@ export class VehicleService {
    * @returns An observable of the created vehicle.
    */
   createVehicle(name: string): Observable<ApiVehicle> {
-    return this.http
-      .post<ApiVehicle>(`${CATALOG_API_BASE}/vehicles`, { name })
-      .pipe(
-        catchError(catalogErrorHandler('Unable to create the vehicle. Please try again.', 'createVehicle', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.post<ApiVehicle>(`${CATALOG_API_BASE}/vehicles`, { name }).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to create the vehicle. Please try again.',
+          'createVehicle',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 
   /**
@@ -58,12 +63,17 @@ export class VehicleService {
    * @returns An observable of the updated vehicle.
    */
   updateVehicle(id: number, name: string): Observable<ApiVehicle> {
-    return this.http
-      .put<ApiVehicle>(`${CATALOG_API_BASE}/vehicles/${id}`, { name })
-      .pipe(
-        catchError(catalogErrorHandler('Unable to update the vehicle. Please try again.', 'updateVehicle', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.put<ApiVehicle>(`${CATALOG_API_BASE}/vehicles/${id}`, { name }).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to update the vehicle. Please try again.',
+          'updateVehicle',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 
   /**
@@ -72,11 +82,16 @@ export class VehicleService {
    * @returns An observable that completes when the deletion is done.
    */
   deleteVehicle(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${CATALOG_API_BASE}/vehicles/${id}`)
-      .pipe(
-        catchError(catalogErrorHandler('Unable to delete the vehicle. Please try again.', 'deleteVehicle', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.delete<void>(`${CATALOG_API_BASE}/vehicles/${id}`).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to delete the vehicle. Please try again.',
+          'deleteVehicle',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 }

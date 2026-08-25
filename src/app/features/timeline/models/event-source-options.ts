@@ -18,7 +18,10 @@
 import { ApiSourceMaterial } from '../../../shared/models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../../shared/models/api-source-material-unit';
 import { MEDIA, Medium } from '../../../shared/models/medium';
-import { sourceUnitDisplayLabel, sourceUnitPathLabel } from '../../../shared/models/source-material';
+import {
+  sourceUnitDisplayLabel,
+  sourceUnitPathLabel,
+} from '../../../shared/models/source-material';
 import { isContainerOrCollectionUnit } from '../../../shared/models/unit-type';
 import { EventSourceLinkInput } from './create-timeline-event-input';
 import { FilterTreeNode } from './timeline-filters';
@@ -332,5 +335,3 @@ export function describeSourceLinkUnit(
     ...(materialTitle !== undefined && { materialTitle }),
   });
 }
-
-

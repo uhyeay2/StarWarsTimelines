@@ -47,12 +47,7 @@ describe('trackSelectOptions', () => {
   });
 
   it('appends the remove option once tracked', () => {
-    expect(trackSelectOptions(true)).toEqual([
-      'In progress',
-      'Completed',
-      'Wish Listed',
-      'remove',
-    ]);
+    expect(trackSelectOptions(true)).toEqual(['In progress', 'Completed', 'Wish Listed', 'remove']);
   });
 });
 

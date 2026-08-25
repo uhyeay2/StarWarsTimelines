@@ -27,11 +27,7 @@ import {
 // ─── Canon mapping ──────────────────────────────────────────────────────────
 
 /** Canonical lookup table indexed by the numeric API canon code. */
-const CANON_BY_CODE: readonly Canon[][] = [
-  ['Canon'],
-  ['Legends'],
-  ['Canon', 'Legends'],
-];
+const CANON_BY_CODE: readonly Canon[][] = [['Canon'], ['Legends'], ['Canon', 'Legends']];
 
 /**
  * Maps a numeric canon type code to its domain-level string array.
@@ -63,8 +59,7 @@ export function isValidNamedEntityDto(dto: unknown): dto is NamedEntityDto {
   }
   const d = dto as Record<string, unknown>;
   return (
-    typeof d['id'] === 'number' &&
-    typeof d['name'] === 'string' && (d['name'] as string).length > 0
+    typeof d['id'] === 'number' && typeof d['name'] === 'string' && (d['name'] as string).length > 0
   );
 }
 
@@ -230,15 +225,9 @@ export function mapTimelineEvent(dto: TimelineEventDto): TimelineEvent {
     title: dto.title,
     description: dto.description,
     sources,
-    locations: dto.locations
-      .filter(isValidNamedEntityDto)
-      .map((entity) => entity.name),
-    characters: dto.characters
-      .filter(isValidNamedEntityDto)
-      .map((entity) => entity.name),
-    vehicles: dto.vehicles
-      .filter(isValidNamedEntityDto)
-      .map((entity) => entity.name),
+    locations: dto.locations.filter(isValidNamedEntityDto).map((entity) => entity.name),
+    characters: dto.characters.filter(isValidNamedEntityDto).map((entity) => entity.name),
+    vehicles: dto.vehicles.filter(isValidNamedEntityDto).map((entity) => entity.name),
     yearStart: dto.yearStart,
     yearEnd: dto.yearEnd,
     sequence: dto.sequence,

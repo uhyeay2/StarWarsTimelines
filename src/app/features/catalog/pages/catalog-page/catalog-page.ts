@@ -16,7 +16,13 @@ import { TimelineEventCatalog } from '../../../timeline/components/timeline-even
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-catalog-page',
-  imports: [CharacterCatalog, NameCatalog, SourceMaterialCatalog, SpeciesCatalog, TimelineEventCatalog],
+  imports: [
+    CharacterCatalog,
+    NameCatalog,
+    SourceMaterialCatalog,
+    SpeciesCatalog,
+    TimelineEventCatalog,
+  ],
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
 })

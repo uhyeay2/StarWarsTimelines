@@ -13,11 +13,7 @@
   } @else {
     <label class="species-search">
       <span class="sr-only">Search species</span>
-      <input
-        name="search"
-        type="search"
-        placeholder="Search species…"
-        [(ngModel)]="searchTerm" />
+      <input name="search" type="search" placeholder="Search species…" [(ngModel)]="searchTerm" />
     </label>
 
     <ul class="species-list">
@@ -26,7 +22,11 @@
           @if (editId() === item.id) {
             <form class="species-edit" (ngSubmit)="saveEdit()">
               <input name="editName" [(ngModel)]="editName" aria-label="Renamed species" />
-              <select name="editHomePlanetId" [(ngModel)]="editHomePlanetId" aria-label="Home planet">
+              <select
+                name="editHomePlanetId"
+                [(ngModel)]="editHomePlanetId"
+                aria-label="Home planet"
+              >
                 <option [ngValue]="noPlanet">No home planet</option>
                 @for (location of sortedLocations(); track location.id) {
                   <option [ngValue]="location.id">{{ location.name }}</option>
@@ -49,7 +49,8 @@
                   class="btn btn-sm btn-danger"
                   type="button"
                   [disabled]="deletingId() === item.id"
-                  (click)="confirmDelete()">
+                  (click)="confirmDelete()"
+                >
                   {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
                 </button>
                 <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
@@ -65,10 +66,7 @@
             @if (isAdmin()) {
               <div class="species-actions">
                 <button class="btn btn-sm" type="button" (click)="beginEdit(item)">Edit</button>
-                <button
-                  class="btn btn-sm btn-danger"
-                  type="button"
-                  (click)="requestDelete(item)">
+                <button class="btn btn-sm btn-danger" type="button" (click)="requestDelete(item)">
                   Delete
                 </button>
               </div>
@@ -93,6 +91,7 @@
       [error]="addError()"
       [saving]="adding()"
       (save)="submitAdd()"
-      (cancel)="cancelAdd()" />
+      (cancel)="cancelAdd()"
+    />
   }
 </section>

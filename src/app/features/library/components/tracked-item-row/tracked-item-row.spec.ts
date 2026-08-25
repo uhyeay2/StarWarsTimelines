@@ -19,8 +19,22 @@ const UNIT_ITEM: LibraryItem = {
   favorite: false,
   units: [
     { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
-    { id: 201, unitType: 'Episode', number: 1, title: 'Attack of the Clones', parentUnitId: 101, status: 'Completed' },
-    { id: 202, unitType: 'Episode', number: 2, title: 'Sneak Preview', parentUnitId: 101, status: null },
+    {
+      id: 201,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Attack of the Clones',
+      parentUnitId: 101,
+      status: 'Completed',
+    },
+    {
+      id: 202,
+      unitType: 'Episode',
+      number: 2,
+      title: 'Sneak Preview',
+      parentUnitId: 101,
+      status: null,
+    },
   ],
 };
 
@@ -46,9 +60,30 @@ const UNIT_ITEM_MULTI_SEASON: LibraryItem = {
     { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
     { id: 102, unitType: 'Season', number: 2, title: 'Season 2', status: null },
     { id: 103, unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
-    { id: 111, unitType: 'Episode', number: 1, title: 'Pilot', parentUnitId: 101, status: 'Completed' },
-    { id: 112, unitType: 'Episode', number: 1, title: 'The Disappeared', parentUnitId: 102, status: null },
-    { id: 113, unitType: 'Episode', number: 1, title: 'Future Heroes', parentUnitId: 103, status: 'Completed' },
+    {
+      id: 111,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Pilot',
+      parentUnitId: 101,
+      status: 'Completed',
+    },
+    {
+      id: 112,
+      unitType: 'Episode',
+      number: 1,
+      title: 'The Disappeared',
+      parentUnitId: 102,
+      status: null,
+    },
+    {
+      id: 113,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Future Heroes',
+      parentUnitId: 103,
+      status: 'Completed',
+    },
   ],
 };
 
@@ -61,8 +96,22 @@ const UNIT_ITEM_NO_TRACKED_SEASONS: LibraryItem = {
   units: [
     { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: null },
     { id: 102, unitType: 'Season', number: 2, title: 'Season 2', status: null },
-    { id: 111, unitType: 'Episode', number: 1, title: 'Chapter 1', parentUnitId: 101, status: null },
-    { id: 112, unitType: 'Episode', number: 1, title: 'Chapter 2', parentUnitId: 102, status: null },
+    {
+      id: 111,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Chapter 1',
+      parentUnitId: 101,
+      status: null,
+    },
+    {
+      id: 112,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Chapter 2',
+      parentUnitId: 102,
+      status: null,
+    },
   ],
 };
 
@@ -127,7 +176,9 @@ describe('TrackedItemRow', () => {
     expect(fixture.nativeElement.querySelectorAll('.move-button').length).toBe(0);
     expect(fixture.nativeElement.querySelector('.drag-handle')).toBeNull();
     expect(
-      (fixture.nativeElement.querySelector('.tracked-item-row') as HTMLElement).getAttribute('draggable'),
+      (fixture.nativeElement.querySelector('.tracked-item-row') as HTMLElement).getAttribute(
+        'draggable',
+      ),
     ).toBeNull();
   });
 
@@ -138,7 +189,9 @@ describe('TrackedItemRow', () => {
     expect(buttons.length).toBe(2);
     expect(fixture.nativeElement.querySelector('.drag-handle')).toBeTruthy();
     expect(
-      (fixture.nativeElement.querySelector('.tracked-item-row') as HTMLElement).getAttribute('draggable'),
+      (fixture.nativeElement.querySelector('.tracked-item-row') as HTMLElement).getAttribute(
+        'draggable',
+      ),
     ).toBe('true');
   });
 
@@ -148,7 +201,9 @@ describe('TrackedItemRow', () => {
     fixture.componentRef.setInput('last', true);
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('.move-button') as NodeListOf<HTMLButtonElement>;
+    const buttons = fixture.nativeElement.querySelectorAll(
+      '.move-button',
+    ) as NodeListOf<HTMLButtonElement>;
     expect(buttons[0]!.disabled).toBe(true);
     expect(buttons[1]!.disabled).toBe(true);
   });
@@ -170,7 +225,9 @@ describe('TrackedItemRow', () => {
     fixture.componentRef.setInput('showReorder', true);
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('.move-button') as NodeListOf<HTMLElement>;
+    const buttons = fixture.nativeElement.querySelectorAll(
+      '.move-button',
+    ) as NodeListOf<HTMLElement>;
     buttons[0]!.click();
     buttons[1]!.click();
 
@@ -213,7 +270,9 @@ describe('TrackedItemRow', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('select.status-select')).toBeTruthy();
-    expect((compiled.querySelector('select.status-select') as HTMLSelectElement).value).toBe('In progress');
+    expect((compiled.querySelector('select.status-select') as HTMLSelectElement).value).toBe(
+      'In progress',
+    );
     expect(compiled.querySelectorAll('select.group-status-select').length).toBe(0);
   });
 
@@ -254,7 +313,9 @@ describe('TrackedItemRow', () => {
     const emissions: { unitId: number; status: TrackingStatus }[] = [];
     component.groupStatusChange.subscribe((value) => emissions.push(value));
 
-    const groupSelect = fixture.nativeElement.querySelector('select.group-status-select') as HTMLSelectElement;
+    const groupSelect = fixture.nativeElement.querySelector(
+      'select.group-status-select',
+    ) as HTMLSelectElement;
     groupSelect.value = 'Completed';
     groupSelect.dispatchEvent(new Event('change'));
 
@@ -269,7 +330,9 @@ describe('TrackedItemRow', () => {
     component.groupRemove.subscribe((value) => removals.push(value));
     component.remove.subscribe(() => materialRemovals++);
 
-    const groupSelect = fixture.nativeElement.querySelector('select.group-status-select') as HTMLSelectElement;
+    const groupSelect = fixture.nativeElement.querySelector(
+      'select.group-status-select',
+    ) as HTMLSelectElement;
     groupSelect.value = 'remove';
     groupSelect.dispatchEvent(new Event('change'));
 

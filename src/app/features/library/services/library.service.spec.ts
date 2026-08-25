@@ -12,12 +12,7 @@ import { LibraryError, LibraryErrorCode } from '../models/library-error';
 import { environment } from '../../../../environments/environment';
 import { LoggerService } from '../../../shared/services/logging/logger.service';
 import { LibraryItemDto, LibraryUnitDto } from './library.dto';
-import {
-  isValidItemDto,
-  isValidUnitDto,
-  mapLibraryItem,
-  mapLibraryUnit,
-} from './library.mapper';
+import { isValidItemDto, isValidUnitDto, mapLibraryItem, mapLibraryUnit } from './library.mapper';
 import { LibraryService } from './library.service';
 
 // ─── Fixture builders ──────────────────────────────────────────────────────
@@ -131,7 +126,9 @@ const _ITEM_C: LibraryItem = {
 
 const BASE = `${environment.apiBaseUrl}/api/users`;
 
-function makeItemList(dtos: LibraryItemDto[] = [ITEM_DTO_A, ITEM_DTO_B]): readonly LibraryItemDto[] {
+function makeItemList(
+  dtos: LibraryItemDto[] = [ITEM_DTO_A, ITEM_DTO_B],
+): readonly LibraryItemDto[] {
   return dtos as readonly LibraryItemDto[];
 }
 
@@ -294,7 +291,10 @@ describe('mapLibraryItem', () => {
   it('drops invalid unit entries gracefully', () => {
     const dtoWithBadUnit: LibraryItemDto = {
       ...ITEM_DTO_A,
-      units: [UNIT_DTO_A, { id: '', unitType: 0, number: 1, title: null, status: 0 } as unknown as LibraryUnitDto],
+      units: [
+        UNIT_DTO_A,
+        { id: '', unitType: 0, number: 1, title: null, status: 0 } as unknown as LibraryUnitDto,
+      ],
     };
     const result = mapLibraryItem(dtoWithBadUnit);
     expect(result.units).toHaveLength(1);
@@ -313,7 +313,10 @@ describe('LibraryService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: LoggerService, useValue: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() } },
+        {
+          provide: LoggerService,
+          useValue: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+        },
       ],
     });
     service = TestBed.inject(LibraryService);
@@ -382,7 +385,10 @@ describe('LibraryService', () => {
     });
 
     it('filters out invalid DTOs gracefully', async () => {
-      const mixed = [{ ...ITEM_DTO_A }, { sourceMaterialId: '' }] as unknown as readonly LibraryItemDto[];
+      const mixed = [
+        { ...ITEM_DTO_A },
+        { sourceMaterialId: '' },
+      ] as unknown as readonly LibraryItemDto[];
       const promise = firstValueFrom(service.getTracked('u1'));
       flushGetRequest().flush(mixed);
       const items = await promise;
@@ -428,15 +434,19 @@ describe('LibraryService', () => {
 
       let result: readonly LibraryItem[] | undefined;
       service.getTracked('u1').subscribe({
-        next: (items) => result = items,
+        next: (items) => (result = items),
       });
 
-      const firstReq = httpMock.expectOne((req) => req.method === 'GET' && req.url.includes('/source-materials'));
+      const firstReq = httpMock.expectOne(
+        (req) => req.method === 'GET' && req.url.includes('/source-materials'),
+      );
       firstReq.flush('Service Unavailable', { status: 503, statusText: 'Service Unavailable' });
 
       await vi.advanceTimersByTimeAsync(1000);
 
-      const retryReq = httpMock.expectOne((req) => req.method === 'GET' && req.url.includes('/source-materials'));
+      const retryReq = httpMock.expectOne(
+        (req) => req.method === 'GET' && req.url.includes('/source-materials'),
+      );
       retryReq.flush(makeItemList());
 
       expect(result).toEqual([ITEM_A, ITEM_B]);
@@ -449,15 +459,19 @@ describe('LibraryService', () => {
 
       let result: readonly LibraryItem[] | undefined;
       service.getTracked('u1').subscribe({
-        next: (items) => result = items,
+        next: (items) => (result = items),
       });
 
-      const firstReq = httpMock.expectOne((req) => req.method === 'GET' && req.url.includes('/source-materials'));
+      const firstReq = httpMock.expectOne(
+        (req) => req.method === 'GET' && req.url.includes('/source-materials'),
+      );
       firstReq.flush('Gateway Timeout', { status: 504, statusText: 'Gateway Timeout' });
 
       await vi.advanceTimersByTimeAsync(1000);
 
-      const retryReq = httpMock.expectOne((req) => req.method === 'GET' && req.url.includes('/source-materials'));
+      const retryReq = httpMock.expectOne(
+        (req) => req.method === 'GET' && req.url.includes('/source-materials'),
+      );
       retryReq.flush(makeItemList());
 
       expect(result).toEqual([ITEM_A, ITEM_B]);
@@ -493,7 +507,9 @@ describe('LibraryService', () => {
 
     it('updates the items signal after mutation', async () => {
       const promise = firstValueFrom(service.addTracked('u1', ITEM_B));
-      httpMock.expectOne(`${BASE}/u1/source-materials`).flush({}, { status: 200, statusText: 'OK' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials`)
+        .flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
       await promise;
       expect(service.items()).toEqual([ITEM_A, ITEM_B]);
@@ -501,17 +517,21 @@ describe('LibraryService', () => {
 
     it('throws LibraryError with ValidationError code on 400', async () => {
       const promise = firstValueFrom(service.addTracked('u1', ITEM_B));
-      httpMock.expectOne(`${BASE}/u1/source-materials`).flush(
-        { detail: 'Cannot add.' },
-        { status: 400, statusText: 'Bad Request' },
-      );
-      await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError, message: 'Cannot add.' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials`)
+        .flush({ detail: 'Cannot add.' }, { status: 400, statusText: 'Bad Request' });
+      await expect(promise).rejects.toMatchObject({
+        code: LibraryErrorCode.ValidationError,
+        message: 'Cannot add.',
+      });
     });
 
     it('logs structured metadata including material info', async () => {
       const logger = TestBed.inject(LoggerService);
       const promise = firstValueFrom(service.addTracked('u1', ITEM_B));
-      httpMock.expectOne(`${BASE}/u1/source-materials`).flush('Error', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials`)
+        .flush('Error', { status: 500, statusText: 'Server Error' });
       await expect(promise).rejects.toBeInstanceOf(LibraryError);
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('addTracked'),
@@ -540,12 +560,14 @@ describe('LibraryService', () => {
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual([10, 20]);
+      expect(items.map((i) => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with NotFound code on 404', async () => {
       const promise = firstValueFrom(service.setStatus('u1', 99, 'Completed'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/99`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/99`)
+        .flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
 
@@ -588,12 +610,14 @@ describe('LibraryService', () => {
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual([10, 20]);
+      expect(items.map((i) => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with ValidationError code on 400', async () => {
       const promise = firstValueFrom(service.setFavorite('u1', 10, true));
-      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/10`)
+        .flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
     });
   });
@@ -612,7 +636,9 @@ describe('LibraryService', () => {
 
     it('throws LibraryError with NotFound code on 404', async () => {
       const promise = firstValueFrom(service.removeTracked('u1', 99));
-      httpMock.expectOne(`${BASE}/u1/source-materials/99`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/99`)
+        .flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
   });
@@ -636,12 +662,14 @@ describe('LibraryService', () => {
 
       const items = await promise;
       expect(items).toHaveLength(2);
-      expect(items.map(i => i.id)).toEqual([10, 20]);
+      expect(items.map((i) => i.id)).toEqual([10, 20]);
     });
 
     it('throws LibraryError with ValidationError code on 400', async () => {
       const promise = firstValueFrom(service.setUnitProgress('u1', 10, 101, 'In progress'));
-      httpMock.expectOne(`${BASE}/u1/source-materials/10/units/101`).flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/10/units/101`)
+        .flush('Bad Request', { status: 400, statusText: 'Bad Request' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.ValidationError });
     });
   });
@@ -660,7 +688,9 @@ describe('LibraryService', () => {
 
     it('throws LibraryError with NotFound code on 404', async () => {
       const promise = firstValueFrom(service.clearUnitProgress('u1', 99, 101));
-      httpMock.expectOne(`${BASE}/u1/source-materials/99/units/101`).flush('Not Found', { status: 404, statusText: 'Not Found' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/99/units/101`)
+        .flush('Not Found', { status: 404, statusText: 'Not Found' });
       await expect(promise).rejects.toMatchObject({ code: LibraryErrorCode.NotFound });
     });
   });
@@ -681,7 +711,9 @@ describe('LibraryService', () => {
     it('accepts readonly array input without error', async () => {
       const ids: readonly number[] = [10];
       const promise = firstValueFrom(service.reorderTrackedItem('u1', ids));
-      httpMock.expectOne(`${BASE}/u1/source-materials/reorder`).flush({}, { status: 200, statusText: 'OK' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/reorder`)
+        .flush({}, { status: 200, statusText: 'OK' });
       flushGetRequest().flush(makeItemList());
       expect(await promise).toEqual([ITEM_A, ITEM_B]);
     });
@@ -697,9 +729,13 @@ describe('LibraryService', () => {
 
       const promise = firstValueFrom(service.setFavorite('u1', 10, false));
 
-      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush({}, { status: 200, statusText: 'OK' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/10`)
+        .flush({}, { status: 200, statusText: 'OK' });
 
-      httpMock.expectOne(`${BASE}/u1/source-materials/10`).flush('Server Error', { status: 500, statusText: 'Server Error' });
+      httpMock
+        .expectOne(`${BASE}/u1/source-materials/10`)
+        .flush('Server Error', { status: 500, statusText: 'Server Error' });
 
       await expect(promise).rejects.toMatchObject({
         code: LibraryErrorCode.NetworkError,
@@ -720,7 +756,9 @@ describe('LibraryService', () => {
 
       await vi.advanceTimersByTimeAsync(200);
 
-      const req = httpMock.expectOne((r) => r.method === 'GET' && r.url.includes('/source-materials'));
+      const req = httpMock.expectOne(
+        (r) => r.method === 'GET' && r.url.includes('/source-materials'),
+      );
       expect(req.request.method).toBe('GET');
       req.flush(makeItemList());
 

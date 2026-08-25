@@ -15,9 +15,7 @@ describe('ErrorState', () => {
     expect(fixture.nativeElement.querySelector('.error-state-title')?.textContent?.trim()).toBe(
       'Something went wrong',
     );
-    const retry = fixture.nativeElement.querySelector(
-      '.error-state-retry',
-    ) as HTMLButtonElement;
+    const retry = fixture.nativeElement.querySelector('.error-state-retry') as HTMLButtonElement;
     expect(retry.textContent?.trim()).toBe('Try again');
   });
 
@@ -42,8 +40,9 @@ describe('ErrorState', () => {
       'The server is unreachable.',
     );
     expect(
-      (fixture.nativeElement.querySelector('.error-state-retry') as HTMLButtonElement)
-        .textContent?.trim(),
+      (
+        fixture.nativeElement.querySelector('.error-state-retry') as HTMLButtonElement
+      ).textContent?.trim(),
     ).toBe('Reload');
   });
 

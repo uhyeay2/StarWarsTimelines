@@ -98,7 +98,9 @@ describe('SourceMaterialCatalog', () => {
             title: `Unit ${i + 1}`,
           }));
         httpMock
-          .expectOne((r) => r.method === 'GET' && r.url.endsWith(`/api/source-materials/${item.id}/units`))
+          .expectOne(
+            (r) => r.method === 'GET' && r.url.endsWith(`/api/source-materials/${item.id}/units`),
+          )
           .flush(units);
       }
       component.completeProbe();
@@ -139,14 +141,16 @@ describe('SourceMaterialCatalog', () => {
     fixture.detectChanges();
     component.submitAddMaterial();
 
-    const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/source-materials'));
+    const post = httpMock.expectOne(
+      (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials'),
+    );
     expect(post.request.body).toEqual({ title: 'Ahsoka', medium: 4, canonType: 1 });
     post.flush({ id: 19, title: 'Ahsoka', medium: 4, canonType: 1 });
 
     // Mutation auto-invalidates the cache → re-fetch fires automatically.
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([
-      { id: 19, title: 'Ahsoka', medium: 4, canonType: 1 },
-    ]);
+    httpMock
+      .expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL))
+      .flush([{ id: 19, title: 'Ahsoka', medium: 4, canonType: 1 }]);
     fixture.detectChanges();
 
     expect(component.newTitle()).toBe('');
@@ -164,7 +168,10 @@ describe('SourceMaterialCatalog', () => {
 
     httpMock
       .expectOne((r) => r.method === 'POST')
-      .flush({ detail: 'A source material with this title already exists.' }, { status: 400, statusText: 'Bad Request' });
+      .flush(
+        { detail: 'A source material with this title already exists.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
     expect(component.addError()).toBe('A source material with this title already exists.');
   });
@@ -179,14 +186,16 @@ describe('SourceMaterialCatalog', () => {
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/11'));
+    const put = httpMock.expectOne(
+      (r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/11'),
+    );
     expect(put.request.body).toEqual({ title: 'Renamed', medium: 0, canonType: 1 });
     put.flush({ id: 11, title: 'Renamed', medium: 0, canonType: 1 });
 
     // Mutation auto-invalidates → re-fetch.
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([
-      { id: 11, title: 'Renamed', medium: 0, canonType: 1 },
-    ]);
+    httpMock
+      .expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL))
+      .flush([{ id: 11, title: 'Renamed', medium: 0, canonType: 1 }]);
     fixture.detectChanges();
 
     expect(component.editId()).toBeNull();
@@ -198,14 +207,22 @@ describe('SourceMaterialCatalog', () => {
   it('surfaces the conflict message when deleting a referenced material', () => {
     loadMaterials([{ id: 11, title: 'Linked', medium: 0, canonType: 0 }]);
 
-    const mapped: ApiSourceMaterial = { id: 11, title: 'Linked', medium: 'Movie', canonType: 'Canon' };
+    const mapped: ApiSourceMaterial = {
+      id: 11,
+      title: 'Linked',
+      medium: 'Movie',
+      canonType: 'Canon',
+    };
     component.requestDelete(mapped);
     component.confirmDelete();
 
     httpMock
       .expectOne((r) => r.method === 'DELETE')
       .flush(
-        { detail: 'Source material is referenced by timeline events or user libraries and cannot be deleted.' },
+        {
+          detail:
+            'Source material is referenced by timeline events or user libraries and cannot be deleted.',
+        },
         { status: 409, statusText: 'Conflict' },
       );
     fixture.detectChanges();
@@ -216,16 +233,19 @@ describe('SourceMaterialCatalog', () => {
 
   it('expands a material and loads its units', async () => {
     vi.useFakeTimers();
-    loadMaterials(
-      [{ id: 11, title: 'The Mandalorian', medium: 4, canonType: 0 }],
-      undefined,
-      {
-        11: [
-          { id: 101, sourceMaterialId: 11, unitType: 3, parentUnitId: null, number: 1, title: null },
-          { id: 201, sourceMaterialId: 11, unitType: 0, parentUnitId: 101, number: 1, title: 'Cat and Mouse' },
-        ],
-      },
-    );
+    loadMaterials([{ id: 11, title: 'The Mandalorian', medium: 4, canonType: 0 }], undefined, {
+      11: [
+        { id: 101, sourceMaterialId: 11, unitType: 3, parentUnitId: null, number: 1, title: null },
+        {
+          id: 201,
+          sourceMaterialId: 11,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 1,
+          title: 'Cat and Mouse',
+        },
+      ],
+    });
 
     // The probe populated the cache. toggleUnits uses the cached data.
     component.toggleUnits(11);
@@ -297,7 +317,12 @@ describe('SourceMaterialCatalog', () => {
     const post = httpMock.expectOne(
       (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/21/units'),
     );
-    expect(post.request.body).toEqual({ unitType: 0, parentUnitId: null, number: 9, title: 'Chapter 9: The Marshal' });
+    expect(post.request.body).toEqual({
+      unitType: 0,
+      parentUnitId: null,
+      number: 9,
+      title: 'Chapter 9: The Marshal',
+    });
     post.flush({
       id: 209,
       sourceMaterialId: 21,
@@ -412,9 +437,30 @@ describe('SourceMaterialCatalog', () => {
       21: [
         { id: 101, sourceMaterialId: 21, unitType: 3, parentUnitId: null, number: 1, title: null },
         { id: 102, sourceMaterialId: 21, unitType: 3, parentUnitId: null, number: 2, title: null },
-        { id: 201, sourceMaterialId: 21, unitType: 0, parentUnitId: 101, number: 1, title: 'Unit 1' },
-        { id: 202, sourceMaterialId: 21, unitType: 0, parentUnitId: 101, number: 2, title: 'Unit 2' },
-        { id: 203, sourceMaterialId: 21, unitType: 0, parentUnitId: 102, number: 1, title: 'Unit 3' },
+        {
+          id: 201,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 1,
+          title: 'Unit 1',
+        },
+        {
+          id: 202,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 2,
+          title: 'Unit 2',
+        },
+        {
+          id: 203,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 102,
+          number: 1,
+          title: 'Unit 3',
+        },
       ],
     };
   }
@@ -489,7 +535,9 @@ describe('SourceMaterialCatalog', () => {
 
   it('shows flat layout for books with no season grouping', async () => {
     vi.useFakeTimers();
-    loadMaterials([{ id: 21, title: 'Darth Bane: Path of Destruction', medium: 1, canonType: 1 }], { 21: 2 });
+    loadMaterials([{ id: 21, title: 'Darth Bane: Path of Destruction', medium: 1, canonType: 1 }], {
+      21: 2,
+    });
 
     component.toggleUnits(21);
     fixture.detectChanges();
@@ -515,19 +563,36 @@ describe('SourceMaterialCatalog', () => {
 
   it('shows volume grouping for comics', async () => {
     vi.useFakeTimers();
-    loadMaterials(
-      [{ id: 21, title: 'Darth Vader', medium: 2, canonType: 0 }],
-      undefined,
-      {
-        21: [
-          { id: 301, sourceMaterialId: 21, unitType: 4, parentUnitId: null, number: 1, title: null },
-          { id: 302, sourceMaterialId: 21, unitType: 4, parentUnitId: null, number: 2, title: null },
-          { id: 401, sourceMaterialId: 21, unitType: 2, parentUnitId: 301, number: 1, title: 'Unit 1' },
-          { id: 402, sourceMaterialId: 21, unitType: 2, parentUnitId: 301, number: 2, title: 'Unit 2' },
-          { id: 403, sourceMaterialId: 21, unitType: 2, parentUnitId: 302, number: 1, title: 'Unit 3' },
-        ],
-      },
-    );
+    loadMaterials([{ id: 21, title: 'Darth Vader', medium: 2, canonType: 0 }], undefined, {
+      21: [
+        { id: 301, sourceMaterialId: 21, unitType: 4, parentUnitId: null, number: 1, title: null },
+        { id: 302, sourceMaterialId: 21, unitType: 4, parentUnitId: null, number: 2, title: null },
+        {
+          id: 401,
+          sourceMaterialId: 21,
+          unitType: 2,
+          parentUnitId: 301,
+          number: 1,
+          title: 'Unit 1',
+        },
+        {
+          id: 402,
+          sourceMaterialId: 21,
+          unitType: 2,
+          parentUnitId: 301,
+          number: 2,
+          title: 'Unit 2',
+        },
+        {
+          id: 403,
+          sourceMaterialId: 21,
+          unitType: 2,
+          parentUnitId: 302,
+          number: 1,
+          title: 'Unit 3',
+        },
+      ],
+    });
 
     component.toggleUnits(21);
     fixture.detectChanges();
@@ -567,12 +632,28 @@ describe('SourceMaterialCatalog', () => {
     fixture.detectChanges();
     component.submitAddUnit();
 
-    httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/units')).flush({
-      id: 211, sourceMaterialId: 21, unitType: 0, parentUnitId: null, number: 1, title: 'Part 1',
-    });
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/units')).flush([
-      { id: 211, sourceMaterialId: 21, unitType: 0, parentUnitId: null, number: 1, title: 'Part 1' },
-    ]);
+    httpMock
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/units'))
+      .flush({
+        id: 211,
+        sourceMaterialId: 21,
+        unitType: 0,
+        parentUnitId: null,
+        number: 1,
+        title: 'Part 1',
+      });
+    httpMock
+      .expectOne((r) => r.method === 'GET' && r.url.endsWith('/units'))
+      .flush([
+        {
+          id: 211,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: null,
+          number: 1,
+          title: 'Part 1',
+        },
+      ]);
     await vi.advanceTimersByTimeAsync(100);
     fixture.detectChanges();
 
@@ -595,7 +676,9 @@ describe('SourceMaterialCatalog', () => {
 
     /** Returns the rendered material row containing the given title. */
     function rowFor(title: string): HTMLElement {
-      const rows = fixture.nativeElement.querySelectorAll('.source-item') as NodeListOf<HTMLElement>;
+      const rows = fixture.nativeElement.querySelectorAll(
+        '.source-item',
+      ) as NodeListOf<HTMLElement>;
       const row = Array.from(rows).find((li) => li.textContent?.includes(title));
       if (!row) {
         throw new Error(`No material row rendered for "${title}".`);
@@ -632,9 +715,9 @@ describe('SourceMaterialCatalog', () => {
       expect(component.addMaterialMedium()).toBe('Movie');
       const dialog = fixture.nativeElement.querySelector('app-material-add-dialog .admin-popup');
       expect(dialog).toBeTruthy();
-      expect(fixture.nativeElement.querySelector('app-material-add-dialog h3')?.textContent?.trim()).toBe(
-        'Add Movie',
-      );
+      expect(
+        fixture.nativeElement.querySelector('app-material-add-dialog h3')?.textContent?.trim(),
+      ).toBe('Add Movie');
 
       component.cancelAddMaterial();
       fixture.detectChanges();
@@ -712,8 +795,22 @@ describe('SourceMaterialCatalog', () => {
     it('infers chapter adds with the next free number for standalone books', () => {
       loadMaterials([{ id: 42, title: 'Novel', medium: 1, canonType: 0 }]);
       seedUnits(42, [
-        { id: 501, sourceMaterialId: 42, unitType: 'Chapter', parentUnitId: null, number: 1, title: null },
-        { id: 502, sourceMaterialId: 42, unitType: 'Chapter', parentUnitId: null, number: 2, title: null },
+        {
+          id: 501,
+          sourceMaterialId: 42,
+          unitType: 'Chapter',
+          parentUnitId: null,
+          number: 1,
+          title: null,
+        },
+        {
+          id: 502,
+          sourceMaterialId: 42,
+          unitType: 'Chapter',
+          parentUnitId: null,
+          number: 2,
+          title: null,
+        },
       ]);
 
       component.onMaterialAddClick('Book', findMaterial(42));
@@ -730,9 +827,30 @@ describe('SourceMaterialCatalog', () => {
     it('infers book adds for collections and nests chapter adds beneath containers', () => {
       loadMaterials([{ id: 21, title: 'Trilogy', medium: 1, canonType: 0 }]);
       seedUnits(21, [
-        { id: 601, sourceMaterialId: 21, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
-        { id: 602, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 1, title: null },
-        { id: 603, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 2, title: null },
+        {
+          id: 601,
+          sourceMaterialId: 21,
+          unitType: 'Book',
+          parentUnitId: null,
+          number: 1,
+          title: 'Book One',
+        },
+        {
+          id: 602,
+          sourceMaterialId: 21,
+          unitType: 'Chapter',
+          parentUnitId: 601,
+          number: 1,
+          title: null,
+        },
+        {
+          id: 603,
+          sourceMaterialId: 21,
+          unitType: 'Chapter',
+          parentUnitId: 601,
+          number: 2,
+          title: null,
+        },
       ]);
 
       // A collection offers another Book at the top level.
@@ -766,14 +884,28 @@ describe('SourceMaterialCatalog', () => {
       vi.useFakeTimers();
       loadMaterials([{ id: 43, title: 'Standalone', medium: 1, canonType: 0 }]);
       seedUnits(43, [
-        { id: 701, sourceMaterialId: 43, unitType: 'Chapter', parentUnitId: null, number: 1, title: null },
-        { id: 702, sourceMaterialId: 43, unitType: 'Chapter', parentUnitId: null, number: 2, title: null },
+        {
+          id: 701,
+          sourceMaterialId: 43,
+          unitType: 'Chapter',
+          parentUnitId: null,
+          number: 1,
+          title: null,
+        },
+        {
+          id: 702,
+          sourceMaterialId: 43,
+          unitType: 'Chapter',
+          parentUnitId: null,
+          number: 2,
+          title: null,
+        },
       ]);
       const material = findMaterial(43);
       expect(component.isConvertibleStandaloneBook(material)).toBe(true);
 
-      const convertButton = Array.from(rowFor('Standalone').querySelectorAll('button')).find(
-        (b) => b.textContent?.includes('Convert to Collection'),
+      const convertButton = Array.from(rowFor('Standalone').querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Convert to Collection'),
       ) as HTMLButtonElement | undefined;
       expect(convertButton).toBeTruthy();
 
@@ -782,15 +914,14 @@ describe('SourceMaterialCatalog', () => {
       expect(component.convertPopupMaterialId()).toBe(43);
       // The dialog prefills the collection title with the current material title.
       expect(component.convertTitle()).toBe('Standalone');
-      expect(
-        fixture.nativeElement.querySelector('app-convert-collection-dialog'),
-      ).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('app-convert-collection-dialog')).toBeTruthy();
 
       component.convertTitle.set('Thrawn Trilogy');
       component.submitConvert();
 
       const post = httpMock.expectOne(
-        (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/43/convert-to-collection'),
+        (r) =>
+          r.method === 'POST' && r.url.endsWith('/api/source-materials/43/convert-to-collection'),
       );
       expect(post.request.body).toEqual({ collectionTitle: 'Thrawn Trilogy' });
       post.flush([]);
@@ -799,7 +930,14 @@ describe('SourceMaterialCatalog', () => {
       const unitsReq = httpMock.expectOne((r) => r.url.endsWith('/units'));
       const materialsReq = httpMock.expectOne((r) => r.url.endsWith('/api/source-materials'));
       unitsReq.flush([
-        { id: 801, sourceMaterialId: 43, unitType: 7, number: 1, title: 'Standalone', parentUnitId: null },
+        {
+          id: 801,
+          sourceMaterialId: 43,
+          unitType: 7,
+          number: 1,
+          title: 'Standalone',
+          parentUnitId: null,
+        },
         { id: 701, sourceMaterialId: 43, unitType: 1, parentUnitId: 801, number: 1, title: null },
       ]);
       materialsReq.flush([{ id: 43, title: 'Thrawn Trilogy', medium: 1, canonType: 0 }]);
@@ -816,8 +954,22 @@ describe('SourceMaterialCatalog', () => {
     it('hides convert for collections and empty books', () => {
       loadMaterials([{ id: 44, title: 'Collection', medium: 1, canonType: 0 }]);
       seedUnits(44, [
-        { id: 901, sourceMaterialId: 44, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
-        { id: 902, sourceMaterialId: 44, unitType: 'Chapter', parentUnitId: 901, number: 1, title: null },
+        {
+          id: 901,
+          sourceMaterialId: 44,
+          unitType: 'Book',
+          parentUnitId: null,
+          number: 1,
+          title: 'Book One',
+        },
+        {
+          id: 902,
+          sourceMaterialId: 44,
+          unitType: 'Chapter',
+          parentUnitId: 901,
+          number: 1,
+          title: null,
+        },
       ]);
       expect(component.isConvertibleStandaloneBook(findMaterial(44))).toBe(false);
       expect(rowFor('Collection').textContent).not.toContain('Convert to Collection');
@@ -852,8 +1004,22 @@ describe('SourceMaterialCatalog', () => {
 
       // Adding a unit INSIDE an existing collection: unambiguous → plain Title.
       seedUnits(21, [
-        { id: 601, sourceMaterialId: 21, unitType: 'Book', parentUnitId: null, number: 1, title: 'Book One' },
-        { id: 602, sourceMaterialId: 21, unitType: 'Chapter', parentUnitId: 601, number: 1, title: null },
+        {
+          id: 601,
+          sourceMaterialId: 21,
+          unitType: 'Book',
+          parentUnitId: null,
+          number: 1,
+          title: 'Book One',
+        },
+        {
+          id: 602,
+          sourceMaterialId: 21,
+          unitType: 'Chapter',
+          parentUnitId: 601,
+          number: 1,
+          title: null,
+        },
       ]);
       component.onMaterialAddClick('Book', findMaterial(21));
       fixture.detectChanges();
@@ -879,7 +1045,9 @@ describe('SourceMaterialCatalog', () => {
       expect(component.startingCollectionFor()).toBe(41);
 
       // The rename fires first since the collection name differs.
-      const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/41'));
+      const put = httpMock.expectOne(
+        (r) => r.method === 'PUT' && r.url.endsWith('/api/source-materials/41'),
+      );
       expect(put.request.body).toEqual({ title: 'Thrawn Trilogy', medium: 1, canonType: 0 });
       put.flush({ id: 41, title: 'Thrawn Trilogy', medium: 1, canonType: 0 });
       // Updating the material auto-invalidates the materials cache.
@@ -916,7 +1084,15 @@ describe('SourceMaterialCatalog', () => {
       // Success closes the popup and reloads the material's units.
       httpMock
         .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/41/units'))
-        .flush(expectedBooks.map((book) => ({ id: 0, sourceMaterialId: 41, unitType: 7, parentUnitId: null, ...book })));
+        .flush(
+          expectedBooks.map((book) => ({
+            id: 0,
+            sourceMaterialId: 41,
+            unitType: 7,
+            parentUnitId: null,
+            ...book,
+          })),
+        );
       await vi.advanceTimersByTimeAsync(100);
       fixture.detectChanges();
 
@@ -937,11 +1113,32 @@ describe('SourceMaterialCatalog', () => {
       const post = httpMock.expectOne(
         (r) => r.method === 'POST' && r.url.endsWith('/api/source-materials/45/units'),
       );
-      expect(post.request.body).toEqual({ unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' });
-      post.flush({ id: 950, sourceMaterialId: 45, unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' });
+      expect(post.request.body).toEqual({
+        unitType: 7,
+        parentUnitId: null,
+        number: 1,
+        title: 'Only Book',
+      });
+      post.flush({
+        id: 950,
+        sourceMaterialId: 45,
+        unitType: 7,
+        parentUnitId: null,
+        number: 1,
+        title: 'Only Book',
+      });
       httpMock
         .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials/45/units'))
-        .flush([{ id: 950, sourceMaterialId: 45, unitType: 7, parentUnitId: null, number: 1, title: 'Only Book' }]);
+        .flush([
+          {
+            id: 950,
+            sourceMaterialId: 45,
+            unitType: 7,
+            parentUnitId: null,
+            number: 1,
+            title: 'Only Book',
+          },
+        ]);
       vi.advanceTimersByTime(100);
 
       expect(component.startCollectionMaterialId()).toBeNull();
@@ -973,7 +1170,14 @@ describe('SourceMaterialCatalog', () => {
 
   describe('tracking (non-admin)', () => {
     beforeEach(() => {
-      mockAuthService.currentUser.set({ id: 'test-user', username: 'test', displayName: 'Test', email: 'test@test.com', emailVerified: true, role: 'Standard' });
+      mockAuthService.currentUser.set({
+        id: 'test-user',
+        username: 'test',
+        displayName: 'Test',
+        email: 'test@test.com',
+        emailVerified: true,
+        role: 'Standard',
+      });
       fixture.componentRef.setInput('isAdmin', false);
       fixture.detectChanges();
     });
@@ -1061,12 +1265,21 @@ describe('SourceMaterialCatalog', () => {
     });
 
     /** Loads a single show and runs the unit probe so its units are synced. */
-    async function loadShowWithUnits(units: Array<{ id: number; sourceMaterialId: number; unitType: number; number: number; title: string | null; parentUnitId: number | null }>): Promise<HTMLElement> {
+    async function loadShowWithUnits(
+      units: Array<{
+        id: number;
+        sourceMaterialId: number;
+        unitType: number;
+        number: number;
+        title: string | null;
+        parentUnitId: number | null;
+      }>,
+    ): Promise<HTMLElement> {
       vi.useFakeTimers();
       sourceMaterialService.invalidateMaterials();
-      httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL)).flush([
-        { id: 21, title: 'The Clone Wars', medium: 4, canonType: 0 },
-      ]);
+      httpMock
+        .expectOne((r) => r.method === 'GET' && r.url.endsWith(MATERIALS_URL))
+        .flush([{ id: 21, title: 'The Clone Wars', medium: 4, canonType: 0 }]);
       fixture.detectChanges();
 
       component.autoProbe();
@@ -1083,8 +1296,22 @@ describe('SourceMaterialCatalog', () => {
     it('expands a season under a show to display its episodes without tracking dropdowns', async () => {
       const root = await loadShowWithUnits([
         { id: 101, sourceMaterialId: 21, unitType: 3, parentUnitId: null, number: 1, title: null },
-        { id: 201, sourceMaterialId: 21, unitType: 0, parentUnitId: 101, number: 1, title: 'Cat and Mouse' },
-        { id: 202, sourceMaterialId: 21, unitType: 0, parentUnitId: 101, number: 2, title: 'A Hidden Enemy' },
+        {
+          id: 201,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 1,
+          title: 'Cat and Mouse',
+        },
+        {
+          id: 202,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 2,
+          title: 'A Hidden Enemy',
+        },
       ]);
 
       // The show is auto-expanded for non-admins without clicking the material arrow.
@@ -1110,9 +1337,30 @@ describe('SourceMaterialCatalog', () => {
     it('collects episodes with dangling parents into an ungrouped group without a track select', async () => {
       const root = await loadShowWithUnits([
         { id: 101, sourceMaterialId: 21, unitType: 3, parentUnitId: null, number: 1, title: null },
-        { id: 201, sourceMaterialId: 21, unitType: 0, parentUnitId: 999, number: 1, title: 'Cat and Mouse' },
-        { id: 202, sourceMaterialId: 21, unitType: 0, parentUnitId: 999, number: 2, title: 'A Hidden Enemy' },
-        { id: 203, sourceMaterialId: 21, unitType: 0, parentUnitId: null, number: 3, title: 'Chapter 1' },
+        {
+          id: 201,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 999,
+          number: 1,
+          title: 'Cat and Mouse',
+        },
+        {
+          id: 202,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 999,
+          number: 2,
+          title: 'A Hidden Enemy',
+        },
+        {
+          id: 203,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: null,
+          number: 3,
+          title: 'Chapter 1',
+        },
       ]);
 
       expect(component.isAutoExpanded(21)).toBe(true);
@@ -1135,7 +1383,14 @@ describe('SourceMaterialCatalog', () => {
     it('hides seasons when toggling an auto-expanded show closed and restores them on re-expand', async () => {
       const root = await loadShowWithUnits([
         { id: 101, sourceMaterialId: 21, unitType: 3, parentUnitId: null, number: 1, title: null },
-        { id: 201, sourceMaterialId: 21, unitType: 0, parentUnitId: 101, number: 1, title: 'Cat and Mouse' },
+        {
+          id: 201,
+          sourceMaterialId: 21,
+          unitType: 0,
+          parentUnitId: 101,
+          number: 1,
+          title: 'Cat and Mouse',
+        },
       ]);
 
       const expandButton = () =>
@@ -1168,7 +1423,9 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
       fixture.detectChanges();
 
       expect(component.isAutoExpanded(21)).toBe(true);
@@ -1180,7 +1437,9 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
       fixture.detectChanges();
 
       const selects = fixture.nativeElement.querySelectorAll('.group-track-select');
@@ -1192,7 +1451,9 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
       fixture.detectChanges();
 
       const selects = fixture.nativeElement.querySelectorAll('.group-track-select');
@@ -1217,7 +1478,9 @@ describe('SourceMaterialCatalog', () => {
       component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1')] });
       fixture.detectChanges();
 
-      const groupSelect = fixture.nativeElement.querySelector('.group-track-select') as HTMLSelectElement;
+      const groupSelect = fixture.nativeElement.querySelector(
+        '.group-track-select',
+      ) as HTMLSelectElement;
       groupSelect.value = 'Completed';
       groupSelect.dispatchEvent(new Event('change'));
 
@@ -1240,19 +1503,30 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
 
       // Pre-track the material with Season 1 tracked
       mockLibraryService.items.set([
-        { id: 21, title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
-          { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
-        ] },
+        {
+          id: 21,
+          title: 'The Clone Wars',
+          medium: 'Live Action Show',
+          status: null,
+          favorite: false,
+          units: [
+            { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+          ],
+        },
       ]);
       fixture.detectChanges();
 
       const selects = fixture.nativeElement.querySelectorAll('.group-track-select');
       const options = selects[0].querySelectorAll('option');
-      const removeOption = Array.from(options as unknown as HTMLOptionElement[]).find((o) => o.textContent?.includes('Remove From Library'));
+      const removeOption = Array.from(options as unknown as HTMLOptionElement[]).find((o) =>
+        o.textContent?.includes('Remove From Library'),
+      );
       expect(removeOption).toBeTruthy();
     });
 
@@ -1261,13 +1535,22 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
 
       // Season 1 is tracked and completed; Season 2 is untracked.
       mockLibraryService.items.set([
-        { id: 21, title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
-          { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'Completed' },
-        ] },
+        {
+          id: 21,
+          title: 'The Clone Wars',
+          medium: 'Live Action Show',
+          status: null,
+          favorite: false,
+          units: [
+            { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'Completed' },
+          ],
+        },
       ]);
       fixture.detectChanges();
 
@@ -1289,13 +1572,22 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
 
       // Pre-track the material with Season 1 tracked
       mockLibraryService.items.set([
-        { id: 21, title: 'The Clone Wars', medium: 'Live Action Show', status: null, favorite: false, units: [
-          { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
-        ] },
+        {
+          id: 21,
+          title: 'The Clone Wars',
+          medium: 'Live Action Show',
+          status: null,
+          favorite: false,
+          units: [
+            { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: 'In progress' },
+          ],
+        },
       ]);
       fixture.detectChanges();
 
@@ -1314,11 +1606,9 @@ describe('SourceMaterialCatalog', () => {
       fixture.detectChanges();
 
       // Set units with Season unitType to trigger group tracking
-      component.unitsByMaterial.set({ 21: [
-        season(101, 1, 'Season 1'),
-        season(102, 2, 'Season 2'),
-        season(103, 3, 'Season 3'),
-      ] });
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2'), season(103, 3, 'Season 3')],
+      });
 
       // Mirrors the reported bug scenario: Season 1 has completed episodes only,
       // Season 2 was just set to 'In progress' (tracked, nothing completed), and

@@ -1,4 +1,9 @@
-<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div
+  class="admin-popup-backdrop"
+  (click)="cancel.emit()"
+  (keydown.escape)="cancel.emit()"
+  tabindex="-1"
+></div>
 <div class="admin-popup" role="dialog" aria-modal="true" [attr.aria-label]="heading()">
   <h3>{{ heading() }}</h3>
   <form (ngSubmit)="save.emit()">

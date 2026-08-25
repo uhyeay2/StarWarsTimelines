@@ -28,9 +28,7 @@ describe('TimelineEventItem', () => {
       canon: ['Canon', 'Legends'],
       title: 'Test Event',
       description: 'A test event description.',
-      sources: [
-        { title: 'Test Source', medium: 'Book', canon: ['Canon', 'Legends'] },
-      ],
+      sources: [{ title: 'Test Source', medium: 'Book', canon: ['Canon', 'Legends'] }],
       locations: ['Tatooine'],
       characters: ['Luke Skywalker'],
       vehicles: ['Millennium Falcon'],
@@ -129,12 +127,8 @@ describe('TimelineEventItem', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const chips = [...compiled.querySelectorAll('button.chip')];
-    const tatooine = chips.find(
-      (chip) => chip.textContent?.trim() === 'Tatooine',
-    ) as HTMLElement;
-    const luke = chips.find(
-      (chip) => chip.textContent?.trim() === 'Luke Skywalker',
-    ) as HTMLElement;
+    const tatooine = chips.find((chip) => chip.textContent?.trim() === 'Tatooine') as HTMLElement;
+    const luke = chips.find((chip) => chip.textContent?.trim() === 'Luke Skywalker') as HTMLElement;
     const falcon = chips.find(
       (chip) => chip.textContent?.trim() === 'Millennium Falcon',
     ) as HTMLElement;
@@ -272,7 +266,10 @@ describe('TimelineEventItem', () => {
       sequence: 1,
     });
     fixture.componentRef.setInput('sourceChips', [
-      { label: 'Shatterpoint', values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-2'] },
+      {
+        label: 'Shatterpoint',
+        values: ['material-shatterpoint:chapter-1', 'material-shatterpoint:chapter-2'],
+      },
       { label: 'Chapter 2', values: ['material-shatterpoint:chapter-2'] },
     ]);
     fixture.detectChanges();
@@ -352,7 +349,12 @@ describe('TimelineEventItem', () => {
           medium: 'Animated Show',
           canon: ['Canon'],
           sourceId: 'material-tcw',
-          unit: { unitType: 'Episode', parentUnitId: 107, number: 9, title: 'The Siege of Mandalore' },
+          unit: {
+            unitType: 'Episode',
+            parentUnitId: 107,
+            number: 9,
+            title: 'The Siege of Mandalore',
+          },
         },
         {
           title: 'Darth Vader (2017)',
@@ -521,13 +523,9 @@ describe('TimelineEventItem tracking dropdown', () => {
     });
     fixture.detectChanges();
 
-    httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials`)
-      .flush(options.library ?? []);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials`).flush(options.library ?? []);
     // Signed-in cards fetch every depicted material's unit cache.
-    httpMock
-      .expectOne(`${API_BASE}/source-materials/11/units`)
-      .flush(options.catalogUnits ?? []);
+    httpMock.expectOne(`${API_BASE}/source-materials/11/units`).flush(options.catalogUnits ?? []);
     fixture.detectChanges();
   }
 
@@ -588,9 +586,7 @@ describe('TimelineEventItem tracking dropdown', () => {
     expect(put.request.method).toBe('PUT');
     expect(put.request.body).toEqual({ status: 2 });
     put.flush(null);
-    httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
-      .flush(TRACKED_MOVIE_DTO);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`).flush(TRACKED_MOVIE_DTO);
   });
 
   it('removes a tracked material from the library', async () => {
@@ -631,9 +627,7 @@ describe('TimelineEventItem tracking dropdown', () => {
     const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
     expect(put.request.body).toEqual({ status: 1, unitId: 301 });
     put.flush(null);
-    httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
-      .flush(TRACKED_MOVIE_DTO);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`).flush(TRACKED_MOVIE_DTO);
   });
 
   it('derives the season status from tracked episodes for shows', async () => {
@@ -670,9 +664,7 @@ describe('TimelineEventItem tracking dropdown', () => {
     const put = httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`);
     expect(put.request.body).toEqual({ status: 1, unitId: 107 });
     put.flush(null);
-    httpMock
-      .expectOne(`${API_BASE}/users/user-1/source-materials/11`)
-      .flush(TRACKED_MOVIE_DTO);
+    httpMock.expectOne(`${API_BASE}/users/user-1/source-materials/11`).flush(TRACKED_MOVIE_DTO);
   });
 
   it('hides the season dropdown when no explicit season container exists', async () => {

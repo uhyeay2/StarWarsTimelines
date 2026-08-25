@@ -21,9 +21,9 @@ describe('TrackSelect', () => {
 
     expect(select.getAttribute('aria-label')).toBe('Track A New Hope');
     expect(select.querySelectorAll('option').length).toBe(4);
-    expect((select.querySelector('option[value=""]') as HTMLOptionElement).textContent?.trim()).toBe(
-      'Track…',
-    );
+    expect(
+      (select.querySelector('option[value=""]') as HTMLOptionElement).textContent?.trim(),
+    ).toBe('Track…');
   });
 
   it('preselects the current status when tracked', () => {
@@ -57,15 +57,11 @@ describe('TrackSelect', () => {
   });
 
   it('flags group variants with the group class', () => {
-    expect(
-      fixture.nativeElement.querySelector('.track-select.group-track-select'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('.track-select.group-track-select')).toBeNull();
 
     fixture.componentRef.setInput('variant', 'group');
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelector('.track-select.group-track-select'),
-    ).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.track-select.group-track-select')).toBeTruthy();
   });
 });

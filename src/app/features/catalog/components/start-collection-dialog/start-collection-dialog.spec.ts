@@ -59,12 +59,18 @@ describe('StartCollectionDialog', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     const rows = el.querySelectorAll('.book-row');
-    expect((rows[0]!.querySelector('.book-move[aria-label="Move book up"]') as HTMLButtonElement).disabled).toBe(true);
     expect(
-      (rows[0]!.querySelector('.book-move[aria-label="Move book down"]') as HTMLButtonElement).disabled,
+      (rows[0]!.querySelector('.book-move[aria-label="Move book up"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (rows[0]!.querySelector('.book-move[aria-label="Move book down"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(false);
 
-    (rows[0]!.querySelector('.book-move[aria-label="Move book down"]') as HTMLButtonElement).click();
+    (
+      rows[0]!.querySelector('.book-move[aria-label="Move book down"]') as HTMLButtonElement
+    ).click();
     await fixture.whenStable();
 
     expect(fixture.componentInstance.books()).toEqual(['Dark Force Rising', 'Thrawn']);
@@ -100,9 +106,9 @@ describe('StartCollectionDialog', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    (
-      fixture.nativeElement.querySelector('form') as HTMLFormElement
-    ).dispatchEvent(new Event('submit'));
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit'),
+    );
     await fixture.whenStable();
 
     expect(saved.length).toBe(1);

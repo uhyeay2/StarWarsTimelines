@@ -55,16 +55,14 @@ describe('isValidItemDto', () => {
     expect(isValidItemDto(null)).toBe(false);
     expect(isValidItemDto({})).toBe(false);
     expect(isValidItemDto({ ...itemDto, sourceMaterialId: '10' })).toBe(false);
-    expect(
-      isValidItemDto({ ...itemDto, status: 'In progress' as unknown as number | null }),
-    ).toBe(false);
+    expect(isValidItemDto({ ...itemDto, status: 'In progress' as unknown as number | null })).toBe(
+      false,
+    );
     expect(isValidItemDto({ ...itemDto, status: undefined as unknown as number | null })).toBe(
       false,
     );
     expect(isValidItemDto({ ...itemDto, units: null as unknown as [] })).toBe(false);
-    expect(isValidItemDto({ ...itemDto, isFavorite: undefined as unknown as boolean })).toBe(
-      false,
-    );
+    expect(isValidItemDto({ ...itemDto, isFavorite: undefined as unknown as boolean })).toBe(false);
   });
 });
 

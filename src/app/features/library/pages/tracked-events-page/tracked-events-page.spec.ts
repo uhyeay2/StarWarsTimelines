@@ -11,7 +11,14 @@ import { LibraryService } from '../../services/library.service';
 import { StatusFilter } from '../../components/status-filter/status-filter';
 import { TrackedEventsPage } from './tracked-events-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
+const USER: User = {
+  id: 'user-padme',
+  username: 'padme',
+  displayName: 'Padmé Amidala',
+  email: 'padme@example.com',
+  emailVerified: true,
+  role: 'Standard',
+};
 
 const TRACKED: LibraryItem[] = [
   {
@@ -29,8 +36,22 @@ const TRACKED: LibraryItem[] = [
     favorite: false,
     units: [
       { id: 101, unitType: 'Season', number: 1, title: 'Season 1', status: null },
-      { id: 201, unitType: 'Episode', number: 1, title: 'Attack of the Clones', parentUnitId: 101, status: null },
-      { id: 202, unitType: 'Episode', number: 2, title: 'Sneak Preview', parentUnitId: 101, status: 'Completed' },
+      {
+        id: 201,
+        unitType: 'Episode',
+        number: 1,
+        title: 'Attack of the Clones',
+        parentUnitId: 101,
+        status: null,
+      },
+      {
+        id: 202,
+        unitType: 'Episode',
+        number: 2,
+        title: 'Sneak Preview',
+        parentUnitId: 101,
+        status: 'Completed',
+      },
     ],
   },
   {
@@ -73,7 +94,10 @@ interface SetupOptions {
   loading?: boolean;
 }
 
-async function setup(currentUser: User | null, options: SetupOptions = {}): Promise<{
+async function setup(
+  currentUser: User | null,
+  options: SetupOptions = {},
+): Promise<{
   fixture: ComponentFixture<TrackedEventsPage>;
   component: TrackedEventsPage;
   mocks: Mocks;
@@ -94,9 +118,8 @@ async function setup(currentUser: User | null, options: SetupOptions = {}): Prom
   };
   libraryMock.ensureTracked.mockImplementation(() => undefined);
   libraryMock.getTracked.mockReturnValue(of(TRACKED));
-  libraryMock.setStatus.mockImplementation(
-    (_userId: string, materialId: number, status: string) =>
-      of(TRACKED.map((item) => (item.id === materialId ? { ...item, status } : item))),
+  libraryMock.setStatus.mockImplementation((_userId: string, materialId: number, status: string) =>
+    of(TRACKED.map((item) => (item.id === materialId ? { ...item, status } : item))),
   );
   libraryMock.setFavorite.mockImplementation(
     (_userId: string, materialId: number, favorite: boolean) =>
@@ -154,7 +177,9 @@ function filterTab(fixture: ComponentFixture<TrackedEventsPage>, label: string):
 }
 
 function mediumHeaders(fixture: ComponentFixture<TrackedEventsPage>): HTMLElement[] {
-  return [...fixture.nativeElement.querySelectorAll('.medium-header .medium-label')] as HTMLElement[];
+  return [
+    ...fixture.nativeElement.querySelectorAll('.medium-header .medium-label'),
+  ] as HTMLElement[];
 }
 
 describe('TrackedEventsPage', () => {
@@ -171,7 +196,9 @@ describe('TrackedEventsPage', () => {
     expect(mocks.libraryMock.ensureTracked).toHaveBeenCalledWith('user-padme');
     expect(mocks.libraryMock.getTracked).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(4);
-    expect(fixture.nativeElement.textContent).toContain('Star Wars: Episode I - The Phantom Menace');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Star Wars: Episode I - The Phantom Menace',
+    );
   });
 
   it('shows a loading message instead of the empty state while the library loads', async () => {
@@ -194,7 +221,9 @@ describe('TrackedEventsPage', () => {
   it('loads and renders the tracked items for the signed-in user', async () => {
     const { fixture } = await setup(USER);
     expect(fixture.nativeElement.querySelectorAll('app-tracked-item-row').length).toBe(4);
-    expect(fixture.nativeElement.textContent).toContain('Star Wars: Episode I - The Phantom Menace');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Star Wars: Episode I - The Phantom Menace',
+    );
   });
 
   describe('status filter', () => {
@@ -243,8 +272,8 @@ describe('TrackedEventsPage', () => {
       const labels = mediumHeaders(fixture).map((el) => el.textContent?.trim());
       expect(labels).toEqual(['Movie', 'Book']);
 
-      const counts = [...fixture.nativeElement.querySelectorAll('.medium-count')].map(
-        (el) => (el as HTMLElement).textContent?.trim(),
+      const counts = [...fixture.nativeElement.querySelectorAll('.medium-count')].map((el) =>
+        (el as HTMLElement).textContent?.trim(),
       );
       expect(counts).toEqual(['3 items', '1 item']);
     });
@@ -273,7 +302,9 @@ describe('TrackedEventsPage', () => {
 
   it('updates an item status when the select changes', async () => {
     const { fixture, mocks } = await setup(USER);
-    const select = fixture.nativeElement.querySelector('app-tracked-item-row select') as HTMLSelectElement;
+    const select = fixture.nativeElement.querySelector(
+      'app-tracked-item-row select',
+    ) as HTMLSelectElement;
     select.value = 'Completed';
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
@@ -307,12 +338,7 @@ describe('TrackedEventsPage', () => {
     groupSelect.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith(
-      'user-padme',
-      22,
-      'Completed',
-      101,
-    );
+    expect(mocks.libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 22, 'Completed', 101);
   });
 
   it('clears unit progress (not the whole item) when a season select chooses Remove From Library', async () => {
@@ -323,11 +349,7 @@ describe('TrackedEventsPage', () => {
     groupSelect.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(mocks.libraryMock.clearUnitProgress).toHaveBeenCalledWith(
-      'user-padme',
-      22,
-      101,
-    );
+    expect(mocks.libraryMock.clearUnitProgress).toHaveBeenCalledWith('user-padme', 22, 101);
     expect(mocks.libraryMock.removeTracked).not.toHaveBeenCalled();
   });
 

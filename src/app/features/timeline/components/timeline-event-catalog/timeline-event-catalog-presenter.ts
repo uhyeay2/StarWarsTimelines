@@ -6,10 +6,7 @@ import { SourceMaterialService } from '../../../catalog/services/source-material
 import { TimelineEventsAdminService } from '../../services/timeline-events-admin.service';
 import { ApiSourceMaterialUnit } from '../../../../shared/models/api-source-material-unit';
 import { CreateTimelineEventInput } from '../../models/create-timeline-event-input';
-import {
-  SourceOptionContext,
-  resolveSourceLinks,
-} from '../../models/event-source-options';
+import { SourceOptionContext, resolveSourceLinks } from '../../models/event-source-options';
 import { editSourceSelectionKeys } from '../../models/source-option-keys';
 import { TimelineEvent } from '../../models/timeline-event';
 import { runOperation } from '../../../../shared/utils/async-operation';

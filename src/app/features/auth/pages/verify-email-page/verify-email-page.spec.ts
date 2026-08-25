@@ -7,7 +7,9 @@ import { VerifyEmailPage } from './verify-email-page';
 
 const VERIFY_URL = `${environment.apiBaseUrl}/api/auth/verify-email`;
 
-function mockRoute(token: string | null): { snapshot: { queryParamMap: { get: (key: string) => string | null } } } {
+function mockRoute(token: string | null): {
+  snapshot: { queryParamMap: { get: (key: string) => string | null } };
+} {
   return {
     snapshot: {
       queryParamMap: {
@@ -78,10 +80,12 @@ describe('VerifyEmailPage', () => {
 
   it('surfaces a server error for an invalid token', async () => {
     createFixture('expired-token');
-    httpMock.expectOne(VERIFY_URL).flush(
-      { detail: 'The verification link is invalid or has expired.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(VERIFY_URL)
+      .flush(
+        { detail: 'The verification link is invalid or has expired.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     await fixture.whenStable();
     fixture.detectChanges();
 

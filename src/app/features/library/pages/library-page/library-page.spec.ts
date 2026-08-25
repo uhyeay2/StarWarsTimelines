@@ -5,7 +5,14 @@ import { User } from '../../../../shared/models/user';
 import { AuthService } from '../../../auth/services/auth.service';
 import { LibraryPage } from './library-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
+const USER: User = {
+  id: 'user-padme',
+  username: 'padme',
+  displayName: 'Padmé Amidala',
+  email: 'padme@example.com',
+  emailVerified: true,
+  role: 'Standard',
+};
 
 async function setup(currentUser: User | null): Promise<ComponentFixture<LibraryPage>> {
   await TestBed.configureTestingModule({

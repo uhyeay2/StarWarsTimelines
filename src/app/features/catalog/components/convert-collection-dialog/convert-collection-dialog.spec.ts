@@ -59,7 +59,9 @@ describe('ConvertCollectionDialog', () => {
     expect(converted.length).toBe(1);
 
     (
-      fixture.nativeElement.querySelector('.admin-popup-actions button[type="button"]') as HTMLButtonElement
+      fixture.nativeElement.querySelector(
+        '.admin-popup-actions button[type="button"]',
+      ) as HTMLButtonElement
     ).click();
     await fixture.whenStable();
     expect(cancelled.length).toBe(1);

@@ -19,7 +19,9 @@
     radial-gradient(2px 2px at 402px 302px, rgba(190, 215, 255, 0.9) 30%, transparent 60%),
     radial-gradient(4px 4px at 282px 432px, rgba(255, 245, 225, 0.85) 25%, transparent 55%),
     radial-gradient(circle at 50% 20%, $color-bg-glow 0%, $color-bg 70%);
-  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat;
+  background-repeat:
+    repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat,
+    no-repeat;
   background-size:
     180px 180px,
     180px 180px,

@@ -8,7 +8,6 @@
   <!-- ─── End Timeline Marker ────────────────────────────────────────── -->
 
   <div class="event-card">
-
     <!-- ─── Event Meta (date, canons, details toggle) ────────────────── -->
     <header class="event-meta">
       <time class="event-date">
@@ -18,7 +17,11 @@
         <!-- ─── Canon Badges ─────────────────────────────────────────── -->
         <div class="event-canons">
           @for (canon of item.canon; track canon) {
-            <span class="canon-badge" [class.canon-badge--canon]="canon === 'Canon'" [class.canon-badge--legends]="canon === 'Legends'">
+            <span
+              class="canon-badge"
+              [class.canon-badge--canon]="canon === 'Canon'"
+              [class.canon-badge--legends]="canon === 'Legends'"
+            >
               {{ canon }}
             </span>
           }
@@ -31,12 +34,17 @@
           class="details-toggle"
           [attr.aria-expanded]="detailsOpen()"
           [attr.aria-controls]="detailsId"
-          (click)="toggleDetails()">
-          <span class="details-toggle-label">{{ detailsOpen() ? 'Hide details' : 'Show details' }}</span>
+          (click)="toggleDetails()"
+        >
+          <span class="details-toggle-label">{{
+            detailsOpen() ? 'Hide details' : 'Show details'
+          }}</span>
           <span
             class="details-toggle-chevron"
             [class.details-toggle-chevron--open]="detailsOpen()"
-            aria-hidden="true">&#9662;</span>
+            aria-hidden="true"
+            >&#9662;</span
+          >
         </button>
         <!-- ─── End Details Toggle ───────────────────────────────────── -->
       </div>
@@ -57,7 +65,8 @@
           [class.source-chip--medium]="chip.medium === true"
           [class.chip--selected]="sourceChipSelected(chip)"
           [attr.aria-pressed]="sourceChipSelected(chip)"
-          (click)="emitToggle('sources', chip.values)">
+          (click)="emitToggle('sources', chip.values)"
+        >
           @if (chip.medium === true) {
             <span class="event-medium">{{ chip.label }}</span>
           } @else {
@@ -83,17 +92,15 @@
             <select
               class="track-select event-track-select"
               [attr.aria-label]="'Track ' + source.title"
-              (change)="onTrackChange($event, source)">
-              <option
-                value=""
-                disabled
-                [selected]="t.status === null"
-                hidden>Track…</option>
+              (change)="onTrackChange($event, source)"
+            >
+              <option value="" disabled [selected]="t.status === null" hidden>Track…</option>
               @for (status of t.options; track status) {
                 <option
                   [value]="status"
                   [selected]="t.status === status"
-                  [class.remove-option]="status === 'remove'">
+                  [class.remove-option]="status === 'remove'"
+                >
                   {{ status === 'remove' ? 'Remove From Library' : status }}
                 </option>
               }
@@ -102,7 +109,6 @@
         }
         <!-- ─── End Tracking Status Dropdown ─────────────────────────────── -->
       }
-
     </p>
     <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->
 
@@ -121,7 +127,8 @@
                   class="chip"
                   [class.chip--selected]="selectedLocationSet().has(location)"
                   [attr.aria-pressed]="selectedLocationSet().has(location)"
-                  (click)="emitToggle('locations', [location])">
+                  (click)="emitToggle('locations', [location])"
+                >
                   {{ location }}
                 </button>
               }
@@ -139,7 +146,8 @@
                   class="chip"
                   [class.chip--selected]="selectedCharacterSet().has(character)"
                   [attr.aria-pressed]="selectedCharacterSet().has(character)"
-                  (click)="emitToggle('characters', [character])">
+                  (click)="emitToggle('characters', [character])"
+                >
                   {{ character }}
                 </button>
               }
@@ -157,7 +165,8 @@
                   class="chip"
                   [class.chip--selected]="selectedVehicleSet().has(vehicle)"
                   [attr.aria-pressed]="selectedVehicleSet().has(vehicle)"
-                  (click)="emitToggle('vehicles', [vehicle])">
+                  (click)="emitToggle('vehicles', [vehicle])"
+                >
                   {{ vehicle }}
                 </button>
               }

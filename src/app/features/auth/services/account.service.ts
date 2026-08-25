@@ -31,27 +31,25 @@ export function fetchUserProfile(
   logger: LoggerService,
   userId: string,
 ): Observable<User> {
-  return http
-    .get<AccountResponse>(`${USERS_BASE}/${userId}`)
-    .pipe(
-      catchError((error: HttpErrorResponse) => {
-        logger.error('Failed to load account details', { error });
-        return throwError(
-          () =>
-            new Error(
-              readProblemDetail(error, 'Unable to load your account details. Please try again.'),
-            ),
-        );
-      }),
-      map((response) => ({
-        id: response.id,
-        username: response.username,
-        displayName: response.displayName,
-        email: response.email,
-        emailVerified: response.emailVerified,
-        role: mapRole(response.role),
-      })),
-    );
+  return http.get<AccountResponse>(`${USERS_BASE}/${userId}`).pipe(
+    catchError((error: HttpErrorResponse) => {
+      logger.error('Failed to load account details', { error });
+      return throwError(
+        () =>
+          new Error(
+            readProblemDetail(error, 'Unable to load your account details. Please try again.'),
+          ),
+      );
+    }),
+    map((response) => ({
+      id: response.id,
+      username: response.username,
+      displayName: response.displayName,
+      email: response.email,
+      emailVerified: response.emailVerified,
+      role: mapRole(response.role),
+    })),
+  );
 }
 
 /**
@@ -115,20 +113,18 @@ export class AccountService {
    * @returns An observable that emits the updated {@link User}.
    */
   updateEmail(userId: string, email: string): Observable<User> {
-    return this.http
-      .put<AccountResponse>(`${USERS_BASE}/${userId}/email`, { email })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.logger.error('Failed to update email', { error });
-          return throwError(
-            () =>
-              new Error(
-                readProblemDetail(error, 'Unable to update your email address. Please try again.'),
-              ),
-          );
-        }),
-        map((response) => this.applyAccount(response)),
-      );
+    return this.http.put<AccountResponse>(`${USERS_BASE}/${userId}/email`, { email }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        this.logger.error('Failed to update email', { error });
+        return throwError(
+          () =>
+            new Error(
+              readProblemDetail(error, 'Unable to update your email address. Please try again.'),
+            ),
+        );
+      }),
+      map((response) => this.applyAccount(response)),
+    );
   }
 
   /**

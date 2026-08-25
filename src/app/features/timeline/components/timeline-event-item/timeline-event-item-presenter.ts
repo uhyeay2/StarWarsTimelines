@@ -3,7 +3,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
 import { EventSource } from '../../models/timeline-event';
 import { LibraryItem } from '../../../../shared/models/library-item';
-import { TrackSelectOption, findTrackedItem, groupTrackingStatus, groupUnitIsTracked, materialTrackingStatus, trackSelectOptions } from '../../../../shared/models/tracking-selection';
+import {
+  TrackSelectOption,
+  findTrackedItem,
+  groupTrackingStatus,
+  groupUnitIsTracked,
+  materialTrackingStatus,
+  trackSelectOptions,
+} from '../../../../shared/models/tracking-selection';
 import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
@@ -22,7 +29,9 @@ export class TrackingDropdownPresenter {
 
   /** The tracked library item for this source material, or null. */
   trackedItem(source: EventSource): LibraryItem | null {
-    return source.sourceId === undefined ? null : findTrackedItem(this.libraryService.items(), source.sourceId);
+    return source.sourceId === undefined
+      ? null
+      : findTrackedItem(this.libraryService.items(), source.sourceId);
   }
 
   /** Whether this source's medium tracks at season/volume/book group level. */
@@ -116,9 +125,7 @@ export class TrackingDropdownPresenter {
    */
   onTrackChange(changeEvent: Event, source: EventSource): void {
     const status = (changeEvent.target as HTMLSelectElement).value as
-      | TrackingStatus
-      | 'remove'
-      | '';
+      TrackingStatus | 'remove' | '';
     const user = this.currentUser();
     if (!user || !status || source.sourceId === undefined) {
       return;
@@ -133,7 +140,8 @@ export class TrackingDropdownPresenter {
     const unitId = this.containerUnitId(source);
     if (unitId !== null) {
       if (status === 'remove') {
-        this.libraryService.clearUnitProgress(userId, material.id, unitId)
+        this.libraryService
+          .clearUnitProgress(userId, material.id, unitId)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe();
         return;
@@ -148,7 +156,8 @@ export class TrackingDropdownPresenter {
           .subscribe();
         return;
       }
-      this.libraryService.setStatus(userId, material.id, status, unitId)
+      this.libraryService
+        .setStatus(userId, material.id, status, unitId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
       return;
@@ -159,18 +168,21 @@ export class TrackingDropdownPresenter {
     }
 
     if (status === 'remove') {
-      this.libraryService.removeTracked(userId, material.id)
+      this.libraryService
+        .removeTracked(userId, material.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
       return;
     }
     if (this.trackedItem(source)) {
-      this.libraryService.setStatus(userId, material.id, status)
+      this.libraryService
+        .setStatus(userId, material.id, status)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
       return;
     }
-    this.libraryService.addTracked(userId, material, status)
+    this.libraryService
+      .addTracked(userId, material, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }

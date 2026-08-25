@@ -11,15 +11,16 @@ const LOCATIONS_URL = '/api/locations';
 /** Flushes the two initial GETs fired by ngOnInit. */
 function flushInitialFetch(
   httpMock: HttpTestingController,
-  species: { id: number; name: string; homePlanetId: number | null; homePlanetName: string | null }[] = [],
+  species: {
+    id: number;
+    name: string;
+    homePlanetId: number | null;
+    homePlanetName: string | null;
+  }[] = [],
   locations: { id: number; name: string }[] = [],
 ): void {
-  httpMock
-    .expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL))
-    .flush(species);
-  httpMock
-    .expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL))
-    .flush(locations);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush(species);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush(locations);
 }
 
 describe('SpeciesCatalog', () => {
@@ -42,7 +43,14 @@ describe('SpeciesCatalog', () => {
     speciesService = TestBed.inject(SpeciesService);
     fixture.detectChanges();
 
-    flushInitialFetch(httpMock, [], [{ id: 11, name: 'Tatooine' }, { id: 12, name: 'Coruscant' }]);
+    flushInitialFetch(
+      httpMock,
+      [],
+      [
+        { id: 11, name: 'Tatooine' },
+        { id: 12, name: 'Coruscant' },
+      ],
+    );
     fixture.detectChanges();
   });
 
@@ -51,7 +59,14 @@ describe('SpeciesCatalog', () => {
   });
 
   /** Triggers a species re-fetch and flushes it with the given items. */
-  function loadSpecies(items: { id: number; name: string; homePlanetId: number | null; homePlanetName: string | null }[]): void {
+  function loadSpecies(
+    items: {
+      id: number;
+      name: string;
+      homePlanetId: number | null;
+      homePlanetName: string | null;
+    }[],
+  ): void {
     speciesService.invalidate();
     httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush(items);
     fixture.detectChanges();
@@ -102,7 +117,9 @@ describe('SpeciesCatalog', () => {
 
     expect(component.addOpen()).toBe(false);
     expect(component.newName()).toBe('');
-    expect(component.items()).toEqual([{ id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
+    expect(component.items()).toEqual([
+      { id: 3, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null },
+    ]);
     expect(fixture.nativeElement.textContent).toContain('Twi\u2019lek');
   });
 
@@ -130,7 +147,10 @@ describe('SpeciesCatalog', () => {
 
     httpMock
       .expectOne((r) => r.method === 'POST')
-      .flush({ detail: 'A species with this name already exists.' }, { status: 400, statusText: 'Bad Request' });
+      .flush(
+        { detail: 'A species with this name already exists.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     fixture.detectChanges();
 
     expect(component.addError()).toBe('A species with this name already exists.');
@@ -161,7 +181,9 @@ describe('SpeciesCatalog', () => {
     component.beginEdit({ id: 3, name: 'Zabrak', homePlanetId: 11, homePlanetName: 'Tatooine' });
     fixture.detectChanges();
 
-    const select = fixture.nativeElement.querySelector('select[name="editHomePlanetId"]') as HTMLSelectElement;
+    const select = fixture.nativeElement.querySelector(
+      'select[name="editHomePlanetId"]',
+    ) as HTMLSelectElement;
     const options = Array.from(select.options).map((o: HTMLOptionElement) => o.textContent?.trim());
     expect(options).toContain('No home planet');
   });
@@ -205,7 +227,9 @@ describe('SpeciesCatalog', () => {
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${SPECIES_URL}/3`));
+    const del = httpMock.expectOne(
+      (r) => r.method === 'DELETE' && r.url.endsWith(`${SPECIES_URL}/3`),
+    );
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadSpecies([]);
@@ -234,7 +258,9 @@ describe('SpeciesCatalog', () => {
     component.searchTerm.set('twi');
     fixture.detectChanges();
 
-    expect(component.filteredItems()).toEqual([{ id: 4, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null }]);
+    expect(component.filteredItems()).toEqual([
+      { id: 4, name: 'Twi\u2019lek', homePlanetId: null, homePlanetName: null },
+    ]);
     expect(fixture.nativeElement.textContent).toContain('Twi\u2019lek');
     expect(fixture.nativeElement.textContent).not.toContain('Wookiee');
   });

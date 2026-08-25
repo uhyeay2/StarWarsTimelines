@@ -3,10 +3,12 @@
     @if (registeredEmail()) {
       <h1>Check your inbox</h1>
       <p class="register-hint">
-        We emailed a verification link to <strong>{{ registeredEmail() }}</strong>.
+        We emailed a verification link to <strong>{{ registeredEmail() }}</strong
+        >.
       </p>
       <p class="register-copy">
-        Click the link in the email to verify your address, then log in to start building your library.
+        Click the link in the email to verify your address, then log in to start building your
+        library.
       </p>
       <a routerLink="/login" class="btn btn-primary register-btn">Back to log in</a>
     } @else {
@@ -16,29 +18,17 @@
       <form (ngSubmit)="submit()" #registerForm="ngForm">
         <label class="register-field">
           <span>Username</span>
-          <input
-            name="username"
-            [(ngModel)]="username"
-            required
-            autocomplete="username" />
+          <input name="username" [(ngModel)]="username" required autocomplete="username" />
         </label>
 
         <label class="register-field">
           <span>Display name <em class="register-optional">(optional)</em></span>
-          <input
-            name="displayName"
-            [(ngModel)]="displayName"
-            autocomplete="name" />
+          <input name="displayName" [(ngModel)]="displayName" autocomplete="name" />
         </label>
 
         <label class="register-field">
           <span>Email</span>
-          <input
-            name="email"
-            type="email"
-            [(ngModel)]="email"
-            required
-            autocomplete="email" />
+          <input name="email" type="email" [(ngModel)]="email" required autocomplete="email" />
         </label>
 
         <div class="register-field">
@@ -50,12 +40,14 @@
               [(ngModel)]="password"
               required
               minlength="6"
-              autocomplete="new-password" />
+              autocomplete="new-password"
+            />
             <button
               type="button"
               class="password-toggle"
               [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-              (click)="showPassword.set(!showPassword())">
+              (click)="showPassword.set(!showPassword())"
+            >
               {{ showPassword() ? 'Hide' : 'Show' }}
             </button>
           </div>
@@ -69,12 +61,14 @@
               [type]="showConfirmPassword() ? 'text' : 'password'"
               [(ngModel)]="confirmPassword"
               required
-              autocomplete="new-password" />
+              autocomplete="new-password"
+            />
             <button
               type="button"
               class="password-toggle"
               [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
-              (click)="showConfirmPassword.set(!showConfirmPassword())">
+              (click)="showConfirmPassword.set(!showConfirmPassword())"
+            >
               {{ showConfirmPassword() ? 'Hide' : 'Show' }}
             </button>
           </div>
@@ -92,9 +86,7 @@
         </button>
       </form>
 
-      <p class="register-login">
-        Already have an account? <a routerLink="/login">Log in</a>
-      </p>
+      <p class="register-login">Already have an account? <a routerLink="/login">Log in</a></p>
     }
   </div>
 </section>

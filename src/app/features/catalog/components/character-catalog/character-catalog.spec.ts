@@ -23,20 +23,21 @@ type BioFields = {
 };
 
 /** Flushes the three initial GETs fired by ngOnInit. */
-function flushInitialFetch(
-  httpMock: HttpTestingController,
-  characters: BioFields[] = [],
-): void {
+function flushInitialFetch(httpMock: HttpTestingController, characters: BioFields[] = []): void {
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush(characters);
-  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([
-    { id: 11, name: 'Tatooine' },
-    { id: 12, name: 'Coruscant' },
-    { id: 13, name: 'Naboo' },
-  ]);
-  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush([
-    { id: 3, name: 'Human', homePlanetId: null, homePlanetName: null },
-    { id: 4, name: 'Wookiee', homePlanetId: null, homePlanetName: null },
-  ]);
+  httpMock
+    .expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL))
+    .flush([
+      { id: 11, name: 'Tatooine' },
+      { id: 12, name: 'Coruscant' },
+      { id: 13, name: 'Naboo' },
+    ]);
+  httpMock
+    .expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL))
+    .flush([
+      { id: 3, name: 'Human', homePlanetId: null, homePlanetName: null },
+      { id: 4, name: 'Wookiee', homePlanetId: null, homePlanetName: null },
+    ]);
 }
 
 describe('CharacterCatalog', () => {
@@ -212,11 +213,16 @@ describe('CharacterCatalog', () => {
 
     httpMock
       .expectOne((r) => r.method === 'POST')
-      .flush({ detail: 'A character with this name already exists.' }, { status: 400, statusText: 'Bad Request' });
+      .flush(
+        { detail: 'A character with this name already exists.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     fixture.detectChanges();
 
     expect(component.addError()).toBe('A character with this name already exists.');
-    expect(fixture.nativeElement.textContent).toContain('A character with this name already exists.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'A character with this name already exists.',
+    );
   });
 
   it('edits a character biography and reloads the list', () => {
@@ -253,7 +259,9 @@ describe('CharacterCatalog', () => {
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith(`${CHARACTERS_URL}/9`));
+    const put = httpMock.expectOne(
+      (r) => r.method === 'PUT' && r.url.endsWith(`${CHARACTERS_URL}/9`),
+    );
     expect(put.request.body).toEqual({
       name: 'Emperor Palpatine',
       planetBornOnId: 12,
@@ -280,7 +288,9 @@ describe('CharacterCatalog', () => {
 
     expect(component.editId()).toBeNull();
     expect(component.items()[0]!.planetBornOnName).toBe('Coruscant');
-    expect(fixture.nativeElement.textContent).toContain('Human \u00b7 Born Coruscant, 84\u201388 BBY \u00b7 Died 4\u201335 ABY');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Human \u00b7 Born Coruscant, 84\u201388 BBY \u00b7 Died 4\u201335 ABY',
+    );
   });
 
   it('offers the unknown option in dropdowns when editing a character that has values, so values can be cleared', () => {
@@ -315,12 +325,12 @@ describe('CharacterCatalog', () => {
     const planetSelect = fixture.nativeElement.querySelector(
       'select[name="editPlanetBornOnId"]',
     ) as HTMLSelectElement;
-    expect(
-      Array.from(speciesSelect.options).some((o) => o.textContent?.trim() === 'Unknown'),
-    ).toBe(true);
-    expect(
-      Array.from(planetSelect.options).some((o) => o.textContent?.trim() === 'Unknown'),
-    ).toBe(true);
+    expect(Array.from(speciesSelect.options).some((o) => o.textContent?.trim() === 'Unknown')).toBe(
+      true,
+    );
+    expect(Array.from(planetSelect.options).some((o) => o.textContent?.trim() === 'Unknown')).toBe(
+      true,
+    );
   });
 
   it('prefills the edit form with the stored biography and sends the full payload when saving', () => {
@@ -351,7 +361,9 @@ describe('CharacterCatalog', () => {
 
     component.saveEdit();
 
-    const http = httpMock.expectOne((req) => req.method === 'PUT' && req.url.includes('/characters/9'));
+    const http = httpMock.expectOne(
+      (req) => req.method === 'PUT' && req.url.includes('/characters/9'),
+    );
     expect(http.request.body).toEqual({
       name: 'Luke',
       planetBornOnId: 11,
@@ -400,7 +412,9 @@ describe('CharacterCatalog', () => {
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith(`${CHARACTERS_URL}/7`));
+    const del = httpMock.expectOne(
+      (r) => r.method === 'DELETE' && r.url.endsWith(`${CHARACTERS_URL}/7`),
+    );
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadCharacters([]);

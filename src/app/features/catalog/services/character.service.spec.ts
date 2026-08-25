@@ -16,10 +16,7 @@ describe('CharacterService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(CharacterService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -82,13 +79,15 @@ describe('CharacterService', () => {
     });
 
     it('sends provided optional fields as-is', async () => {
-      const promise = firstValueFrom(service.createCharacter({
-        name: 'Leia',
-        planetBornOnId: 3,
-        speciesId: 5,
-        yearOfBirthEarliest: -19,
-        yearOfBirthLatest: -19,
-      }));
+      const promise = firstValueFrom(
+        service.createCharacter({
+          name: 'Leia',
+          planetBornOnId: 3,
+          speciesId: 5,
+          yearOfBirthEarliest: -19,
+          yearOfBirthLatest: -19,
+        }),
+      );
 
       const req = httpMock.expectOne(BASE);
       expect(req.request.body).toEqual({
@@ -146,20 +145,21 @@ describe('CharacterService', () => {
   describe('error handling', () => {
     it('throws EntityInUseError on 409', async () => {
       const promise = firstValueFrom(service.deleteCharacter(1));
-      httpMock.expectOne(`${BASE}/1`).flush(
-        { detail: 'Character is referenced by events' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      httpMock
+        .expectOne(`${BASE}/1`)
+        .flush(
+          { detail: 'Character is referenced by events' },
+          { status: 409, statusText: 'Conflict' },
+        );
 
       await expect(promise).rejects.toBeInstanceOf(EntityInUseError);
     });
 
     it('throws CatalogError with code not-found on 404', async () => {
       const promise = firstValueFrom(service.deleteCharacter(999));
-      httpMock.expectOne(`${BASE}/999`).flush(
-        { detail: 'Character not found' },
-        { status: 404, statusText: 'Not Found' },
-      );
+      httpMock
+        .expectOne(`${BASE}/999`)
+        .flush({ detail: 'Character not found' }, { status: 404, statusText: 'Not Found' });
 
       const err = await promise.catch((e) => e);
       expect(err).toBeInstanceOf(CatalogError);

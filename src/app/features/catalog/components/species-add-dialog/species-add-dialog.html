@@ -1,4 +1,9 @@
-<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div
+  class="admin-popup-backdrop"
+  (click)="cancel.emit()"
+  (keydown.escape)="cancel.emit()"
+  tabindex="-1"
+></div>
 <div class="admin-popup" role="dialog" aria-modal="true" aria-label="Add species">
   <h3>Add species</h3>
   <form (ngSubmit)="save.emit()">
@@ -12,7 +17,8 @@
         ariaLabel="Home planet"
         [options]="locationOptions()"
         noneLabel="No home planet"
-        [(value)]="homePlanetId" />
+        [(value)]="homePlanetId"
+      />
     </div>
     @if (error()) {
       <p class="form-error" role="alert">{{ error() }}</p>

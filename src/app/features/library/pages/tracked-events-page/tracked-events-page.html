@@ -1,6 +1,5 @@
 <!-- ─── Tracked Events Page ─────────────────────────────────────────────── -->
 <section class="tracked-events-page">
-
   <!-- ─── Page Header ────────────────────────────────────────────────── -->
   <header class="page-header">
     <h1>My Tracked Events</h1>
@@ -11,14 +10,11 @@
   <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
   @if (!user()) {
     <app-login-prompt>Log in to view and manage your tracked events.</app-login-prompt>
-  <!-- ─── Tracked Layout (when logged in) ────────────────────────────── -->
+    <!-- ─── Tracked Layout (when logged in) ────────────────────────────── -->
   } @else {
     <div class="tracked-layout">
-
       <!-- ─── Status Filter Tabs ─────────────────────────────────────── -->
-      <app-status-filter
-        [(selection)]="statusSelection"
-        label="Filter tracked items by status" />
+      <app-status-filter [(selection)]="statusSelection" label="Filter tracked items by status" />
       <!-- ─── End Status Filter Tabs ─────────────────────────────────── -->
 
       <!-- ─── Tracked Items Grouped By Medium ────────────────────────── -->
@@ -30,10 +26,13 @@
               class="medium-header"
               [class.medium-header--open]="isMediumExpanded(group.medium)"
               [attr.aria-expanded]="isMediumExpanded(group.medium)"
-              (click)="toggleMedium(group.medium)">
+              (click)="toggleMedium(group.medium)"
+            >
               <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
               <span class="medium-label">{{ group.medium }}</span>
-              <span class="medium-count">{{ group.items.length }} {{ group.items.length === 1 ? 'item' : 'items' }}</span>
+              <span class="medium-count"
+                >{{ group.items.length }} {{ group.items.length === 1 ? 'item' : 'items' }}</span
+              >
             </button>
             @if (isMediumExpanded(group.medium)) {
               <ul class="item-list">
@@ -45,7 +44,8 @@
                       (statusChange)="setStatus(item.id, $event)"
                       (remove)="removeTracked(item.id)"
                       (groupStatusChange)="setGroupStatus(item.id, $event.unitId, $event.status)"
-                      (groupRemove)="clearGroupProgress(item.id, $event.unitId)" />
+                      (groupRemove)="clearGroupProgress(item.id, $event.unitId)"
+                    />
                   </li>
                 }
               </ul>

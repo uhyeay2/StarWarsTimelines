@@ -97,10 +97,7 @@ export class TimelineEventsAdminService {
       this.logger.error(`[TimelineEventsAdminService] ${context}: ${err.message}`, { error: err });
       return throwError(() => err);
     }
-    const message =
-      err instanceof HttpErrorResponse
-        ? readProblemDetail(err, fallback)
-        : fallback;
+    const message = err instanceof HttpErrorResponse ? readProblemDetail(err, fallback) : fallback;
     this.logger.error(`[TimelineEventsAdminService] ${context}: ${message}`, { error: err });
     return throwError(() => new TimelineError(message, this.classifyError(err)));
   }
@@ -123,11 +120,10 @@ export class TimelineEventsAdminService {
 }
 
 function toRequestPayload(input: CreateTimelineEventInput): Record<string, unknown> {
-  const links = input.sourceMaterials.map(
-    (link: EventSourceLinkInput) =>
-      link.sourceMaterialUnitId !== null
-        ? { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: link.sourceMaterialUnitId }
-        : { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: null },
+  const links = input.sourceMaterials.map((link: EventSourceLinkInput) =>
+    link.sourceMaterialUnitId !== null
+      ? { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: link.sourceMaterialUnitId }
+      : { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: null },
   );
   return {
     title: input.title,

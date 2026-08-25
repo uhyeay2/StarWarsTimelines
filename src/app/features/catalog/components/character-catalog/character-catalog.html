@@ -17,7 +17,8 @@
         name="search"
         type="search"
         placeholder="Search characters…"
-        [(ngModel)]="searchTerm" />
+        [(ngModel)]="searchTerm"
+      />
     </label>
 
     <ul class="character-list">
@@ -33,7 +34,11 @@
                     <option [ngValue]="species.id">{{ species.name }}</option>
                   }
                 </select>
-                <select name="editPlanetBornOnId" [(ngModel)]="editPlanetBornOnId" aria-label="Birth planet">
+                <select
+                  name="editPlanetBornOnId"
+                  [(ngModel)]="editPlanetBornOnId"
+                  aria-label="Birth planet"
+                >
                   <option [ngValue]="noSelection">Unknown</option>
                   @for (location of sortedLocations(); track location.id) {
                     <option [ngValue]="location.id">{{ location.name }}</option>
@@ -45,47 +50,55 @@
                   step="1"
                   aria-label="Born from year"
                   placeholder="Born from (BBY is negative)"
-                  [(ngModel)]="editBirthFrom" />
+                  [(ngModel)]="editBirthFrom"
+                />
                 <input
                   name="editBirthTo"
                   type="number"
                   step="1"
                   aria-label="Born to year"
                   placeholder="Born to"
-                  [(ngModel)]="editBirthTo" />
+                  [(ngModel)]="editBirthTo"
+                />
                 <input
                   name="editDeathFrom"
                   type="number"
                   step="1"
                   aria-label="Died from year"
                   placeholder="Died from (ABY is positive)"
-                  [(ngModel)]="editDeathFrom" />
+                  [(ngModel)]="editDeathFrom"
+                />
                 <input
                   name="editDeathTo"
                   type="number"
                   step="1"
                   aria-label="Died to year"
                   placeholder="Died to"
-                  [(ngModel)]="editDeathTo" />
+                  [(ngModel)]="editDeathTo"
+                />
                 <button class="btn btn-sm" type="submit" [disabled]="savingId() === item.id">
                   {{ savingId() === item.id ? 'Saving…' : 'Save' }}
                 </button>
                 <button class="btn btn-sm" type="button" (click)="cancelEdit()">Cancel</button>
               </form>
-              <p class="character-hint">Saving replaces all details: choose “Unknown” or leave a pair blank to clear the stored value.</p>
+              <p class="character-hint">
+                Saving replaces all details: choose “Unknown” or leave a pair blank to clear the
+                stored value.
+              </p>
             </div>
           } @else if (confirmDeleteId() === item.id) {
             <div class="delete-prompt">
               <p>
-                Delete “{{ item.name }}”? This is blocked while the character is linked to a timeline
-                event.
+                Delete “{{ item.name }}”? This is blocked while the character is linked to a
+                timeline event.
               </p>
               <div class="delete-actions">
                 <button
                   class="btn btn-sm btn-danger"
                   type="button"
                   [disabled]="deletingId() === item.id"
-                  (click)="confirmDelete()">
+                  (click)="confirmDelete()"
+                >
                   {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
                 </button>
                 <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
@@ -101,10 +114,7 @@
             @if (isAdmin()) {
               <div class="character-actions">
                 <button class="btn btn-sm" type="button" (click)="beginEdit(item)">Edit</button>
-                <button
-                  class="btn btn-sm btn-danger"
-                  type="button"
-                  (click)="requestDelete(item)">
+                <button class="btn btn-sm btn-danger" type="button" (click)="requestDelete(item)">
                   Delete
                 </button>
               </div>
@@ -135,6 +145,7 @@
       [error]="addError()"
       [saving]="adding()"
       (save)="submitAdd()"
-      (cancel)="cancelAdd()" />
+      (cancel)="cancelAdd()"
+    />
   }
 </section>

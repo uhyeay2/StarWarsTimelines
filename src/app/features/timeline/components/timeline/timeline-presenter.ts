@@ -62,7 +62,9 @@ export class TimelinePresenter {
   });
 
   readonly continuityEvents = computed(() =>
-    this.sourceFilteredEvents().filter((event) => matchesCanonView(event.canon, this.filters().canonView)),
+    this.sourceFilteredEvents().filter((event) =>
+      matchesCanonView(event.canon, this.filters().canonView),
+    ),
   );
 
   readonly facetOptions = computed(() => {
@@ -112,9 +114,7 @@ export class TimelinePresenter {
       .filter((event) => matchesFilters(event, this.filters()))
       .sort(
         (a, b) =>
-          a.yearStart - b.yearStart ||
-          a.sequence - b.sequence ||
-          a.title.localeCompare(b.title),
+          a.yearStart - b.yearStart || a.sequence - b.sequence || a.title.localeCompare(b.title),
       ),
   );
 

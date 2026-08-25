@@ -49,7 +49,7 @@ export function formatGalacticYearRange(
     return formatGalacticYear(earliest);
   }
 
-  if ((earliest < 0) !== (latest < 0)) {
+  if (earliest < 0 !== latest < 0) {
     // Era-spanning range: order endpoints chronologically instead of numerically.
     const [first, second] = earliest <= latest ? [earliest, latest] : [latest, earliest];
     return `${formatGalacticYear(first)} \u2013 ${formatGalacticYear(second)}`;

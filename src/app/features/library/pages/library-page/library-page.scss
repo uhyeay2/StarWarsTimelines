@@ -18,7 +18,6 @@
   margin: 0 0 2rem;
 }
 
-
 .hub-layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -36,7 +35,10 @@
   border: 1px solid $color-border;
   border-radius: 14px;
   text-decoration: none;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .hub-card:hover {

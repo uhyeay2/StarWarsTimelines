@@ -4,11 +4,7 @@ interface Named {
   name: string;
 }
 
-const items: Named[] = [
-  { name: 'Tatooine' },
-  { name: 'Coruscant' },
-  { name: 'taul' },
-];
+const items: Named[] = [{ name: 'Tatooine' }, { name: 'Coruscant' }, { name: 'taul' }];
 
 describe('filterByName', () => {
   it('matches case-insensitively', () => {

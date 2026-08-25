@@ -55,7 +55,14 @@ export class CharacterService {
         speciesId: input.speciesId ?? null,
       })
       .pipe(
-        catchError(catalogErrorHandler('Unable to create the character. Please try again.', 'createCharacter', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to create the character. Please try again.',
+            'createCharacter',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         tap(() => this.cache.invalidate()),
       );
   }
@@ -78,7 +85,14 @@ export class CharacterService {
         speciesId: input.speciesId ?? null,
       })
       .pipe(
-        catchError(catalogErrorHandler('Unable to update the character. Please try again.', 'updateCharacter', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to update the character. Please try again.',
+            'updateCharacter',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         tap(() => this.cache.invalidate()),
       );
   }
@@ -89,11 +103,16 @@ export class CharacterService {
    * @returns An observable that completes when the deletion is done.
    */
   deleteCharacter(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${CATALOG_API_BASE}/characters/${id}`)
-      .pipe(
-        catchError(catalogErrorHandler('Unable to delete the character. Please try again.', 'deleteCharacter', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.delete<void>(`${CATALOG_API_BASE}/characters/${id}`).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to delete the character. Please try again.',
+          'deleteCharacter',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 }

@@ -88,7 +88,10 @@ describe('CatalogEventService', () => {
           provide: CatalogInvalidator,
           useValue: { invalidateEntity: invalidateEntitySpy },
         },
-        { provide: LoggerService, useValue: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() } },
+        {
+          provide: LoggerService,
+          useValue: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
+        },
         { provide: StorageService, useValue: new StorageService() },
       ],
     });
@@ -196,9 +199,7 @@ describe('CatalogEventService', () => {
     authSignal.set(USER);
     TestBed.flushEffects();
 
-    MockEventSource.instances[0]!.simulateMessage(
-      JSON.stringify({ type: 'created' }),
-    );
+    MockEventSource.instances[0]!.simulateMessage(JSON.stringify({ type: 'created' }));
 
     expect(invalidateEntitySpy).not.toHaveBeenCalled();
   });
@@ -298,9 +299,7 @@ describe('CatalogEventService', () => {
         emitted = true;
       });
 
-      MockEventSource.instances[0]!.simulateMessage(
-        JSON.stringify({ type: 'created' }),
-      );
+      MockEventSource.instances[0]!.simulateMessage(JSON.stringify({ type: 'created' }));
 
       expect(emitted).toBe(false);
     });

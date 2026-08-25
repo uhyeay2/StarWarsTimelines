@@ -47,9 +47,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     canon: ['Canon', 'Legends'],
     title: 'Both',
     description: '',
-    sources: [
-      { title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 30 },
-    ],
+    sources: [{ title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 30 }],
     locations: ['Naboo', 'Coruscant'],
     characters: ['Padme Amidala', 'Darth Maul'],
     vehicles: ['Sith Infiltrator'],
@@ -87,7 +85,9 @@ describe('Timeline', () => {
     };
   }
 
-  function sourceMaterialServiceMock(overrides?: { units?: { id: number; title?: string; unitType: string; number: number }[] }) {
+  function sourceMaterialServiceMock(overrides?: {
+    units?: { id: number; title?: string; unitType: string; number: number }[];
+  }) {
     return {
       getUnitCache: vi.fn(() => ({
         data: () => overrides?.units ?? [],
@@ -104,10 +104,30 @@ describe('Timeline', () => {
     units?: { id: number; title?: string; unitType: string; number: number }[];
   }) {
     return [
-      { provide: CharacterService, useValue: characterServiceMock(overrides?.characters !== undefined ? { characters: overrides.characters } : {}) },
-      { provide: LocationService, useValue: locationServiceMock(overrides?.locations !== undefined ? { locations: overrides.locations } : {}) },
-      { provide: VehicleService, useValue: vehicleServiceMock(overrides?.vehicles !== undefined ? { vehicles: overrides.vehicles } : {}) },
-      { provide: SourceMaterialService, useValue: sourceMaterialServiceMock(overrides?.units !== undefined ? { units: overrides.units } : {}) },
+      {
+        provide: CharacterService,
+        useValue: characterServiceMock(
+          overrides?.characters !== undefined ? { characters: overrides.characters } : {},
+        ),
+      },
+      {
+        provide: LocationService,
+        useValue: locationServiceMock(
+          overrides?.locations !== undefined ? { locations: overrides.locations } : {},
+        ),
+      },
+      {
+        provide: VehicleService,
+        useValue: vehicleServiceMock(
+          overrides?.vehicles !== undefined ? { vehicles: overrides.vehicles } : {},
+        ),
+      },
+      {
+        provide: SourceMaterialService,
+        useValue: sourceMaterialServiceMock(
+          overrides?.units !== undefined ? { units: overrides.units } : {},
+        ),
+      },
     ];
   }
 
@@ -116,7 +136,10 @@ describe('Timeline', () => {
     return { events$: catalogEvents$.asObservable(), connected: signal(false) };
   }
 
-  function eventsServiceMock(events: readonly TimelineEvent[] = FIXTURE_EVENTS, overrides?: Record<string, unknown>) {
+  function eventsServiceMock(
+    events: readonly TimelineEvent[] = FIXTURE_EVENTS,
+    overrides?: Record<string, unknown>,
+  ) {
     return {
       getEvents$: () => of(events),
       loading: signal(false),
@@ -181,8 +204,8 @@ describe('Timeline', () => {
 
   const openDetails = (title: string): void => {
     const cards = [...fixture.nativeElement.querySelectorAll('app-timeline-event-item')];
-    const card = cards.find(
-      (el) => (el as HTMLElement).textContent?.includes(title),
+    const card = cards.find((el) =>
+      (el as HTMLElement).textContent?.includes(title),
     ) as HTMLElement;
     (card.querySelector('.details-toggle') as HTMLElement).click();
     fixture.detectChanges();
@@ -297,9 +320,9 @@ describe('Timeline', () => {
     const expanders = [...sourceGroup.querySelectorAll('.filter-option-expand')];
     (expanders[0] as HTMLElement).click();
     fixture.detectChanges();
-    expect([...sourceGroup.querySelectorAll('.filter-option-label')].map((el) => el.textContent)).toEqual(
-      ['Animated Show', 'The Clone Wars'],
-    );
+    expect(
+      [...sourceGroup.querySelectorAll('.filter-option-label')].map((el) => el.textContent),
+    ).toEqual(['Animated Show', 'The Clone Wars']);
   });
 
   it('renders the heading and description inputs', () => {
@@ -493,9 +516,9 @@ describe('Timeline', () => {
   it('retains the source tree expansion when the advanced filters are hidden and reopened', () => {
     const sourceGroup = (): HTMLElement =>
       (
-        [
-          ...fixture.nativeElement.querySelectorAll('.filter-group-trigger'),
-        ].find((trigger) => trigger.textContent?.includes('Source')) as HTMLElement
+        [...fixture.nativeElement.querySelectorAll('.filter-group-trigger')].find((trigger) =>
+          trigger.textContent?.includes('Source'),
+        ) as HTMLElement
       ).closest('.filter-group') as HTMLElement;
     const sourceLabels = (): string[] =>
       [...sourceGroup().querySelectorAll('.filter-option-label')].map(
@@ -581,8 +604,8 @@ describe('Timeline', () => {
     const characterGroup = groups.find((g) => g.textContent?.includes('Characters'))!;
     (characterGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
     fixture.detectChanges();
-    const labels = [...characterGroup.querySelectorAll('.filter-option-label')].map(
-      (el) => el.textContent?.trim(),
+    const labels = [...characterGroup.querySelectorAll('.filter-option-label')].map((el) =>
+      el.textContent?.trim(),
     );
     expect(labels).toContain('Yoda');
     expect(characterSvc.fetchCharacters).toHaveBeenCalled();
@@ -620,8 +643,8 @@ describe('Timeline', () => {
     const locationGroup = groups.find((g) => g.textContent?.includes('Location'))!;
     (locationGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
     fixture.detectChanges();
-    const labels = [...locationGroup.querySelectorAll('.filter-option-label')].map(
-      (el) => el.textContent?.trim(),
+    const labels = [...locationGroup.querySelectorAll('.filter-option-label')].map((el) =>
+      el.textContent?.trim(),
     );
     expect(labels).toContain('Tatooine');
   });
@@ -677,7 +700,13 @@ describe('Timeline', () => {
       eventsSig.set([...FIXTURE_EVENTS, newEvent]);
     });
     await setupTimeline([
-      { provide: TimelineEventsService, useValue: eventsServiceMock(FIXTURE_EVENTS, { events: eventsSig, invalidate: invalidateMock }) },
+      {
+        provide: TimelineEventsService,
+        useValue: eventsServiceMock(FIXTURE_EVENTS, {
+          events: eventsSig,
+          invalidate: invalidateMock,
+        }),
+      },
 
       ...catalogProviders(),
       { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -743,8 +772,10 @@ describe('Timeline', () => {
         sequence: 1,
       };
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: eventsServiceMock([...FIXTURE_EVENTS, eventNoId]) },
-
+        {
+          provide: TimelineEventsService,
+          useValue: eventsServiceMock([...FIXTURE_EVENTS, eventNoId]),
+        },
 
         ...catalogProviders(),
         { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -852,10 +883,7 @@ describe('Timeline', () => {
       await fixture.whenStable();
 
       fixture.componentRef.setInput('sourceIds', [50]);
-      fixture.componentRef.setInput(
-        'trackedUnitScope',
-        new Map([[50, new Set([101])]]),
-      );
+      fixture.componentRef.setInput('trackedUnitScope', new Map([[50, new Set([101])]]));
       fixture.detectChanges();
 
       // Only the tracked season (and unpinned depictions of the show) is known.
@@ -1002,12 +1030,7 @@ describe('Timeline', () => {
       // comparison, placing 'Alpha Event' before 'Gamma Event'; the
       // spanning event (0..1) shares start year 0 and sequence 1, so its
       // position also comes down to its title.
-      expect(eventTitles()).toEqual([
-        'Alpha Event',
-        'Gamma Event',
-        'Alpha Event',
-        'Beta Event',
-      ]);
+      expect(eventTitles()).toEqual(['Alpha Event', 'Gamma Event', 'Alpha Event', 'Beta Event']);
     });
 
     it('matches a multi-source event when any of its sources is selected', async () => {
@@ -1022,7 +1045,10 @@ describe('Timeline', () => {
         canon: ['Canon', 'Legends'],
       };
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: eventsServiceMock([...FIXTURE_EVENTS, dualEvent]) },
+        {
+          provide: TimelineEventsService,
+          useValue: eventsServiceMock([...FIXTURE_EVENTS, dualEvent]),
+        },
         ...catalogProviders(),
         { provide: CatalogEventService, useValue: catalogEventMock() },
         {
@@ -1091,8 +1117,10 @@ describe('Timeline', () => {
   describe('loading and error states', () => {
     it('shows skeleton loading when events are loading initially', async () => {
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: eventsServiceMock([], { loading: signal(true), events: signal([]) }) },
-
+        {
+          provide: TimelineEventsService,
+          useValue: eventsServiceMock([], { loading: signal(true), events: signal([]) }),
+        },
 
         ...catalogProviders(),
         { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -1117,8 +1145,13 @@ describe('Timeline', () => {
 
     it('shows error state when events fail to load', async () => {
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: eventsServiceMock([], { events: signal(null), error: signal('Failed to load timeline events') }) },
-
+        {
+          provide: TimelineEventsService,
+          useValue: eventsServiceMock([], {
+            events: signal(null),
+            error: signal('Failed to load timeline events'),
+          }),
+        },
 
         ...catalogProviders(),
         { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -1150,8 +1183,10 @@ describe('Timeline', () => {
     it('retriggers event loading via invalidate', async () => {
       const invalidateMock = vi.fn();
       await setupTimeline([
-        { provide: TimelineEventsService, useValue: eventsServiceMock(FIXTURE_EVENTS, { invalidate: invalidateMock }) },
-
+        {
+          provide: TimelineEventsService,
+          useValue: eventsServiceMock(FIXTURE_EVENTS, { invalidate: invalidateMock }),
+        },
 
         ...catalogProviders(),
         { provide: CatalogEventService, useValue: catalogEventMock() },

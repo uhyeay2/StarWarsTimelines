@@ -14,7 +14,14 @@ import { CANON_VIEWS, CanonView } from '../../models/canon';
 import { StorageService } from '../storage.service';
 
 /** Available catalog tab keys, shared by the catalog page and the navbar. */
-export const CATALOG_TABS = ['sources', 'events', 'characters', 'vehicles', 'locations', 'species'] as const;
+export const CATALOG_TABS = [
+  'sources',
+  'events',
+  'characters',
+  'vehicles',
+  'locations',
+  'species',
+] as const;
 
 /** A single catalog tab key. */
 export type CatalogTab = (typeof CATALOG_TABS)[number];
@@ -42,17 +49,13 @@ export const DEFAULT_CATALOG_TAB: CatalogTab = 'sources';
 export class NavPreferencesService {
   private readonly storage = inject(StorageService);
 
-  private readonly timelineViewState = signal<CanonView>(this.readStoredValue(
-    NAV_PREF_KEYS.timelineView,
-    CANON_VIEWS,
-    DEFAULT_TIMELINE_VIEW,
-  ));
+  private readonly timelineViewState = signal<CanonView>(
+    this.readStoredValue(NAV_PREF_KEYS.timelineView, CANON_VIEWS, DEFAULT_TIMELINE_VIEW),
+  );
 
-  private readonly catalogTabState = signal<CatalogTab>(this.readStoredValue(
-    NAV_PREF_KEYS.catalogTab,
-    CATALOG_TABS,
-    DEFAULT_CATALOG_TAB,
-  ));
+  private readonly catalogTabState = signal<CatalogTab>(
+    this.readStoredValue(NAV_PREF_KEYS.catalogTab, CATALOG_TABS, DEFAULT_CATALOG_TAB),
+  );
 
   /** Last viewed timeline canon view (defaults to `'Canon'`). */
   readonly timelineView = this.timelineViewState.asReadonly();
@@ -97,11 +100,7 @@ export class NavPreferencesService {
    * @param fallback The default when absent or invalid.
    * @returns The stored value if valid, otherwise the fallback.
    */
-  private readStoredValue<T extends string>(
-    key: string,
-    allowed: readonly T[],
-    fallback: T,
-  ): T {
+  private readStoredValue<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
     const stored = this.storage.getItem(key);
     return stored !== null && (allowed as readonly string[]).includes(stored)
       ? (stored as T)

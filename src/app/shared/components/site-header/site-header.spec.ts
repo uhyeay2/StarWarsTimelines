@@ -85,8 +85,9 @@ describe('SiteHeader', () => {
     await create({});
 
     const options = Array.from(
-      fixture.nativeElement.querySelectorAll('.site-nav-item:first-of-type a.nav-dropdown-item') as
-        NodeListOf<HTMLAnchorElement>,
+      fixture.nativeElement.querySelectorAll(
+        '.site-nav-item:first-of-type a.nav-dropdown-item',
+      ) as NodeListOf<HTMLAnchorElement>,
     );
 
     expect(options.length).toBeGreaterThan(1);

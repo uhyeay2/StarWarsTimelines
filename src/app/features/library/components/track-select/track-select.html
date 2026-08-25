@@ -2,13 +2,15 @@
   class="track-select"
   [class.group-track-select]="variant() === 'group'"
   [attr.aria-label]="label()"
-  (change)="onSelect($event)">
+  (change)="onSelect($event)"
+>
   <option value="" disabled [selected]="currentStatus() === null" hidden>Track…</option>
   @for (status of options(); track status) {
     <option
       [value]="status"
       [selected]="currentStatus() === status"
-      [class.remove-option]="status === 'remove'">
+      [class.remove-option]="status === 'remove'"
+    >
       {{ status === 'remove' ? 'Remove From Library' : status }}
     </option>
   }

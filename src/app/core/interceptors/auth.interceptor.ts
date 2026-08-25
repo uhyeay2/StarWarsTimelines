@@ -1,15 +1,7 @@
 import { HttpErrorResponse, HttpEvent, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  filter,
-  finalize,
-  switchMap,
-  take,
-} from 'rxjs';
+import { BehaviorSubject, Observable, catchError, filter, finalize, switchMap, take } from 'rxjs';
 import { AuthService } from '../../features/auth/services/auth.service';
 import { ROUTES } from '../../shared/constants/routes.constants';
 

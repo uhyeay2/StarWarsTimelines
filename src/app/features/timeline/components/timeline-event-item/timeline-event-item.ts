@@ -118,9 +118,7 @@ export class TimelineEventItem implements OnInit {
   isNestedContainerUnit(source: EventSource): boolean {
     const unit = source.unit;
     return (
-      unit !== undefined &&
-      unit.parentUnitId != null &&
-      isContainerOrCollectionUnit(unit.unitType)
+      unit !== undefined && unit.parentUnitId != null && isContainerOrCollectionUnit(unit.unitType)
     );
   }
 
@@ -145,11 +143,14 @@ export class TimelineEventItem implements OnInit {
 
   readonly sourceTrackingData = computed(() => {
     const sources = this.event().sources;
-    const map = new Map<string | number, {
-      showTracking: boolean;
-      options: readonly TrackSelectOption[];
-      status: TrackingStatus | null;
-    }>();
+    const map = new Map<
+      string | number,
+      {
+        showTracking: boolean;
+        options: readonly TrackSelectOption[];
+        status: TrackingStatus | null;
+      }
+    >();
     for (const source of sources) {
       const key = this.trackSource(source);
       map.set(key, {

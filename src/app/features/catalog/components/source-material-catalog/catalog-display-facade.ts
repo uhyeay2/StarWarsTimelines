@@ -68,7 +68,9 @@ export class CatalogDisplayFacade {
     return result;
   });
 
-  mediumGroups(filteredMaterials: readonly ApiSourceMaterial[]): Array<{ medium: Medium; materials: ApiSourceMaterial[] }> {
+  mediumGroups(
+    filteredMaterials: readonly ApiSourceMaterial[],
+  ): Array<{ medium: Medium; materials: ApiSourceMaterial[] }> {
     const map = new Map<Medium, ApiSourceMaterial[]>();
     for (const m of filteredMaterials) {
       let list = map.get(m.medium);
@@ -78,9 +80,10 @@ export class CatalogDisplayFacade {
       }
       list.push(m);
     }
-    return MEDIA
-      .filter((medium) => map.has(medium))
-      .map((medium) => ({ medium, materials: map.get(medium)! }));
+    return MEDIA.filter((medium) => map.has(medium)).map((medium) => ({
+      medium,
+      materials: map.get(medium)!,
+    }));
   }
 
   // ─── Expansion state management ───────────────────────────────────────
@@ -208,7 +211,9 @@ export class CatalogDisplayFacade {
       }));
 
     const orphans = details.filter(
-      (u) => u.parentUnitId === null || u.parentUnitId === undefined ||
+      (u) =>
+        u.parentUnitId === null ||
+        u.parentUnitId === undefined ||
         !containerIds.has(u.parentUnitId),
     );
     if (orphans.length > 0) {
@@ -241,7 +246,9 @@ export class CatalogDisplayFacade {
       case 'Comic':
         return 'grouped-volume';
       case 'Book':
-        return this.unitCrud.hasBookUnits(material.id, this.unitData.unitsByMaterial()) ? 'grouped-book' : 'flat';
+        return this.unitCrud.hasBookUnits(material.id, this.unitData.unitsByMaterial())
+          ? 'grouped-book'
+          : 'flat';
       default:
         return 'flat';
     }

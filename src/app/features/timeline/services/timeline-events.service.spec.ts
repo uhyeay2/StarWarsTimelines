@@ -40,7 +40,10 @@ const EVENT_DTO = [
         },
       },
     ],
-    characters: [{ id: 7, name: 'Darth Maul' }, { id: 8, name: 'Qui-Gon Jinn' }],
+    characters: [
+      { id: 7, name: 'Darth Maul' },
+      { id: 8, name: 'Qui-Gon Jinn' },
+    ],
     locations: [{ id: 12, name: 'Naboo' }],
     vehicles: [{ id: 15, name: 'Sith Infiltrator' }],
   },
@@ -152,9 +155,7 @@ describe('TimelineEventsService', () => {
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
       await promise;
 
-      expect(service.events()).toEqual([
-        expect.objectContaining({ id: 1 }),
-      ]);
+      expect(service.events()).toEqual([expect.objectContaining({ id: 1 })]);
       expect(service.loading()).toBe(false);
       expect(service.error()).toBeNull();
     });
@@ -169,9 +170,7 @@ describe('TimelineEventsService', () => {
       service.getEvents();
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
-      expect(service.events()).toEqual([
-        expect.objectContaining({ id: 1 }),
-      ]);
+      expect(service.events()).toEqual([expect.objectContaining({ id: 1 })]);
     });
 
     it('sets loading signal during fetch', () => {
@@ -201,10 +200,7 @@ describe('TimelineEventsService', () => {
   describe('DTO validation', () => {
     it('drops malformed events and keeps valid ones', async () => {
       const promise = firstValueFrom(service.getEvents$());
-      httpMock.expectOne(EVENTS_URL).flush([
-        { id: '', title: null },
-        EVENT_DTO[0]!,
-      ]);
+      httpMock.expectOne(EVENTS_URL).flush([{ id: '', title: null }, EVENT_DTO[0]!]);
 
       const events = await promise;
       expect(events).toHaveLength(1);
@@ -263,10 +259,9 @@ describe('TimelineEventsService', () => {
 
     it('wraps 400 errors as ServerError', async () => {
       const promise = firstValueFrom(service.getEvents$());
-      httpMock.expectOne(EVENTS_URL).flush(
-        { detail: 'Bad request' },
-        { status: 400, statusText: 'Bad Request' },
-      );
+      httpMock
+        .expectOne(EVENTS_URL)
+        .flush({ detail: 'Bad request' }, { status: 400, statusText: 'Bad Request' });
 
       await expect(promise).rejects.toMatchObject({
         name: 'TimelineError',
@@ -278,10 +273,12 @@ describe('TimelineEventsService', () => {
       vi.useFakeTimers();
 
       const promise = firstValueFrom(service.getEvents$());
-      httpMock.expectOne(EVENTS_URL).flush(
-        { detail: 'The events endpoint is disabled.' },
-        { status: 503, statusText: 'Service Unavailable' },
-      );
+      httpMock
+        .expectOne(EVENTS_URL)
+        .flush(
+          { detail: 'The events endpoint is disabled.' },
+          { status: 503, statusText: 'Service Unavailable' },
+        );
 
       // 503 is transient so it retries 3 times before failing
       for (let i = 0; i < 3; i++) {
@@ -447,18 +444,14 @@ describe('TimelineEventsService', () => {
       httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
 
       const promise = firstValueFrom(service.reloadEvent(1));
-      httpMock
-        .expectOne(`${EVENTS_URL}/1`)
-        .flush({ id: '', title: null });
+      httpMock.expectOne(`${EVENTS_URL}/1`).flush({ id: '', title: null });
 
       await expect(promise).rejects.toMatchObject({
         code: TimelineErrorCode.ValidationError,
       });
 
       // Original cache should remain unchanged
-      expect(service.events()).toEqual([
-        expect.objectContaining({ id: 1 }),
-      ]);
+      expect(service.events()).toEqual([expect.objectContaining({ id: 1 })]);
     });
 
     it('retries on 503 before failing', async () => {

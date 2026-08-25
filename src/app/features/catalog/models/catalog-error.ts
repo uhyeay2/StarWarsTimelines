@@ -18,11 +18,7 @@
  * - `'network-error'` — The HTTP request failed entirely.
  */
 export type CatalogErrorCode =
-  | 'entity-in-use'
-  | 'duplicate-entity'
-  | 'not-found'
-  | 'validation-error'
-  | 'network-error';
+  'entity-in-use' | 'duplicate-entity' | 'not-found' | 'validation-error' | 'network-error';
 
 /**
  * A domain-specific error thrown when a catalog CRUD operation fails.

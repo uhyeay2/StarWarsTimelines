@@ -314,7 +314,9 @@ describe('LoggerService', () => {
       });
       const svc = TestBed.inject(LoggerService);
       let called = false;
-      svc.group('test', () => { called = true; });
+      svc.group('test', () => {
+        called = true;
+      });
       expect(called).toBe(true);
     });
   });
@@ -430,9 +432,7 @@ describe('LoggerService', () => {
       await new Promise<void>((resolve) => queueMicrotask(resolve));
 
       expect(sink.log).toHaveBeenCalledTimes(1);
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Sink failed'),
-      );
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Sink failed'));
       infoSpy.mockRestore();
       errorSpy.mockRestore();
     });
@@ -441,7 +441,9 @@ describe('LoggerService', () => {
       const sink: LogSink = { log: vi.fn() };
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [{ provide: LOG_CONFIG, useValue: { sinks: [sink], silent: true, colorize: false } }],
+        providers: [
+          { provide: LOG_CONFIG, useValue: { sinks: [sink], silent: true, colorize: false } },
+        ],
       });
       const svc = TestBed.inject(LoggerService);
       const spies = mockAllConsole();
@@ -457,7 +459,9 @@ describe('LoggerService', () => {
       const sink: LogSink = { log: vi.fn() };
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        providers: [{ provide: LOG_CONFIG, useValue: { sinks: [sink], minLevel: 'warn', colorize: false } }],
+        providers: [
+          { provide: LOG_CONFIG, useValue: { sinks: [sink], minLevel: 'warn', colorize: false } },
+        ],
       });
       const svc = TestBed.inject(LoggerService);
       const spies = mockAllConsole();
@@ -543,7 +547,11 @@ describe('LoggerService', () => {
     it('always calls groupEnd even if fn throws', () => {
       const groupSpy = vi.spyOn(console, 'group').mockImplementation(() => undefined);
       const endSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
-      expect(() => service.group('test', () => { throw new Error('boom'); })).toThrow('boom');
+      expect(() =>
+        service.group('test', () => {
+          throw new Error('boom');
+        }),
+      ).toThrow('boom');
       expect(endSpy).toHaveBeenCalledTimes(1);
       groupSpy.mockRestore();
       endSpy.mockRestore();
@@ -557,7 +565,9 @@ describe('LoggerService', () => {
       const svc = TestBed.inject(LoggerService);
       const groupSpy = vi.spyOn(console, 'group').mockImplementation(() => undefined);
       let called = false;
-      svc.group('test', () => { called = true; });
+      svc.group('test', () => {
+        called = true;
+      });
       expect(groupSpy).not.toHaveBeenCalled();
       expect(called).toBe(true);
       groupSpy.mockRestore();
@@ -571,7 +581,9 @@ describe('LoggerService', () => {
       const svc = TestBed.inject(LoggerService);
       const spy = vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
       let called = false;
-      svc.groupCollapsed('test', () => { called = true; });
+      svc.groupCollapsed('test', () => {
+        called = true;
+      });
       expect(spy).not.toHaveBeenCalled();
       expect(called).toBe(true);
       spy.mockRestore();

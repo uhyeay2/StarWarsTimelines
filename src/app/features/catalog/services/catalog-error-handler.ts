@@ -1,6 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { CatalogError, CatalogErrorCode, DuplicateEntityError, EntityInUseError } from '../models/catalog-error';
+import {
+  CatalogError,
+  CatalogErrorCode,
+  DuplicateEntityError,
+  EntityInUseError,
+} from '../models/catalog-error';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { LoggerService } from '../../../shared/services/logging/logger.service';
 
@@ -27,7 +32,9 @@ export function catalogErrorHandler(
     if (error.status === 409) {
       logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
       return throwError(() =>
-        conflictCode === 'duplicate-entity' ? new DuplicateEntityError(detail) : new EntityInUseError(detail),
+        conflictCode === 'duplicate-entity'
+          ? new DuplicateEntityError(detail)
+          : new EntityInUseError(detail),
       );
     }
 

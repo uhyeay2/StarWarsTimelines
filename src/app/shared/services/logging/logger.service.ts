@@ -152,12 +152,13 @@ const LEVEL_WEIGHTS: Record<LogLevel, number> = {
 };
 
 /** Maps each log level to the corresponding `console` method name. */
-const CONSOLE_METHODS: Record<LogLevel, keyof Pick<Console, 'debug' | 'info' | 'warn' | 'error'>> = {
-  debug: 'debug',
-  info: 'info',
-  warn: 'warn',
-  error: 'error',
-};
+const CONSOLE_METHODS: Record<LogLevel, keyof Pick<Console, 'debug' | 'info' | 'warn' | 'error'>> =
+  {
+    debug: 'debug',
+    info: 'info',
+    warn: 'warn',
+    error: 'error',
+  };
 
 /** CSS styles applied to each log level when `colorize` is enabled. */
 const LEVEL_STYLES: Record<LogLevel, string> = {
@@ -342,9 +343,7 @@ export class LoggerService {
    * @returns A promise that resolves when all sinks have been flushed.
    */
   async flush(): Promise<void> {
-    await Promise.all(
-      this.config.sinks.map((sink) => sink.flush?.() ?? Promise.resolve()),
-    );
+    await Promise.all(this.config.sinks.map((sink) => sink.flush?.() ?? Promise.resolve()));
   }
 
   // ─── Internals ────────────────────────────────────────────────────────
@@ -427,7 +426,12 @@ export class LoggerService {
   ): void {
     if (this.config.sinks.length === 0) return;
 
-    const entry: LogEntry = { level, message, timestamp, ...(context !== undefined && { context }) };
+    const entry: LogEntry = {
+      level,
+      message,
+      timestamp,
+      ...(context !== undefined && { context }),
+    };
 
     queueMicrotask(() => {
       for (const sink of this.config.sinks) {

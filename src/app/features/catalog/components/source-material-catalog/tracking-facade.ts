@@ -33,15 +33,11 @@ export class TrackingFacade {
 
   readonly trackedItems = computed(() => this.libraryService.items());
 
-  readonly trackedItemIds = computed(() =>
-    new Set(this.trackedItems().map((item) => item.id)),
-  );
+  readonly trackedItemIds = computed(() => new Set(this.trackedItems().map((item) => item.id)));
 
   /** Loads tracked items for the given user into the library cache. */
   loadTracked(userId: string): void {
-    this.libraryService.getTracked(userId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+    this.libraryService.getTracked(userId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
   /** Returns the tracked item for a material ID, or null if not tracked. */
@@ -74,12 +70,17 @@ export class TrackingFacade {
    * If status is 'remove', removes the item from the library;
    * otherwise, adds or updates the tracked item with the given status.
    */
-  onTrackMaterial(materialId: number, status: string, material: ApiSourceMaterial | undefined): void {
+  onTrackMaterial(
+    materialId: number,
+    status: string,
+    material: ApiSourceMaterial | undefined,
+  ): void {
     const userId = this.currentUser()?.id;
     if (!userId) return;
 
     if (status === 'remove' || status === '') {
-      this.libraryService.removeTracked(userId, materialId)
+      this.libraryService
+        .removeTracked(userId, materialId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
       return;
@@ -95,7 +96,11 @@ export class TrackingFacade {
 
     if (material) {
       this.libraryService
-        .addTracked(userId, { id: material.id, title: material.title, medium: material.medium }, status as TrackingStatus)
+        .addTracked(
+          userId,
+          { id: material.id, title: material.title, medium: material.medium },
+          status as TrackingStatus,
+        )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
     }
@@ -106,12 +111,18 @@ export class TrackingFacade {
    * If status is 'remove', removes the unit's progress;
    * otherwise, sets the unit's status.
    */
-  onTrackGroupUnit(materialId: number, unitId: number, status: string, material: ApiSourceMaterial | undefined): void {
+  onTrackGroupUnit(
+    materialId: number,
+    unitId: number,
+    status: string,
+    material: ApiSourceMaterial | undefined,
+  ): void {
     const userId = this.currentUser()?.id;
     if (!userId) return;
 
     if (status === 'remove' || status === '') {
-      this.libraryService.clearUnitProgress(userId, materialId, unitId)
+      this.libraryService
+        .clearUnitProgress(userId, materialId, unitId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe();
       return;
@@ -120,9 +131,15 @@ export class TrackingFacade {
     const trackedItem = this.getTrackedItem(materialId);
     if (!trackedItem && material) {
       this.libraryService
-        .addTracked(userId, { id: material.id, title: material.title, medium: material.medium }, status as TrackingStatus)
+        .addTracked(
+          userId,
+          { id: material.id, title: material.title, medium: material.medium },
+          status as TrackingStatus,
+        )
         .pipe(
-          switchMap(() => this.libraryService.setStatus(userId, materialId, status as TrackingStatus, unitId)),
+          switchMap(() =>
+            this.libraryService.setStatus(userId, materialId, status as TrackingStatus, unitId),
+          ),
           takeUntilDestroyed(this.destroyRef),
         )
         .subscribe();

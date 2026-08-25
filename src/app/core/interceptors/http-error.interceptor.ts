@@ -8,15 +8,12 @@ export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
   return next(request).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
-        logger.error(
-          `HTTP ${error.status} ${request.method} ${request.urlWithParams}`,
-          {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.message,
-            body: error.error,
-          },
-        );
+        logger.error(`HTTP ${error.status} ${request.method} ${request.urlWithParams}`, {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          body: error.error,
+        });
       } else {
         logger.error(`Request failed ${request.method} ${request.urlWithParams}`, { error });
       }

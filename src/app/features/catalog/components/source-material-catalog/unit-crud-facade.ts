@@ -87,7 +87,9 @@ export class UnitCrudFacade {
 
   /** Next free number among sibling units under the same parent. */
   nextNumberFor(materialId: number, parentUnitId: number | null, units: UnitsByMaterial): number {
-    const siblings = this.unitsFor(materialId, units).filter((u) => u.parentUnitId === parentUnitId);
+    const siblings = this.unitsFor(materialId, units).filter(
+      (u) => u.parentUnitId === parentUnitId,
+    );
     return siblings.length === 0 ? 1 : Math.max(...siblings.map((u) => u.number)) + 1;
   }
 
@@ -96,7 +98,9 @@ export class UnitCrudFacade {
     if (context.parentUnitId === null) {
       return `Add ${context.childType.toLowerCase()}`;
     }
-    const parent = this.unitsFor(context.materialId, units).find((u) => u.id === context.parentUnitId);
+    const parent = this.unitsFor(context.materialId, units).find(
+      (u) => u.id === context.parentUnitId,
+    );
     const target = parent ? this.groupUnitLabel(parent) : 'collection';
     return `Add ${context.childType.toLowerCase()} to ${target}`;
   }
@@ -184,7 +188,11 @@ export class UnitCrudFacade {
       busyValue: key,
       idleValue: null,
       error: actionError,
-      operation: this.sourceMaterialService.updateSourceMaterialUnit(key.materialId, key.unitId, input),
+      operation: this.sourceMaterialService.updateSourceMaterialUnit(
+        key.materialId,
+        key.unitId,
+        input,
+      ),
       onSuccess: (updated) => {
         if (updated) {
           this.unitEditKey.set(null);

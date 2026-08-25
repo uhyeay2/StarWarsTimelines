@@ -38,7 +38,12 @@
   width: 6rem;
   height: 0.85rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba($color-accent, 0.08) 25%, rgba($color-accent, 0.15) 50%, rgba($color-accent, 0.08) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba($color-accent, 0.08) 25%,
+    rgba($color-accent, 0.15) 50%,
+    rgba($color-accent, 0.08) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
@@ -47,7 +52,12 @@
   width: 60%;
   height: 1.15rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, $color-surface-control 25%, $color-border-card 50%, $color-surface-control 75%);
+  background: linear-gradient(
+    90deg,
+    $color-surface-control 25%,
+    $color-border-card 50%,
+    $color-surface-control 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite 0.1s;
 }
@@ -56,7 +66,12 @@
   width: 40%;
   height: 0.85rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, $color-surface-raised 25%, $color-border 50%, $color-surface-raised 75%);
+  background: linear-gradient(
+    90deg,
+    $color-surface-raised 25%,
+    $color-border 50%,
+    $color-surface-raised 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite 0.2s;
 }
@@ -65,12 +80,21 @@
   width: 80%;
   height: 0.75rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, $color-surface-subtle 25%, $color-border-subtle 50%, $color-surface-subtle 75%);
+  background: linear-gradient(
+    90deg,
+    $color-surface-subtle 25%,
+    $color-border-subtle 50%,
+    $color-surface-subtle 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s ease-in-out infinite 0.3s;
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

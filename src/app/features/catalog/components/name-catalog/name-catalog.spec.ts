@@ -92,7 +92,9 @@ describe('NameCatalog', () => {
 
     // Mutation auto-invalidates the cache → re-fetch fires automatically.
     locationService.fetchLocations();
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([{ id: 12, name: 'Naboo' }]);
+    httpMock
+      .expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL))
+      .flush([{ id: 12, name: 'Naboo' }]);
     fixture.detectChanges();
 
     expect(component.addOpen()).toBe(false);
@@ -109,12 +111,17 @@ describe('NameCatalog', () => {
 
     httpMock
       .expectOne((r) => r.method === 'POST')
-      .flush({ detail: 'A location with this name already exists.' }, { status: 400, statusText: 'Bad Request' });
+      .flush(
+        { detail: 'A location with this name already exists.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     fixture.detectChanges();
 
     expect(component.addError()).toBe('A location with this name already exists.');
     expect(component.addOpen()).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain('A location with this name already exists.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'A location with this name already exists.',
+    );
   });
 
   it('edits an existing location and reloads the list', () => {
@@ -125,7 +132,9 @@ describe('NameCatalog', () => {
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/locations/11'));
+    const put = httpMock.expectOne(
+      (r) => r.method === 'PUT' && r.url.endsWith('/api/locations/11'),
+    );
     expect(put.request.body).toEqual({ name: 'New name' });
     put.flush({ id: 11, name: 'New name' });
 
@@ -157,7 +166,9 @@ describe('NameCatalog', () => {
 
     component.confirmDelete();
 
-    const del = httpMock.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/locations/11'));
+    const del = httpMock.expectOne(
+      (r) => r.method === 'DELETE' && r.url.endsWith('/api/locations/11'),
+    );
     del.flush(null, { status: 204, statusText: 'No Content' });
 
     loadLocations([]);

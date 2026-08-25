@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, HostListener, input, model, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  input,
+  model,
+  output,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CANON_TYPES, CanonType } from '../../../../shared/models/canon-type';
 

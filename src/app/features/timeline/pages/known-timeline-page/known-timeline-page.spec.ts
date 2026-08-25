@@ -19,7 +19,14 @@ import { TimelineEventsService } from '../../services/timeline-events.service';
 import { Timeline } from '../../components/timeline/timeline';
 import { KnownTimelinePage } from './known-timeline-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
+const USER: User = {
+  id: 'user-padme',
+  username: 'padme',
+  displayName: 'Padmé Amidala',
+  email: 'padme@example.com',
+  emailVerified: true,
+  role: 'Standard',
+};
 
 const TRACKED: LibraryItem[] = [
   {
@@ -45,7 +52,10 @@ const TRACKED: LibraryItem[] = [
   },
 ];
 
-async function setup(currentUser: User | null, tracked: LibraryItem[] = TRACKED): Promise<{
+async function setup(
+  currentUser: User | null,
+  tracked: LibraryItem[] = TRACKED,
+): Promise<{
   fixture: ComponentFixture<KnownTimelinePage>;
   component: KnownTimelinePage;
 }> {
@@ -55,8 +65,21 @@ async function setup(currentUser: User | null, tracked: LibraryItem[] = TRACKED)
     providers: [
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser: signal(currentUser) } },
-      { provide: LibraryService, useValue: { items: signal(tracked), ensureTracked: vi.fn(), clearCache: vi.fn() } },
-      { provide: TimelineEventsService, useValue: { getEvents$: () => of([]), loading: signal(false), error: signal(null), events: signal([]), getEvents: vi.fn(), invalidate: vi.fn() } },
+      {
+        provide: LibraryService,
+        useValue: { items: signal(tracked), ensureTracked: vi.fn(), clearCache: vi.fn() },
+      },
+      {
+        provide: TimelineEventsService,
+        useValue: {
+          getEvents$: () => of([]),
+          loading: signal(false),
+          error: signal(null),
+          events: signal([]),
+          getEvents: vi.fn(),
+          invalidate: vi.fn(),
+        },
+      },
       {
         provide: CharacterService,
         useValue: {
@@ -139,16 +162,8 @@ describe('KnownTimelinePage', () => {
   it('includes all tracked statuses by default and passes the ids to the timeline', async () => {
     const { fixture, component } = await setup(USER);
     expect(component.statusSelection()).toEqual([]);
-    expect(component.consumedIds()).toEqual([
-      21,
-      22,
-      23,
-    ]);
-    expect(timelineSourceIds(fixture)).toEqual([
-      21,
-      22,
-      23,
-    ]);
+    expect(component.consumedIds()).toEqual([21, 22, 23]);
+    expect(timelineSourceIds(fixture)).toEqual([21, 22, 23]);
   });
 
   it('shows only Completed items when that status is selected', async () => {
@@ -200,7 +215,7 @@ describe('KnownTimelinePage', () => {
           {
             id: 201,
             unitType: 'Episode',
-            
+
             number: 1,
             status: null,
             parentUnitId: 101,
@@ -211,9 +226,7 @@ describe('KnownTimelinePage', () => {
 
     // The show is in scope, but only through its tracked units.
     expect(component.consumedIds()).toContain(30);
-    expect(component.trackedUnitScope().get(30)).toEqual(
-      new Set([101, 201]),
-    );
+    expect(component.trackedUnitScope().get(30)).toEqual(new Set([101, 201]));
 
     const timeline = fixture.debugElement.query(By.directive(Timeline)).componentInstance;
     expect(timeline.trackedUnitScope().get(30)).toEqual(new Set([101, 201]));

@@ -13,18 +13,15 @@ export class LandingPage {
   protected readonly features = [
     {
       title: 'Galactic Eras',
-      description:
-        'Navigate the major periods of Star Wars history with clear, visual markers.',
+      description: 'Navigate the major periods of Star Wars history with clear, visual markers.',
     },
     {
       title: 'Key Events',
-      description:
-        'Discover the battles, treaties, and turning points that shaped the galaxy.',
+      description: 'Discover the battles, treaties, and turning points that shaped the galaxy.',
     },
     {
       title: 'Characters',
-      description:
-        'Follow your favorite heroes and villains across the timeline of the saga.',
+      description: 'Follow your favorite heroes and villains across the timeline of the saga.',
     },
   ];
 }

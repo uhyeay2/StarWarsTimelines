@@ -44,12 +44,17 @@ export class SpeciesService {
    * @returns An observable of the created species.
    */
   createSpecies(name: string, homePlanetId: number | null): Observable<ApiSpecies> {
-    return this.http
-      .post<ApiSpecies>(`${CATALOG_API_BASE}/species`, { name, homePlanetId })
-      .pipe(
-        catchError(catalogErrorHandler('Unable to create the species. Please try again.', 'createSpecies', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.post<ApiSpecies>(`${CATALOG_API_BASE}/species`, { name, homePlanetId }).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to create the species. Please try again.',
+          'createSpecies',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 
   /**
@@ -63,7 +68,14 @@ export class SpeciesService {
     return this.http
       .put<ApiSpecies>(`${CATALOG_API_BASE}/species/${id}`, { name, homePlanetId })
       .pipe(
-        catchError(catalogErrorHandler('Unable to update the species. Please try again.', 'updateSpecies', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to update the species. Please try again.',
+            'updateSpecies',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         tap(() => this.cache.invalidate()),
       );
   }
@@ -74,11 +86,16 @@ export class SpeciesService {
    * @returns An observable that completes when the deletion is done.
    */
   deleteSpecies(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${CATALOG_API_BASE}/species/${id}`)
-      .pipe(
-        catchError(catalogErrorHandler('Unable to delete the species. Please try again.', 'deleteSpecies', 'entity-in-use', this.logger)),
-        tap(() => this.cache.invalidate()),
-      );
+    return this.http.delete<void>(`${CATALOG_API_BASE}/species/${id}`).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to delete the species. Please try again.',
+          'deleteSpecies',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => this.cache.invalidate()),
+    );
   }
 }

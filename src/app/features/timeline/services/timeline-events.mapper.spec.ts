@@ -55,9 +55,7 @@ describe('type guards', () => {
   });
 
   it('validates source material DTOs', () => {
-    expect(
-      isValidSourceMaterialDto({ id: 10, title: 'T', medium: 0, canonType: 0 }),
-    ).toBe(true);
+    expect(isValidSourceMaterialDto({ id: 10, title: 'T', medium: 0, canonType: 0 })).toBe(true);
     expect(isValidSourceMaterialDto(null)).toBe(false);
     expect(isValidSourceMaterialDto({ id: 10, title: 'T' })).toBe(false);
     expect(isValidSourceMaterialDto({ id: 10, title: 'T', medium: 'Movie', canonType: 0 })).toBe(
@@ -208,7 +206,10 @@ describe('mapTimelineEvent', () => {
     const mapped = mapTimelineEvent({
       ...eventDto(),
       sourceMaterials: [
-        { sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 }, sourceMaterialUnit: null },
+        {
+          sourceMaterial: { id: 10, title: 'A New Hope', medium: 0, canonType: 0 },
+          sourceMaterialUnit: null,
+        },
         { broken: true },
         null,
       ],

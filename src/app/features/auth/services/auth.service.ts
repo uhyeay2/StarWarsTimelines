@@ -84,9 +84,8 @@ export class AuthService {
           if (error.status === 401) {
             const body = error.error as { title?: string; detail?: string } | null;
             const detail = body?.detail || 'Invalid username or password';
-            const code: AuthErrorCode = body?.title === 'Email not verified'
-              ? 'email-not-verified'
-              : 'invalid-credentials';
+            const code: AuthErrorCode =
+              body?.title === 'Email not verified' ? 'email-not-verified' : 'invalid-credentials';
             this.logger.warn('Login failed', { code, detail });
             return throwError(() => new AuthError(detail, code));
           }
@@ -125,19 +124,15 @@ export class AuthService {
    * @returns An observable that completes when the account has been created.
    */
   register(request: RegisterRequest): Observable<void> {
-    return this.http
-      .post<void>(`${environment.apiBaseUrl}/api/auth/register`, request)
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.logger.warn('Registration failed', { error });
-          return throwError(
-            () =>
-              new Error(
-                readProblemDetail(error, 'Unable to create your account. Please try again.'),
-              ),
-          );
-        }),
-      );
+    return this.http.post<void>(`${environment.apiBaseUrl}/api/auth/register`, request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        this.logger.warn('Registration failed', { error });
+        return throwError(
+          () =>
+            new Error(readProblemDetail(error, 'Unable to create your account. Please try again.')),
+        );
+      }),
+    );
   }
 
   /**
@@ -147,19 +142,17 @@ export class AuthService {
    * @returns An observable that completes when the email has been verified.
    */
   verifyEmail(token: string): Observable<void> {
-    return this.http
-      .post<void>(`${environment.apiBaseUrl}/api/auth/verify-email`, { token })
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.logger.warn('Email verification failed', { error });
-          return throwError(
-            () =>
-              new Error(
-                readProblemDetail(error, 'Unable to verify your email address. Please try again.'),
-              ),
-          );
-        }),
-      );
+    return this.http.post<void>(`${environment.apiBaseUrl}/api/auth/verify-email`, { token }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        this.logger.warn('Email verification failed', { error });
+        return throwError(
+          () =>
+            new Error(
+              readProblemDetail(error, 'Unable to verify your email address. Please try again.'),
+            ),
+        );
+      }),
+    );
   }
 
   /**
@@ -176,14 +169,19 @@ export class AuthService {
       return of(undefined);
     }
     return this.http
-      .post<void>(`${environment.apiBaseUrl}/api/auth/resend-verification-email`, { usernameOrEmail })
+      .post<void>(`${environment.apiBaseUrl}/api/auth/resend-verification-email`, {
+        usernameOrEmail,
+      })
       .pipe(
         catchError((error: HttpErrorResponse) => {
           this.logger.warn('Resend verification email failed', { error });
           return throwError(
             () =>
               new Error(
-                readProblemDetail(error, 'Unable to resend the verification email. Please try again.'),
+                readProblemDetail(
+                  error,
+                  'Unable to resend the verification email. Please try again.',
+                ),
               ),
           );
         }),

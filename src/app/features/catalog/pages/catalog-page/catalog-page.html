@@ -11,7 +11,8 @@
         class="catalog-tab"
         [class.catalog-tab--active]="activeTab() === tab.key"
         [attr.aria-pressed]="activeTab() === tab.key"
-        (click)="selectTab(tab.key)">
+        (click)="selectTab(tab.key)"
+      >
         {{ tab.label }}
       </button>
     }
@@ -25,7 +26,12 @@
       <app-name-catalog [isAdmin]="isAdmin()" catalog="vehicles" title="Vehicles" noun="vehicle" />
     }
     @case ('locations') {
-      <app-name-catalog [isAdmin]="isAdmin()" catalog="locations" title="Locations" noun="location" />
+      <app-name-catalog
+        [isAdmin]="isAdmin()"
+        catalog="locations"
+        title="Locations"
+        noun="location"
+      />
     }
     @case ('species') {
       <app-species-catalog [isAdmin]="isAdmin()" />

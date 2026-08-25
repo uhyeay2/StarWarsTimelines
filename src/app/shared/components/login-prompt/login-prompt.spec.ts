@@ -46,8 +46,9 @@ describe('LoginPrompt', () => {
 
     expect(fixture.nativeElement.querySelector('.login-prompt--compact')).toBeTruthy();
     expect(
-      (fixture.nativeElement.querySelector('.login-prompt a') as HTMLAnchorElement).textContent
-        ?.trim(),
+      (
+        fixture.nativeElement.querySelector('.login-prompt a') as HTMLAnchorElement
+      ).textContent?.trim(),
     ).toBe('Log in');
   });
 });

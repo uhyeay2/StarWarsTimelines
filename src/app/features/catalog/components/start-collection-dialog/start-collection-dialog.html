@@ -1,5 +1,15 @@
-<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
-<div class="admin-popup admin-popup--wide" role="dialog" aria-modal="true" aria-label="Start collection">
+<div
+  class="admin-popup-backdrop"
+  (click)="cancel.emit()"
+  (keydown.escape)="cancel.emit()"
+  tabindex="-1"
+></div>
+<div
+  class="admin-popup admin-popup--wide"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Start collection"
+>
   <h3>Start collection</h3>
   <p class="admin-popup-hint">
     List the books in order — their numbers are assigned automatically. Use the arrows to reorder
@@ -13,7 +23,8 @@
         [(ngModel)]="collectionName"
         placeholder="Collection name…"
         required
-        autofocus />
+        autofocus
+      />
     </label>
 
     <ol class="book-list">
@@ -25,27 +36,37 @@
             [ngModel]="book"
             (ngModelChange)="setBook(i, $event)"
             [attr.aria-label]="'Book ' + (i + 1) + ' title'"
-            placeholder="Book title…" />
+            placeholder="Book title…"
+          />
           <span class="book-row-buttons">
             <button
               class="btn btn-sm book-move"
               type="button"
               [disabled]="first || saving()"
               (click)="moveBook(i, -1)"
-              aria-label="Move book up">↑</button>
+              aria-label="Move book up"
+            >
+              ↑
+            </button>
             <button
               class="btn btn-sm book-move"
               type="button"
               [disabled]="last || saving()"
               (click)="moveBook(i, 1)"
-              aria-label="Move book down">↓</button>
+              aria-label="Move book down"
+            >
+              ↓
+            </button>
             @if (books().length > 1) {
               <button
                 class="btn btn-sm btn-danger book-remove"
                 type="button"
                 [disabled]="saving()"
                 (click)="removeBook(i)"
-                [attr.aria-label]="'Remove book ' + (i + 1)">✕</button>
+                [attr.aria-label]="'Remove book ' + (i + 1)"
+              >
+                ✕
+              </button>
             }
           </span>
         </li>

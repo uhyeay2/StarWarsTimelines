@@ -52,7 +52,9 @@ describe('NameAddDialog', () => {
     fixture.componentInstance.cancel.subscribe(() => cancelled.push(1));
 
     (element.querySelector('.admin-popup-backdrop') as HTMLElement).click();
-    (element.querySelector('.admin-popup-actions .btn:not(.btn-primary)') as HTMLButtonElement).click();
+    (
+      element.querySelector('.admin-popup-actions .btn:not(.btn-primary)') as HTMLButtonElement
+    ).click();
     await fixture.whenStable();
 
     expect(cancelled).toHaveLength(2);

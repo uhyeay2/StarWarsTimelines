@@ -1,6 +1,5 @@
 <!-- ─── Filter Group ────────────────────────────────────────────────────── -->
 <div class="filter-group">
-
   <!-- ─── Trigger Row (label + clear button) ─────────────────────────── -->
   <div class="filter-group-row">
     <button
@@ -8,7 +7,8 @@
       class="filter-group-trigger"
       [attr.aria-expanded]="open()"
       aria-haspopup="listbox"
-      (click)="togglePanel()">
+      (click)="togglePanel()"
+    >
       <span class="filter-group-label">{{ label() }}</span>
       @if (selectedCount() > 0) {
         <span class="filter-group-count">{{ selectedCount() }}</span>
@@ -22,7 +22,8 @@
         class="filter-group-clear-trigger"
         [attr.aria-label]="'Clear ' + label()"
         title="Clear {{ label() }}"
-        (click)="clearSelection()">
+        (click)="clearSelection()"
+      >
         &#10005;
       </button>
     }
@@ -34,8 +35,8 @@
     class="filter-group-panel"
     [class.filter-group-panel--drop-up]="dropUp()"
     [style.max-height.px]="panelMaxHeight()"
-    [hidden]="!open()">
-
+    [hidden]="!open()"
+  >
     <!-- ─── Search Input ─────────────────────────────────────────────── -->
     <div class="filter-group-search">
       <input
@@ -43,7 +44,8 @@
         [attr.aria-label]="'Search ' + label()"
         placeholder="Search..."
         [value]="query()"
-        (input)="query.set($any($event.target).value)" />
+        (input)="query.set($any($event.target).value)"
+      />
     </div>
     <!-- ─── End Search Input ─────────────────────────────────────────── -->
 
@@ -56,7 +58,8 @@
           [defaultExpandedDepth]="defaultExpandedDepth()"
           [selected]="selected()"
           [searching]="isSearching()"
-          (toggle)="toggle($event)" />
+          (toggle)="toggle($event)"
+        />
       }
       @if (filteredOptions().length === 0) {
         <p class="filter-group-empty">No matches.</p>

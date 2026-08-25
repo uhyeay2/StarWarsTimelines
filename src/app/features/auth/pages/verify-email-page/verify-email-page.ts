@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
@@ -24,7 +31,9 @@ export class VerifyEmailPage implements OnInit {
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
       this.verifying.set(false);
-      this.error.set('The verification link is missing. Check the link in your email and try again.');
+      this.error.set(
+        'The verification link is missing. Check the link in your email and try again.',
+      );
       return;
     }
 

@@ -2,21 +2,25 @@
   <a class="brand" routerLink="/">Star Wars Timelines</a>
   <div class="site-header-right">
     <nav class="site-nav">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+        >Home</a
+      >
 
       <app-nav-dropdown
         class="site-nav-item"
         label="Timeline"
         [toggleLink]="'/timeline'"
         [toggleQueryParams]="{ view: navPrefs.timelineView() }"
-        [options]="timelineOptions" />
+        [options]="timelineOptions"
+      />
 
       <app-nav-dropdown
         class="site-nav-item"
         label="Library"
         [toggleLink]="'/library'"
         [options]="libraryOptions"
-        [highlightItems]="true" />
+        [highlightItems]="true"
+      />
 
       @if (user()) {
         <app-nav-dropdown
@@ -24,7 +28,8 @@
           label="Catalog"
           [toggleLink]="'/catalog'"
           [toggleQueryParams]="{ tab: navPrefs.catalogTab() }"
-          [options]="catalogOptions" />
+          [options]="catalogOptions"
+        />
       }
     </nav>
     <div class="site-user">

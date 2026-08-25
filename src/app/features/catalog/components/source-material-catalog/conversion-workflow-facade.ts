@@ -9,9 +9,7 @@ import { addedTo } from '../../../../shared/utils/set-operations';
 import { UnitCrudFacade } from './unit-crud-facade';
 import { UnitDataFacade } from './unit-data-facade';
 import { topLevelChildType } from './unit-type-utils';
-import {
-  StartCollectionPayload,
-} from '../start-collection-dialog/start-collection-dialog';
+import { StartCollectionPayload } from '../start-collection-dialog/start-collection-dialog';
 
 type CloseAllPopupsFn = () => void;
 type MaterialsFn = () => readonly ApiSourceMaterial[];
@@ -99,7 +97,11 @@ export class ConversionWorkflowFacade {
 
   // ─── Book choice ──────────────────────────────────────────────────────
 
-  openBookChoice(materialId: number, actionError: WritableSignal<string | null>, closeAllPopups: CloseAllPopupsFn): void {
+  openBookChoice(
+    materialId: number,
+    actionError: WritableSignal<string | null>,
+    closeAllPopups: CloseAllPopupsFn,
+  ): void {
     actionError.set(null);
     closeAllPopups();
     this.bookChoiceMaterialId.set(materialId);
@@ -116,7 +118,12 @@ export class ConversionWorkflowFacade {
 
   // ─── Start collection ─────────────────────────────────────────────────
 
-  requestStartCollection(materialId: number, actionError: WritableSignal<string | null>, materials: MaterialsFn, closeAllPopups: CloseAllPopupsFn): void {
+  requestStartCollection(
+    materialId: number,
+    actionError: WritableSignal<string | null>,
+    materials: MaterialsFn,
+    closeAllPopups: CloseAllPopupsFn,
+  ): void {
     actionError.set(null);
     closeAllPopups();
     const material = materials().find((m) => m.id === materialId);
@@ -190,7 +197,11 @@ export class ConversionWorkflowFacade {
 
   // ─── Convert standalone book ──────────────────────────────────────────
 
-  requestConvert(material: ApiSourceMaterial, actionError: WritableSignal<string | null>, closeAllPopups: CloseAllPopupsFn): void {
+  requestConvert(
+    material: ApiSourceMaterial,
+    actionError: WritableSignal<string | null>,
+    closeAllPopups: CloseAllPopupsFn,
+  ): void {
     actionError.set(null);
     closeAllPopups();
     this.convertPopupMaterialId.set(material.id);

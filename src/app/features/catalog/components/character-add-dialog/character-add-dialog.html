@@ -1,4 +1,9 @@
-<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div
+  class="admin-popup-backdrop"
+  (click)="cancel.emit()"
+  (keydown.escape)="cancel.emit()"
+  tabindex="-1"
+></div>
 <div class="admin-popup" role="dialog" aria-modal="true" aria-label="Add character">
   <h3>Add character</h3>
   <form (ngSubmit)="save.emit()">
@@ -12,7 +17,8 @@
         ariaLabel="Species"
         [options]="speciesOptions()"
         noneLabel="Unknown"
-        [(value)]="speciesId" />
+        [(value)]="speciesId"
+      />
     </div>
     <div class="source-field">
       <span>Birth planet</span>
@@ -20,7 +26,8 @@
         ariaLabel="Birth planet"
         [options]="locationOptions()"
         noneLabel="Unknown"
-        [(value)]="planetBornOnId" />
+        [(value)]="planetBornOnId"
+      />
     </div>
     <div class="year-pair">
       <label class="source-field">
@@ -30,21 +37,40 @@
           type="number"
           step="1"
           placeholder="-41 = 41 BBY"
-          [(ngModel)]="birthFrom" />
+          [(ngModel)]="birthFrom"
+        />
       </label>
       <label class="source-field">
         <span>Born to</span>
-        <input name="newBirthTo" type="number" step="1" placeholder="-39 = 39 BBY" [(ngModel)]="birthTo" />
+        <input
+          name="newBirthTo"
+          type="number"
+          step="1"
+          placeholder="-39 = 39 BBY"
+          [(ngModel)]="birthTo"
+        />
       </label>
     </div>
     <div class="year-pair">
       <label class="source-field">
         <span>Died from</span>
-        <input name="newDeathFrom" type="number" step="1" placeholder="4 = 4 ABY" [(ngModel)]="deathFrom" />
+        <input
+          name="newDeathFrom"
+          type="number"
+          step="1"
+          placeholder="4 = 4 ABY"
+          [(ngModel)]="deathFrom"
+        />
       </label>
       <label class="source-field">
         <span>Died to</span>
-        <input name="newDeathTo" type="number" step="1" placeholder="35 = 35 ABY" [(ngModel)]="deathTo" />
+        <input
+          name="newDeathTo"
+          type="number"
+          step="1"
+          placeholder="35 = 35 ABY"
+          [(ngModel)]="deathTo"
+        />
       </label>
     </div>
     <p class="admin-popup-hint">

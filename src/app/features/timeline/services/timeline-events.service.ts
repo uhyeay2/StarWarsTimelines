@@ -32,16 +32,7 @@
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import {
-  catchError,
-  map,
-  Observable,
-  of,
-  retry,
-  tap,
-  throwError,
-  timer,
-} from 'rxjs';
+import { catchError, map, Observable, of, retry, tap, throwError, timer } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { SignalCache } from '../../../shared/utils/signal-cache';
@@ -49,10 +40,7 @@ import { TimelineEvent } from '../models/timeline-event';
 import { TimelineError, TimelineErrorCode } from '../models/timeline-error';
 import { LoggerService } from '../../../shared/services/logging/logger.service';
 import { TimelineEventDto } from './timeline-events.dto';
-import {
-  isValidTimelineEventDto,
-  mapTimelineEvent,
-} from './timeline-events.mapper';
+import { isValidTimelineEventDto, mapTimelineEvent } from './timeline-events.mapper';
 
 /** Base URL for the timeline events API. */
 const BASE = `${environment.apiBaseUrl}/api/timeline-events`;
@@ -214,11 +202,12 @@ export class TimelineEventsService {
         }
         if (err instanceof HttpErrorResponse && err.status === 404) {
           this.removeEventFromCache(eventId);
-          return throwError(() =>
-            new TimelineError(
-              `Event ${eventId} was not found and has been removed from the cache.`,
-              TimelineErrorCode.NotFound,
-            ),
+          return throwError(
+            () =>
+              new TimelineError(
+                `Event ${eventId} was not found and has been removed from the cache.`,
+                TimelineErrorCode.NotFound,
+              ),
           );
         }
         const message = this.mapError(err);

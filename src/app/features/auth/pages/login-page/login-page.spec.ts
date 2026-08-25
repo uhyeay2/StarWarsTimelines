@@ -114,9 +114,7 @@ describe('LoginPage', () => {
     component.password.set('wrong');
     fixture.detectChanges();
     component.login();
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpMock.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -139,9 +137,7 @@ describe('LoginPage', () => {
     component.password.set('wrong');
     fixture.detectChanges();
     component.login();
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpMock.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
     await fixture.whenStable();
     fixture.detectChanges();
 

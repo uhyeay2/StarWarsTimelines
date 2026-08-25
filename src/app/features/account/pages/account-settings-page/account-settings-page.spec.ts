@@ -21,7 +21,14 @@ function loginAsPadme(): void {
   sessionStorage.setItem('starwars-timelines.token', 'token-value');
   sessionStorage.setItem(
     'starwars-timelines.user',
-    JSON.stringify({ id: USER_ID, username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' }),
+    JSON.stringify({
+      id: USER_ID,
+      username: 'padme',
+      displayName: 'Padmé Amidala',
+      email: 'padme@example.com',
+      emailVerified: true,
+      role: 'Standard',
+    }),
   );
 }
 
@@ -57,9 +64,7 @@ describe('AccountSettingsPage', () => {
     createComponent();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'Log in to manage your account settings.',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Log in to manage your account settings.');
     expect(fixture.nativeElement.querySelector('a[href="/login"]')).toBeTruthy();
   });
 
@@ -75,9 +80,9 @@ describe('AccountSettingsPage', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('padme');
     expect(compiled.querySelector('.settings-username')?.textContent).toContain('padme');
-    expect(
-      (compiled.querySelector('input[name="displayName"]') as HTMLInputElement).value,
-    ).toBe('Padmé Amidala');
+    expect((compiled.querySelector('input[name="displayName"]') as HTMLInputElement).value).toBe(
+      'Padmé Amidala',
+    );
     expect((compiled.querySelector('input[name="email"]') as HTMLInputElement).value).toBe(
       'padme@example.com',
     );
@@ -97,10 +102,12 @@ describe('AccountSettingsPage', () => {
     createComponent();
     fixture.detectChanges();
 
-    httpMock.expectOne(ACCOUNT_URL).flush(
-      { detail: 'No user with the requested identifier was found.' },
-      { status: 404, statusText: 'Not Found' },
-    );
+    httpMock
+      .expectOne(ACCOUNT_URL)
+      .flush(
+        { detail: 'No user with the requested identifier was found.' },
+        { status: 404, statusText: 'Not Found' },
+      );
     fixture.detectChanges();
 
     expect(component.loadError()).toBe('No user with the requested identifier was found.');
@@ -195,10 +202,12 @@ describe('AccountSettingsPage', () => {
 
     component.email.set('taken@example.com');
     component.updateEmail();
-    httpMock.expectOne(`${ACCOUNT_URL}/email`).flush(
-      { detail: 'A user with this email address is already registered.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(`${ACCOUNT_URL}/email`)
+      .flush(
+        { detail: 'A user with this email address is already registered.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -299,16 +308,16 @@ describe('AccountSettingsPage', () => {
     component.newPassword.set('noblequeen1');
     component.confirmPassword.set('noblequeen1');
     component.updatePassword();
-    httpMock.expectOne(`${ACCOUNT_URL}/password`).flush(
-      { detail: 'The current password is incorrect.' },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    httpMock
+      .expectOne(`${ACCOUNT_URL}/password`)
+      .flush(
+        { detail: 'The current password is incorrect.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(component.passwordError()).toBe('The current password is incorrect.');
-    expect(fixture.nativeElement.textContent).toContain(
-      'The current password is incorrect.',
-    );
+    expect(fixture.nativeElement.textContent).toContain('The current password is incorrect.');
   });
 });

@@ -154,7 +154,11 @@ export class AccountSettingsPage implements OnInit {
       busyValue: true,
       idleValue: false,
       error: this.passwordError,
-      operation: this.accountService.updatePassword(account.id, this.currentPassword(), this.newPassword()),
+      operation: this.accountService.updatePassword(
+        account.id,
+        this.currentPassword(),
+        this.newPassword(),
+      ),
       onSuccess: () => {
         this.currentPassword.set('');
         this.newPassword.set('');

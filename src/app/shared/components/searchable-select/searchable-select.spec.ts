@@ -59,8 +59,8 @@ describe('SearchableSelect', () => {
     searchBox().dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    const labels = Array.from(element.querySelectorAll('.ss-option')).map(
-      (o) => o.textContent?.trim(),
+    const labels = Array.from(element.querySelectorAll('.ss-option')).map((o) =>
+      o.textContent?.trim(),
     );
     expect(labels).toEqual(['Coruscant']);
   });

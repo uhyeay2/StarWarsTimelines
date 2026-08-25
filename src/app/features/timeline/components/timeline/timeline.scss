@@ -149,7 +149,9 @@
   color: $color-text-secondary;
   background: transparent;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .view-button:hover {
@@ -179,7 +181,13 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: linear-gradient(to bottom, rgba($color-accent, 0.1), $color-accent 15%, $color-accent 85%, rgba($color-accent, 0.1));
+  background: linear-gradient(
+    to bottom,
+    rgba($color-accent, 0.1),
+    $color-accent 15%,
+    $color-accent 85%,
+    rgba($color-accent, 0.1)
+  );
 }
 
 .timeline-item {

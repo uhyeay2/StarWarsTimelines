@@ -25,9 +25,13 @@ describe('SignalCache', () => {
   it('fetch sets loading to true while in flight', () => {
     let emitFn!: (value: number[]) => void;
     const cache = new SignalCache(
-      () => new Observable<number[]>((sub) => {
-        emitFn = (v) => { sub.next(v); sub.complete(); };
-      }),
+      () =>
+        new Observable<number[]>((sub) => {
+          emitFn = (v) => {
+            sub.next(v);
+            sub.complete();
+          };
+        }),
     );
 
     cache.fetch();
@@ -41,7 +45,12 @@ describe('SignalCache', () => {
   it('fetch guards against concurrent calls', () => {
     let callCount = 0;
     // Use a non-completing Observable so loading stays true during the guard check
-    const cache = new SignalCache(() => new Observable((_sub) => { callCount++; }));
+    const cache = new SignalCache(
+      () =>
+        new Observable((_sub) => {
+          callCount++;
+        }),
+    );
 
     cache.fetch();
     cache.fetch(); // second call should be no-op while loading
@@ -69,7 +78,10 @@ describe('SignalCache', () => {
 
   it('invalidate clears data and re-fetches', () => {
     let callCount = 0;
-    const cache = new SignalCache(() => { callCount++; return of([callCount]); });
+    const cache = new SignalCache(() => {
+      callCount++;
+      return of([callCount]);
+    });
 
     cache.fetch();
     expect(cache.data()).toEqual([1]);
@@ -82,7 +94,14 @@ describe('SignalCache', () => {
   it('TTL expires data and re-fetches automatically', async () => {
     vi.useFakeTimers();
     let callCount = 0;
-    const cache = new SignalCache(() => { callCount++; return of([callCount]); }, undefined, 1000);
+    const cache = new SignalCache(
+      () => {
+        callCount++;
+        return of([callCount]);
+      },
+      undefined,
+      1000,
+    );
 
     cache.fetch();
     expect(cache.data()).toEqual([1]);
@@ -98,7 +117,14 @@ describe('SignalCache', () => {
   it('invalidate cancels pending TTL timer', () => {
     vi.useFakeTimers();
     let callCount = 0;
-    const cache = new SignalCache(() => { callCount++; return of([callCount]); }, undefined, 5000);
+    const cache = new SignalCache(
+      () => {
+        callCount++;
+        return of([callCount]);
+      },
+      undefined,
+      5000,
+    );
 
     cache.fetch();
     expect(cache.data()).toEqual([1]); // callCount=1, TTL timer set for t=5000
@@ -125,7 +151,14 @@ describe('SignalCache', () => {
   it('TTL of 0 means no automatic expiry', async () => {
     vi.useFakeTimers();
     let callCount = 0;
-    const cache = new SignalCache(() => { callCount++; return of([callCount]); }, undefined, 0);
+    const cache = new SignalCache(
+      () => {
+        callCount++;
+        return of([callCount]);
+      },
+      undefined,
+      0,
+    );
 
     cache.fetch();
     expect(cache.data()).toEqual([1]);

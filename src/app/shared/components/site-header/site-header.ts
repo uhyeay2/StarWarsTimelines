@@ -45,22 +45,18 @@ export class SiteHeader {
   protected readonly navPrefs = inject(NavPreferencesService);
 
   /** Canon view options for the Timeline dropdown. */
-  protected readonly timelineOptions: readonly NavDropdownOption[] = CANON_VIEWS.map(
-    (view) => ({
-      label: view,
-      routerLink: ROUTES.TIMELINE,
-      queryParams: { view },
-    }),
-  );
+  protected readonly timelineOptions: readonly NavDropdownOption[] = CANON_VIEWS.map((view) => ({
+    label: view,
+    routerLink: ROUTES.TIMELINE,
+    queryParams: { view },
+  }));
 
   /** Catalog tab options for the Catalog dropdown. */
-  protected readonly catalogOptions: readonly NavDropdownOption[] = CATALOG_TABS.map(
-    (tab) => ({
-      label: CATALOG_TAB_LABELS[tab],
-      routerLink: ROUTES.CATALOG,
-      queryParams: { tab },
-    }),
-  );
+  protected readonly catalogOptions: readonly NavDropdownOption[] = CATALOG_TABS.map((tab) => ({
+    label: CATALOG_TAB_LABELS[tab],
+    routerLink: ROUTES.CATALOG,
+    queryParams: { tab },
+  }));
 
   /** Library section options for the Library dropdown. */
   protected readonly libraryOptions: readonly NavDropdownOption[] = [
@@ -70,8 +66,6 @@ export class SiteHeader {
   ];
 
   logout(): void {
-    this.auth.logout()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+    this.auth.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 }

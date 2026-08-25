@@ -19,7 +19,14 @@
  * @see {@link StatusFilter} for the shared filter control.
  */
 
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { buildTrackedScope } from '../../../../shared/models/tracking-selection';
 import { AuthService } from '../../../auth/services/auth.service';

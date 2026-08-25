@@ -8,7 +8,14 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { LibraryService } from '../../services/library.service';
 import { WishListPage } from './wish-list-page';
 
-const USER: User = { id: 'user-padme', username: 'padme', displayName: 'Padmé Amidala', email: 'padme@example.com', emailVerified: true, role: 'Standard' };
+const USER: User = {
+  id: 'user-padme',
+  username: 'padme',
+  displayName: 'Padmé Amidala',
+  email: 'padme@example.com',
+  emailVerified: true,
+  role: 'Standard',
+};
 
 const TRACKED: LibraryItem[] = [
   {
@@ -132,11 +139,7 @@ describe('WishListPage', () => {
     const upButton = rows[1].querySelectorAll('.move-button')[0] as HTMLElement;
     upButton.click();
 
-    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      21,
-      23,
-      22,
-    ]);
+    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [21, 23, 22]);
   });
 
   it('moves an item down within the wish list', async () => {
@@ -145,11 +148,7 @@ describe('WishListPage', () => {
     const downButton = rows[0].querySelectorAll('.move-button')[1] as HTMLElement;
     downButton.click();
 
-    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      21,
-      23,
-      22,
-    ]);
+    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [21, 23, 22]);
   });
 
   it('reorders by dragging one item onto another', async () => {
@@ -159,11 +158,7 @@ describe('WishListPage', () => {
     rows[0].dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
     rows[0].dispatchEvent(new Event('drop', { bubbles: true }));
 
-    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [
-      21,
-      23,
-      22,
-    ]);
+    expect(libraryMock.reorderTrackedItem).toHaveBeenCalledWith('user-padme', [21, 23, 22]);
   });
 
   it('updates an item status when the select changes', async () => {
@@ -173,10 +168,6 @@ describe('WishListPage', () => {
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(libraryMock.setStatus).toHaveBeenCalledWith(
-      'user-padme',
-      22,
-      'In progress',
-    );
+    expect(libraryMock.setStatus).toHaveBeenCalledWith('user-padme', 22, 'In progress');
   });
 });

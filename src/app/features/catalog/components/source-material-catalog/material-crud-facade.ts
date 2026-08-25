@@ -45,7 +45,11 @@ export class MaterialCrudFacade {
 
   // ─── Add material ─────────────────────────────────────────────────────
 
-  openAddMaterial(medium: Medium, actionError: WritableSignal<string | null>, closeAllPopups: CloseAllPopupsFn): void {
+  openAddMaterial(
+    medium: Medium,
+    actionError: WritableSignal<string | null>,
+    closeAllPopups: CloseAllPopupsFn,
+  ): void {
     actionError.set(null);
     closeAllPopups();
     this.addMaterialMedium.set(medium);

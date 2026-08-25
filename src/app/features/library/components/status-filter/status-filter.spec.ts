@@ -22,8 +22,8 @@ function tab(fixture: ComponentFixture<StatusFilter>, label: string): HTMLElemen
 }
 
 function activeLabels(fixture: ComponentFixture<StatusFilter>): string[] {
-  return [...fixture.nativeElement.querySelectorAll('.filter-tab--active')].map(
-    (el) => (el as HTMLElement).textContent?.trim(),
+  return [...fixture.nativeElement.querySelectorAll('.filter-tab--active')].map((el) =>
+    (el as HTMLElement).textContent?.trim(),
   );
 }
 
@@ -37,8 +37,8 @@ describe('StatusFilter', () => {
 
   it('renders an All tab plus one tab per tracking status', async () => {
     const { fixture } = await setup();
-    const labels = [...fixture.nativeElement.querySelectorAll('.filter-tab')].map(
-      (el) => (el as HTMLElement).textContent?.trim(),
+    const labels = [...fixture.nativeElement.querySelectorAll('.filter-tab')].map((el) =>
+      (el as HTMLElement).textContent?.trim(),
     );
     expect(labels).toEqual(['All', 'In progress', 'Completed', 'Wish Listed']);
   });

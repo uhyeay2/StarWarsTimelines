@@ -12,17 +12,15 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: ErrorHandler, useClass: AppErrorHandler },
-    provideHttpClient(withInterceptors([
-      authInterceptor,
-      httpErrorInterceptor,
-      securityHeadersInterceptor,
-    ])),
+    provideHttpClient(
+      withInterceptors([authInterceptor, httpErrorInterceptor, securityHeadersInterceptor]),
+    ),
     provideRouter(
       routes,
       withInMemoryScrolling({
         scrollPositionRestoration: 'top',
         anchorScrolling: 'enabled',
       }),
-    )
-  ]
+    ),
+  ],
 };

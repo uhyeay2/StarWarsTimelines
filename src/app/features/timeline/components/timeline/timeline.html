@@ -1,6 +1,5 @@
 <!-- ─── Timeline Page ───────────────────────────────────────────────────── -->
 <section class="timeline-page">
-
   <!-- ─── Page Header ─────────────────────────────────────────────────── -->
   <header class="page-header">
     <h1>{{ heading() }}</h1>
@@ -9,10 +8,8 @@
   <!-- ─── End Page Header ─────────────────────────────────────────────── -->
 
   <div class="timeline-layout">
-
     <!-- ─── Filter Panel ──────────────────────────────────────────────── -->
     <aside class="filter-panel" aria-label="Filters">
-
       <!-- ─── Filter Panel Header ─────────────────────────────────────── -->
       <div class="filter-panel-header">
         <h2>Filters</h2>
@@ -32,7 +29,8 @@
             [class.view-button--active]="filters().canonView === view"
             [attr.aria-pressed]="filters().canonView === view"
             [attr.aria-checked]="filters().canonView === view"
-            (click)="selectView(view)">
+            (click)="selectView(view)"
+          >
             {{ view }}
           </button>
         }
@@ -44,7 +42,8 @@
         type="button"
         class="advanced-toggle"
         [attr.aria-expanded]="advancedOpen()"
-        (click)="toggleAdvanced()">
+        (click)="toggleAdvanced()"
+      >
         <span class="advanced-toggle-label">Advanced Filters</span>
         @if (activeFacetCount() > 0) {
           <span class="advanced-toggle-count">{{ activeFacetCount() }}</span>
@@ -52,43 +51,49 @@
         <span
           class="advanced-toggle-chevron"
           [class.advanced-toggle-chevron--open]="advancedOpen()"
-          aria-hidden="true">&#9662;</span>
+          aria-hidden="true"
+          >&#9662;</span
+        >
       </button>
       <!-- ─── End Advanced Filters Toggle ─────────────────────────────── -->
 
       <!-- ─── Advanced Filter Groups ──────────────────────────────────── -->
       <div class="advanced-filters" [hidden]="!advancedOpen()">
         @if (facetOptions().sources.length) {
-            <app-filter-group
-              label="Source"
-              [options]="facetOptions().sources"
-              [selected]="filters().sources"
-              (selectedChange)="updateFilter('sources', $event)" />
-          }
+          <app-filter-group
+            label="Source"
+            [options]="facetOptions().sources"
+            [selected]="filters().sources"
+            (selectedChange)="updateFilter('sources', $event)"
+          />
+        }
 
-          @if (facetOptions().locations.length) {
-            <app-filter-group
-              label="Location"
-              [options]="facetOptions().locations"
-              [selected]="filters().locations"
-              (selectedChange)="updateFilter('locations', $event)" />
-          }
+        @if (facetOptions().locations.length) {
+          <app-filter-group
+            label="Location"
+            [options]="facetOptions().locations"
+            [selected]="filters().locations"
+            (selectedChange)="updateFilter('locations', $event)"
+          />
+        }
 
-          @if (facetOptions().characters.length) {
-            <app-filter-group
-              label="Characters"
-              [options]="facetOptions().characters"
-              [selected]="filters().characters"
-              (selectedChange)="updateFilter('characters', $event)" />
-          }
+        @if (facetOptions().characters.length) {
+          <app-filter-group
+            label="Characters"
+            [options]="facetOptions().characters"
+            [selected]="filters().characters"
+            (selectedChange)="updateFilter('characters', $event)"
+          />
+        }
 
-          @if (facetOptions().vehicles.length) {
-            <app-filter-group
-              label="Vehicles"
-              [options]="facetOptions().vehicles"
-              [selected]="filters().vehicles"
-              (selectedChange)="updateFilter('vehicles', $event)" />
-          }
+        @if (facetOptions().vehicles.length) {
+          <app-filter-group
+            label="Vehicles"
+            [options]="facetOptions().vehicles"
+            [selected]="filters().vehicles"
+            (selectedChange)="updateFilter('vehicles', $event)"
+          />
+        }
       </div>
       <!-- ─── End Advanced Filter Groups ──────────────────────────────── -->
     </aside>
@@ -96,20 +101,20 @@
 
     <!-- ─── Timeline Content ──────────────────────────────────────────── -->
     <div class="timeline-content">
-
       <!-- ─── Loading State ───────────────────────────────────────────── -->
       @if (isLoading()) {
         <app-timeline-skeleton />
-      <!-- ─── Error State ─────────────────────────────────────────────── -->
+        <!-- ─── Error State ─────────────────────────────────────────────── -->
       } @else if (eventsError(); as errorMsg) {
         <app-error-state
           title="Unable to load timeline events"
           [message]="errorMsg"
-          (retry)="retryLoad()" />
-      <!-- ─── Empty State ─────────────────────────────────────────────── -->
+          (retry)="retryLoad()"
+        />
+        <!-- ─── Empty State ─────────────────────────────────────────────── -->
       } @else if (filteredEvents().length === 0) {
         <p class="empty-state">No events match your filters.</p>
-      <!-- ─── Events List ─────────────────────────────────────────────── -->
+        <!-- ─── Events List ─────────────────────────────────────────────── -->
       } @else {
         <ol class="timeline-list">
           @for (event of filteredEvents(); track event.id) {
@@ -121,7 +126,8 @@
                 [selectedCharacters]="filters().characters"
                 [selectedVehicles]="filters().vehicles"
                 [selectedSources]="filters().sources"
-                (toggleFacet)="onToggleFacet($event)" />
+                (toggleFacet)="onToggleFacet($event)"
+              />
             </li>
           }
         </ol>

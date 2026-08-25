@@ -132,12 +132,7 @@ export class LibraryCacheManager {
           return throwError(() => error);
         },
       }),
-      map(
-        (items) =>
-          items
-            .filter(isValidItemDto)
-            .map(mapLibraryItem) as readonly LibraryItem[],
-      ),
+      map((items) => items.filter(isValidItemDto).map(mapLibraryItem) as readonly LibraryItem[]),
     );
   }
 
@@ -208,7 +203,10 @@ export class LibraryCacheManager {
           : this.fetchItems(userId).pipe(tap((items) => this.items.set(items))),
       ),
       catchError(
-        this.handleError('Reload failed after mutation.', `${context}:reload`, { userId, materialId }),
+        this.handleError('Reload failed after mutation.', `${context}:reload`, {
+          userId,
+          materialId,
+        }),
       ),
     );
   }

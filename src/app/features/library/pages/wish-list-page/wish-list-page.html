@@ -1,6 +1,5 @@
 <!-- ─── My Wish List Page ───────────────────────────────────────────────── -->
 <section class="wish-list-page">
-
   <!-- ─── Page Header ────────────────────────────────────────────────── -->
   <header class="page-header">
     <h1>My Wish List</h1>
@@ -11,10 +10,9 @@
   <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
   @if (!user()) {
     <app-login-prompt>Log in to view and manage your wish list.</app-login-prompt>
-  <!-- ─── Wish List Layout (when logged in) ──────────────────────────── -->
+    <!-- ─── Wish List Layout (when logged in) ──────────────────────────── -->
   } @else {
     <div class="wish-list-layout">
-
       <!-- ─── Reorder Hint ───────────────────────────────────────────── -->
       @if (wishListItems().length > 0) {
         <p class="reorder-hint">Drag items or use the arrows to order your wish list.</p>
@@ -41,7 +39,8 @@
                 (dragEnd)="onDragEnd()"
                 (drop)="reorderWishList(item.id)"
                 (groupStatusChange)="setGroupStatus(item.id, $event.unitId, $event.status)"
-                (groupRemove)="clearGroupProgress(item.id, $event.unitId)" />
+                (groupRemove)="clearGroupProgress(item.id, $event.unitId)"
+              />
             </li>
           }
         </ol>
@@ -50,7 +49,10 @@
       } @else if (error()) {
         <p class="form-status" role="alert" aria-live="polite">{{ error() }}</p>
       } @else {
-        <p class="empty-state">Your wish list is empty — track materials as Wish Listed from the catalog or your tracked events.</p>
+        <p class="empty-state">
+          Your wish list is empty — track materials as Wish Listed from the catalog or your tracked
+          events.
+        </p>
       }
       <!-- ─── End Wish List Items ────────────────────────────────────── -->
     </div>

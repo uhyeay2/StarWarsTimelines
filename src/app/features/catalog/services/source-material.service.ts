@@ -169,7 +169,14 @@ export class SourceMaterialService {
         canonType: canonTypeToApiCode(input.canonType),
       })
       .pipe(
-        catchError(catalogErrorHandler('Unable to create the source material. Please try again.', 'createSourceMaterial', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to create the source material. Please try again.',
+            'createSourceMaterial',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         map((item) => this.mapSourceMaterial(item)),
         tap(() => this.materialsCache.invalidate()),
       );
@@ -181,7 +188,10 @@ export class SourceMaterialService {
    * @param input - The updated source material data.
    * @returns An observable of the updated source material.
    */
-  updateSourceMaterial(id: number, input: CreateSourceMaterialInput): Observable<ApiSourceMaterial> {
+  updateSourceMaterial(
+    id: number,
+    input: CreateSourceMaterialInput,
+  ): Observable<ApiSourceMaterial> {
     return this.http
       .put<SourceMaterialDto>(`${CATALOG_API_BASE}/source-materials/${id}`, {
         title: input.title,
@@ -189,7 +199,14 @@ export class SourceMaterialService {
         canonType: canonTypeToApiCode(input.canonType),
       })
       .pipe(
-        catchError(catalogErrorHandler('Unable to update the source material. Please try again.', 'updateSourceMaterial', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to update the source material. Please try again.',
+            'updateSourceMaterial',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         map((item) => this.mapSourceMaterial(item)),
         tap(() => this.materialsCache.invalidate()),
       );
@@ -201,15 +218,20 @@ export class SourceMaterialService {
    * @returns An observable that completes when the material is deleted.
    */
   deleteSourceMaterial(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${CATALOG_API_BASE}/source-materials/${id}`)
-      .pipe(
-        catchError(catalogErrorHandler('Unable to delete the source material. Please try again.', 'deleteSourceMaterial', 'entity-in-use', this.logger)),
-        tap(() => {
-          this.materialsCache.invalidate();
-          this.unitCaches.get(id)?.invalidate();
-        }),
-      );
+    return this.http.delete<void>(`${CATALOG_API_BASE}/source-materials/${id}`).pipe(
+      catchError(
+        catalogErrorHandler(
+          'Unable to delete the source material. Please try again.',
+          'deleteSourceMaterial',
+          'entity-in-use',
+          this.logger,
+        ),
+      ),
+      tap(() => {
+        this.materialsCache.invalidate();
+        this.unitCaches.get(id)?.invalidate();
+      }),
+    );
   }
 
   /**
@@ -218,13 +240,26 @@ export class SourceMaterialService {
    * @param collectionTitle - The title for the new collection.
    * @returns An observable of the created units.
    */
-  convertStandaloneBookToCollection(id: number, collectionTitle: string): Observable<ApiSourceMaterialUnit[]> {
+  convertStandaloneBookToCollection(
+    id: number,
+    collectionTitle: string,
+  ): Observable<ApiSourceMaterialUnit[]> {
     return this.http
-      .post<readonly SourceMaterialUnitDto[]>(`${CATALOG_API_BASE}/source-materials/${id}/convert-to-collection`, {
-        collectionTitle,
-      })
+      .post<readonly SourceMaterialUnitDto[]>(
+        `${CATALOG_API_BASE}/source-materials/${id}/convert-to-collection`,
+        {
+          collectionTitle,
+        },
+      )
       .pipe(
-        catchError(catalogErrorHandler('Unable to convert the book to a collection. Please try again.', 'convertStandaloneBookToCollection', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to convert the book to a collection. Please try again.',
+            'convertStandaloneBookToCollection',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         map((items) => items.map((item) => this.mapUnit(item))),
         tap(() => {
           this.materialsCache.invalidate();
@@ -256,7 +291,14 @@ export class SourceMaterialService {
         },
       )
       .pipe(
-        catchError(catalogErrorHandler('Unable to create the unit. Please try again.', 'createSourceMaterialUnit', 'duplicate-entity', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to create the unit. Please try again.',
+            'createSourceMaterialUnit',
+            'duplicate-entity',
+            this.logger,
+          ),
+        ),
         map((item) => this.mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
@@ -285,7 +327,14 @@ export class SourceMaterialService {
         },
       )
       .pipe(
-        catchError(catalogErrorHandler('Unable to update the unit. Please try again.', 'updateSourceMaterialUnit', 'duplicate-entity', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to update the unit. Please try again.',
+            'updateSourceMaterialUnit',
+            'duplicate-entity',
+            this.logger,
+          ),
+        ),
         map((item) => this.mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
@@ -301,7 +350,14 @@ export class SourceMaterialService {
     return this.http
       .delete<void>(`${CATALOG_API_BASE}/source-materials/${sourceMaterialId}/units/${unitId}`)
       .pipe(
-        catchError(catalogErrorHandler('Unable to delete the unit. Please try again.', 'deleteSourceMaterialUnit', 'entity-in-use', this.logger)),
+        catchError(
+          catalogErrorHandler(
+            'Unable to delete the unit. Please try again.',
+            'deleteSourceMaterialUnit',
+            'entity-in-use',
+            this.logger,
+          ),
+        ),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
   }

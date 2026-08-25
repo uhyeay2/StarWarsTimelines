@@ -4,15 +4,18 @@ import { authGuard } from './features/auth/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./features/landing/pages/landing-page/landing-page').then((m) => m.LandingPage),
+    loadComponent: () =>
+      import('./features/landing/pages/landing-page/landing-page').then((m) => m.LandingPage),
   },
   {
     path: 'timeline',
-    loadComponent: () => import('./features/timeline/components/timeline/timeline').then((m) => m.Timeline),
+    loadComponent: () =>
+      import('./features/timeline/components/timeline/timeline').then((m) => m.Timeline),
   },
   {
     path: 'login',
-    loadComponent: () => import('./features/auth/pages/login-page/login-page').then((m) => m.LoginPage),
+    loadComponent: () =>
+      import('./features/auth/pages/login-page/login-page').then((m) => m.LoginPage),
   },
   {
     path: 'register',
@@ -22,7 +25,9 @@ export const routes: Routes = [
   {
     path: 'verify-email',
     loadComponent: () =>
-      import('./features/auth/pages/verify-email-page/verify-email-page').then((m) => m.VerifyEmailPage),
+      import('./features/auth/pages/verify-email-page/verify-email-page').then(
+        (m) => m.VerifyEmailPage,
+      ),
   },
   {
     path: 'library',
@@ -43,7 +48,9 @@ export const routes: Routes = [
       {
         path: 'wish-list',
         loadComponent: () =>
-          import('./features/library/pages/wish-list-page/wish-list-page').then((m) => m.WishListPage),
+          import('./features/library/pages/wish-list-page/wish-list-page').then(
+            (m) => m.WishListPage,
+          ),
       },
       {
         path: 'timeline',

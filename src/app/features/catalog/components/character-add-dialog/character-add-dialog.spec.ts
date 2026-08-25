@@ -65,8 +65,8 @@ describe('CharacterAddDialog', () => {
     await fixture.whenStable();
 
     expect((field('newName') as HTMLInputElement).value).toBe('Grogu');
-    const toggleLabels = Array.from(element.querySelectorAll('.ss-value')).map(
-      (s) => s.textContent?.trim(),
+    const toggleLabels = Array.from(element.querySelectorAll('.ss-value')).map((s) =>
+      s.textContent?.trim(),
     );
     expect(toggleLabels).toEqual(['Wookiee', 'Tatooine']);
     expect(Number(field('newBirthFrom').value)).toBe(-41);
@@ -86,7 +86,9 @@ describe('CharacterAddDialog', () => {
     expect(saved).toHaveLength(1);
 
     (element.querySelector('.admin-popup-backdrop') as HTMLElement).click();
-    (element.querySelector('.admin-popup-actions .btn:not(.btn-primary)') as HTMLButtonElement).click();
+    (
+      element.querySelector('.admin-popup-actions .btn:not(.btn-primary)') as HTMLButtonElement
+    ).click();
     await fixture.whenStable();
 
     expect(cancelled).toHaveLength(2);

@@ -21,7 +21,10 @@ import {
   model,
   signal,
 } from '@angular/core';
-import { collectTreeLeaves, FilterTreeNode } from '../../../features/timeline/models/timeline-filters';
+import {
+  collectTreeLeaves,
+  FilterTreeNode,
+} from '../../../features/timeline/models/timeline-filters';
 import { FilterTree } from './filter-tree';
 
 @Component({
@@ -134,10 +137,7 @@ export class FilterGroup {
   /** Closes the panel when a click lands anywhere outside the component. */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
-    if (
-      this.open() &&
-      !this.elementRef.nativeElement.contains(event.target as Node)
-    ) {
+    if (this.open() && !this.elementRef.nativeElement.contains(event.target as Node)) {
       this.open.set(false);
     }
   }
@@ -180,16 +180,11 @@ export class FilterGroup {
     const spaceAbove = rect.top - gap;
 
     this.panelMaxHeight.set(null);
-    this.dropUp.set(
-      spaceBelow < FilterGroup.MAX_PANEL_HEIGHT_PX &&
-        spaceAbove > spaceBelow,
-    );
+    this.dropUp.set(spaceBelow < FilterGroup.MAX_PANEL_HEIGHT_PX && spaceAbove > spaceBelow);
 
     const available = this.dropUp() ? spaceAbove : spaceBelow;
     if (available < FilterGroup.MAX_PANEL_HEIGHT_PX) {
-      this.panelMaxHeight.set(
-        Math.max(available, FilterGroup.MIN_PANEL_HEIGHT_PX),
-      );
+      this.panelMaxHeight.set(Math.max(available, FilterGroup.MIN_PANEL_HEIGHT_PX));
     }
   }
 }
