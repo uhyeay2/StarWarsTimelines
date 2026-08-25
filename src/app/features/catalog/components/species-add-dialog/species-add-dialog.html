@@ -1,0 +1,27 @@
+<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div class="admin-popup" role="dialog" aria-modal="true" aria-label="Add species">
+  <h3>Add species</h3>
+  <form (ngSubmit)="save.emit()">
+    <label class="source-field">
+      <span>Name</span>
+      <input name="newName" [(ngModel)]="name" placeholder="Species name…" required autofocus />
+    </label>
+    <div class="source-field">
+      <span>Home planet</span>
+      <app-searchable-select
+        ariaLabel="Home planet"
+        [options]="locationOptions()"
+        noneLabel="No home planet"
+        [(value)]="homePlanetId" />
+    </div>
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <div class="admin-popup-actions">
+      <button class="btn btn-primary btn-sm" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Adding…' : 'Add' }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</div>

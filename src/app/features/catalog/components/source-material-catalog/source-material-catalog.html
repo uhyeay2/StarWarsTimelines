@@ -1,0 +1,387 @@
+<section class="source-material-catalog">
+  <h2>Source materials</h2>
+
+  @if (loading()) {
+    <p class="form-status" role="status" aria-live="polite">Loading…</p>
+  } @else if (loadError()) {
+    <p class="form-error" role="alert" aria-live="polite">{{ loadError() }}</p>
+  } @else {
+    <label class="source-search">
+      <span class="sr-only">Search source materials</span>
+      <input
+        name="search"
+        type="search"
+        placeholder="Search source materials…"
+        [(ngModel)]="searchTerm" />
+    </label>
+
+    @for (group of mediumGroups(); track group.medium) {
+      <div class="medium-group">
+        <div class="medium-header" [class.medium-header--open]="isMediumExpanded(group.medium)">
+          <button
+            type="button"
+            class="medium-header-toggle"
+            (click)="toggleMedium(group.medium)"
+            [attr.aria-expanded]="isMediumExpanded(group.medium)">
+            <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+            <span class="medium-label">{{ group.medium }}</span>
+            <span class="medium-count">{{ group.materials.length }} {{ group.materials.length === 1 ? 'material' : 'materials' }}</span>
+          </button>
+          @if (isAdmin()) {
+            <button
+              class="btn btn-sm medium-add-button"
+              type="button"
+              [disabled]="probeLoading()"
+              [title]="'Add a ' + group.medium + ' source material'"
+              (click)="openAddMaterial(group.medium)">
+              + Add
+            </button>
+          }
+        </div>
+        @if (isMediumExpanded(group.medium)) {
+          <ul class="source-list">
+            @for (material of group.materials; track material.id) {
+              <li class="source-item">
+                @if (editId() === material.id) {
+                  <form class="source-edit" (ngSubmit)="saveEdit()">
+                    <input
+                      name="editTitle"
+                      [(ngModel)]="editTitle"
+                      aria-label="Renamed source material" />
+                    <select name="editMedium" [(ngModel)]="editMedium" aria-label="Medium">
+                      @for (medium of media; track medium) {
+                        <option [value]="medium">{{ medium }}</option>
+                      }
+                    </select>
+                    <select name="editCanonType" [(ngModel)]="editCanonType" aria-label="Canon type">
+                      @for (canonType of canonTypes; track canonType) {
+                        <option [value]="canonType">{{ canonType }}</option>
+                      }
+                    </select>
+                    <button class="btn btn-sm" type="submit" [disabled]="savingId() === material.id">
+                      {{ savingId() === material.id ? 'Saving…' : 'Save' }}
+                    </button>
+                    <button class="btn btn-sm" type="button" (click)="cancelEdit()">Cancel</button>
+                  </form>
+                } @else if (confirmDeleteId() === material.id) {
+                  <div class="delete-prompt">
+                    <p>
+                      Delete "{{ material.title }}"? This is blocked while it is referenced by a timeline
+                      event or a user library.
+                    </p>
+                    <div class="delete-actions">
+                      <button
+                        class="btn btn-sm btn-danger"
+                        type="button"
+                        [disabled]="deletingId() === material.id"
+                        (click)="confirmDelete()">
+                        {{ deletingId() === material.id ? 'Deleting…' : 'Delete' }}
+                      </button>
+                      <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
+                    </div>
+                  </div>
+                } @else {
+                  <!-- ═══════════════════════════════════════════════════════════════════
+                       MATERIAL HEADER — expand button + title/meta + actions
+                       ═══════════════════════════════════════════════════════════════════ -->
+                  <div class="source-top">
+                    <div class="source-item-main">
+                      @if (hasUnits()[material.id]) {
+                        <button
+                          type="button"
+                          class="source-expand"
+                          [class.source-expand--open]="isMaterialExpanded(material.id)"
+                          (click)="toggleUnits(material.id)"
+                          aria-label="Toggle units">
+                          {{ isMaterialExpanded(material.id) ? '▾' : '▸' }}
+                        </button>
+                      } @else {
+                        <span class="source-expand"></span>
+                      }
+                      <div class="source-item-text">
+                        <span class="source-title">{{ material.title }}</span>
+                        <span class="source-meta">{{ material.canonType }}</span>
+                      </div>
+                    </div>
+
+                    @if (isAdmin()) {
+                      <div class="source-actions">
+                        @if (hasMaterialAdd(group.medium)) {
+                          <button
+                            class="btn btn-sm"
+                            type="button"
+                            [disabled]="probeLoading()"
+                            title="Add a unit to this source material"
+                            (click)="onMaterialAddClick(group.medium, material)">
+                            + Add
+                          </button>
+                        }
+                        @if (isConvertibleStandaloneBook(material)) {
+                          <button
+                            class="btn btn-sm"
+                            type="button"
+                            title="Turn this standalone book into a collection of books"
+                            (click)="requestConvert(material)">
+                            Convert to Collection
+                          </button>
+                        }
+                        <button class="btn btn-sm" type="button" (click)="beginEdit(material)">
+                          Edit
+                        </button>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          type="button"
+                          (click)="requestDelete(material)">
+                          Delete
+                        </button>
+                      </div>
+                    } @else if (group.medium === 'Movie' || group.medium === 'Video Game' || (group.medium === 'Book' && !materialTracksViaContainers(material.id))) {
+                      <!-- ═══════════════════════════════════════════════════════════════
+                           NON-ADMIN: title-level tracking dropdown
+                           Movies, Books, Games → track at title level
+                           Comics, Shows → track per group (below in expanded section)
+                           ═══════════════════════════════════════════════════════════════ -->
+                      <app-track-select
+                        [label]="'Track ' + material.title"
+                        [options]="getTrackingOptions(material.id)"
+                        [currentStatus]="getMaterialCurrentStatus(material.id)"
+                        (statusChange)="onTrackMaterial(material.id, $event)" />
+                    }
+                  </div>
+
+                  <!-- ═══════════════════════════════════════════════════════════════════
+                       EXPANDED SECTION — varies by medium
+                       ═══════════════════════════════════════════════════════════════════ -->
+                  @if (shouldShowUnits(material.id) && editId() !== material.id) {
+                    <div class="unit">
+                      @if (unitsLoading()) {
+                        <p class="form-status" role="status" aria-live="polite">Loading units…</p>
+                      } @else if (unitsError()) {
+                        <p class="form-error" role="alert" aria-live="polite">{{ unitsError() }}</p>
+                      } @else {
+                        <!-- ═══════════════════════════════════════════════════════════
+                             NON-ADMIN UNIT DISPLAY — medium-specific
+                             ═══════════════════════════════════════════════════════════ -->
+                        @if (!isAdmin()) {
+                          <!-- ─── Movies: no units to display ─── -->
+                          @if (group.medium === 'Movie') {
+                          } @else if (group.medium === 'Comic' || group.medium === 'Live Action Show' || group.medium === 'Animated Show' || (group.medium === 'Book' && materialTracksViaContainers(material.id))) {
+                            <!-- Comics/Shows/Book collections: season/volume/book groups with tracking -->
+                            @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
+                              <div class="group-track-section">
+                                <div class="track-group-row">
+                                  <button
+                                    type="button"
+                                    class="season-header"
+                                    [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
+                                    (click)="toggleSeason(material.id, displayGroup.expandKey)">
+                                    <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                    <span class="season-label">{{ displayGroup.label }}</span>
+                                  </button>
+                                  @if (displayGroup.containerId !== null) {
+                                    <app-track-select
+                                      variant="group"
+                                      [label]="'Track ' + displayGroup.label"
+                                      [options]="getGroupTrackingOptions(material.id, displayGroup.containerId)"
+                                      [currentStatus]="getGroupCurrentStatus(material.id, displayGroup.containerId)"
+                                      (statusChange)="onTrackGroupUnit(material.id, displayGroup.containerId, $event)" />
+                                  }
+                                </div>
+                                @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
+                                  <ul class="season-episodes">
+                                    @for (childUnit of displayGroup.units; track childUnit.id) {
+                                      <li class="unit-item">
+                                        <span class="unit-label">
+                                          <span class="unit-type">{{ childUnit.unitType }}</span>
+                                          {{ unitLabel(childUnit) }}
+                                        </span>
+                                      </li>
+                                    }
+                                  </ul>
+                                }
+                              </div>
+                            }
+                          } @else if (group.medium === 'Book' || group.medium === 'Video Game') {
+                            <!-- Books/Games: units listed flat (no per-unit tracking) -->
+                            <ul class="unit-list">
+                              @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                                <li class="unit-item">
+                                  <span class="unit-label">
+                                    <span class="unit-type">{{ unit.unitType }}</span>
+                                    {{ unitLabel(unit) }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        }
+
+                        <!-- ═══════════════════════════════════════════════════════════
+                             ADMIN UNIT LIST — flat or grouped by display strategy
+                             ═══════════════════════════════════════════════════════════ -->
+                        @if (isAdmin()) {
+                          @switch (displayStrategy()[material.id]) {
+                            @case ('flat') {
+                              <ul class="unit-list">
+                                @for (unit of unitsByMaterial()[material.id] ?? []; track unit.id) {
+                                  <li class="unit-item">
+                                    <ng-container *ngTemplateOutlet="adminUnitItem; context: { $implicit: unit, materialId: material.id }"></ng-container>
+                                  </li>
+                                }
+                              </ul>
+                            }
+                            @default {
+                              <ul class="unit-list">
+                                @for (displayGroup of getDisplayGroups(material.id); track displayGroup.expandKey) {
+                                  <li class="season-group">
+                                    <div class="track-group-row">
+                                      <button
+                                        type="button"
+                                        class="season-header"
+                                        [class.season-header--open]="isSeasonExpanded(material.id, displayGroup.expandKey)"
+                                        (click)="toggleSeason(material.id, displayGroup.expandKey)">
+                                        <span class="season-toggle">{{ isSeasonExpanded(material.id, displayGroup.expandKey) ? '▾' : '▸' }}</span>
+                                        <span class="season-label">{{ displayGroup.label }}</span>
+                                        <span class="season-count">{{ displayGroup.units.length }} {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span>
+                                      </button>
+                                      @if (displayGroup.containerId !== null) {
+                                        <button
+                                          class="btn btn-sm container-add-button"
+                                          type="button"
+                                          [title]="'Add a unit inside ' + displayGroup.label"
+                                          (click)="openAddUnitPopup({ materialId: material.id, parentUnitId: displayGroup.containerId, childType: nestedChildTypeFor(displayGroup.containerType) })">
+                                          + Add
+                                        </button>
+                                      }
+                                    </div>
+                                    @if (isSeasonExpanded(material.id, displayGroup.expandKey)) {
+                                      <ul class="season-episodes">
+                                        @for (unit of displayGroup.units; track unit.id) {
+                                          <li class="unit-item">
+                                            <ng-container *ngTemplateOutlet="adminUnitItem; context: { $implicit: unit, materialId: material.id }"></ng-container>
+                                          </li>
+                                        }
+                                      </ul>
+                                    }
+                                  </li>
+                                }
+                              </ul>
+                            }
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+    @if (searchTerm() && mediumGroups().length === 0 && materials().length > 0) {
+      <p class="form-status" role="status" aria-live="polite">No source materials match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="form-error" role="alert" aria-live="polite">{{ actionError() }}</p>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ADMIN POPUPS — one dialog at a time, driven by signals
+         ═══════════════════════════════════════════════════════════════════════ -->
+    @if (isAdmin()) {
+      @if (addMaterialMedium(); as popupMedium) {
+        <app-material-add-dialog
+          [medium]="popupMedium"
+          [titleLabel]="popupMedium === 'Book' ? 'Book Title or Collection Name' : 'Title'"
+          [(title)]="newTitle"
+          [(canonType)]="newCanonType"
+          [error]="addError()"
+          [saving]="adding()"
+          (save)="submitAddMaterial()"
+          (cancel)="cancelAddMaterial()" />
+      }
+
+      @if (bookChoiceMaterialId() !== null) {
+        <app-book-choice-dialog
+          (chooseChapter)="chooseBookChapter(bookChoiceMaterialId()!)"
+          (chooseBook)="requestStartCollection(bookChoiceMaterialId()!)"
+          (cancel)="cancelBookChoice()" />
+      }
+
+      @if (unitPopupContext(); as context) {
+        <app-unit-add-dialog
+          [heading]="unitPopupHeading(context)"
+          [(number)]="popupNumber"
+          [(title)]="popupTitle"
+          [error]="unitAddError()"
+          [saving]="addingUnitFor() === context.materialId"
+          (save)="submitAddUnit()"
+          (cancel)="cancelAddUnit()" />
+      }
+
+      @if (convertPopupMaterialId() !== null) {
+        <app-convert-collection-dialog
+          [(title)]="convertTitle"
+          [error]="actionError()"
+          [saving]="convertingId() === convertPopupMaterialId()"
+          (convert)="submitConvert()"
+          (cancel)="cancelConvert()" />
+      }
+
+      @if (startCollectionMaterialId() !== null) {
+        <app-start-collection-dialog
+          [(collectionName)]="startCollectionName"
+          [error]="actionError()"
+          [saving]="startingCollectionFor() === startCollectionMaterialId()"
+          (save)="submitStartCollection($event)"
+          (cancel)="cancelStartCollection()" />
+      }
+    }
+  }
+
+  <ng-template #adminUnitItem let-unit let-materialId="materialId">
+    @if (unitEditKey()?.unitId === unit.id) {
+      <app-unit-edit-form
+        [(number)]="unitEditNumber"
+        [(title)]="unitEditTitle"
+        [saving]="unitSavingKey()?.unitId === unit.id"
+        (save)="saveUnitEdit()"
+        (cancel)="cancelUnitEdit()" />
+    } @else if (unitConfirmDeleteKey()?.unitId === unit.id) {
+      <span class="unit-delete-prompt">
+        Delete unit {{ unitLabel(unit) }}? This is blocked while it is used by a
+        timeline event or user progress.
+        <button
+          class="btn btn-sm btn-danger"
+          type="button"
+          [disabled]="unitDeletingKey()?.unitId === unit.id"
+          (click)="confirmUnitDelete()">
+          {{ unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
+        </button>
+        <button class="btn btn-sm" type="button" (click)="cancelUnitDelete()">
+          Cancel
+        </button>
+      </span>
+    } @else {
+      <span class="unit-label">
+        <span class="unit-type">{{ unit.unitType }}</span>
+        {{ unitLabel(unit) }}
+      </span>
+      <div class="unit-actions">
+        <button
+          class="btn btn-sm"
+          type="button"
+          (click)="beginUnitEdit(materialId, unit)">
+          Edit
+        </button>
+        <button
+          class="btn btn-sm btn-danger"
+          type="button"
+          (click)="requestUnitDelete(materialId, unit)">
+          Delete
+        </button>
+      </div>
+    }
+  </ng-template>
+</section>

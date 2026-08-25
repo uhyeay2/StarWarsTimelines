@@ -1,0 +1,103 @@
+@use '../../../../styles/tokens' as *;
+:host {
+  display: block;
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+a.nav-dropdown-toggle {
+  display: inline-block;
+  color: $color-text-secondary;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding-bottom: 0.25rem;
+}
+
+a.nav-dropdown-toggle::after {
+  content: '\25BE';
+  font-size: 0.65em;
+  margin-left: 0.35rem;
+  vertical-align: 0.1em;
+  transition: transform 0.15s ease;
+}
+
+a.nav-dropdown-toggle:hover {
+  color: $color-text-heading;
+}
+
+a.nav-dropdown-toggle.active {
+  color: $color-accent;
+  border-bottom: 2px solid $color-accent;
+}
+
+.nav-dropdown:hover a.nav-dropdown-toggle::after,
+.nav-dropdown:focus-within a.nav-dropdown-toggle::after {
+  transform: rotate(180deg);
+}
+
+/*
+ * Menu surface: positioned flush with the wrapper bottom and carries the
+ * visual gap as internal padding, so the hover surface is continuous from
+ * toggle to panel while open. When closed it is `visibility: hidden` — not
+ * hit-testable — so nothing under the cursor re-opens it after an option
+ * has been selected.
+ */
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  translate: -50% 0;
+  min-width: 12rem;
+  padding-top: 0.55rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.35rem);
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+  z-index: 30;
+}
+
+/* Open on hover; `:focus-visible` keeps keyboard navigation working while
+   ignoring the plain focus left behind by mouse clicks. */
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:has(a.nav-dropdown-item:focus-visible) .nav-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.nav-dropdown-panel {
+  padding: 0.45rem;
+  background: $color-overlay-panel;
+  border: 1px solid $color-border;
+  border-radius: 0.6rem;
+  box-shadow: 0 14px 32px rgba($color-black, 0.55);
+  backdrop-filter: blur(10px);
+}
+
+a.nav-dropdown-item {
+  display: block;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.4rem;
+  color: $color-text-secondary;
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+a.nav-dropdown-item:hover,
+a.nav-dropdown-item:focus-visible {
+  color: $color-text-heading;
+  background-color: rgba($color-accent, 0.08);
+}
+
+a.nav-dropdown-item.active {
+  color: $color-accent;
+}

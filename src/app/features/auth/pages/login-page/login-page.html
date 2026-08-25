@@ -1,0 +1,76 @@
+<section class="login-page">
+  <div class="login-card">
+    <h1>Log in</h1>
+    <p class="login-hint">Use a demo account to explore your personal library.</p>
+
+    <form (ngSubmit)="login()" #loginForm="ngForm">
+      <label class="login-field">
+        <span>Username</span>
+        <input
+          name="username"
+          [(ngModel)]="username"
+          required
+          autocomplete="username" />
+      </label>
+
+      <div class="login-field">
+        <span>Password</span>
+        <div class="password-input">
+          <input
+            name="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            [(ngModel)]="password"
+            required
+            autocomplete="current-password" />
+          <button
+            type="button"
+            class="password-toggle"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            (click)="showPassword.set(!showPassword())">
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <p class="login-error" role="alert">{{ error() }}</p>
+      }
+
+      @if (needsVerification()) {
+        <div class="login-verify">
+          <p class="login-verify-text">
+            Didn't get the email? We can send a fresh verification link to the address on your account.
+          </p>
+          <button
+            type="button"
+            class="resend-button"
+            [disabled]="resending()"
+            (click)="resendVerification()">
+            {{ resending() ? 'Sending…' : 'Resend verification email' }}
+          </button>
+          @if (verificationSent()) {
+            <p class="login-verify-sent" role="status" aria-live="polite">A new verification email is on its way.</p>
+          }
+        </div>
+      }
+
+      <button class="btn btn-primary" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
+
+    <p class="login-signup">
+      Don't have an account? <a routerLink="/register">Sign up</a>
+    </p>
+
+    <div class="demo-accounts">
+      <p>Demo accounts</p>
+      <ul>
+        <li><strong>padme</strong> / padme123</li>
+        <li><strong>luke</strong> / luke123</li>
+        <li><strong>rey</strong> / rey123</li>
+        <li><strong>admin</strong> / admin123</li>
+      </ul>
+    </div>
+  </div>
+</section>

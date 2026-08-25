@@ -1,0 +1,68 @@
+<!-- ─── Tracked Events Page ─────────────────────────────────────────────── -->
+<section class="tracked-events-page">
+
+  <!-- ─── Page Header ────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <h1>My Tracked Events</h1>
+    <p>Manage the source material you have completed, are working through, or have wish listed.</p>
+  </header>
+  <!-- ─── End Page Header ────────────────────────────────────────────── -->
+
+  <!-- ─── Login Prompt (when logged out) ─────────────────────────────── -->
+  @if (!user()) {
+    <app-login-prompt>Log in to view and manage your tracked events.</app-login-prompt>
+  <!-- ─── Tracked Layout (when logged in) ────────────────────────────── -->
+  } @else {
+    <div class="tracked-layout">
+
+      <!-- ─── Status Filter Tabs ─────────────────────────────────────── -->
+      <app-status-filter
+        [(selection)]="statusSelection"
+        label="Filter tracked items by status" />
+      <!-- ─── End Status Filter Tabs ─────────────────────────────────── -->
+
+      <!-- ─── Tracked Items Grouped By Medium ────────────────────────── -->
+      @if (mediumGroups().length > 0) {
+        @for (group of mediumGroups(); track group.medium) {
+          <div class="medium-group">
+            <button
+              type="button"
+              class="medium-header"
+              [class.medium-header--open]="isMediumExpanded(group.medium)"
+              [attr.aria-expanded]="isMediumExpanded(group.medium)"
+              (click)="toggleMedium(group.medium)">
+              <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+              <span class="medium-label">{{ group.medium }}</span>
+              <span class="medium-count">{{ group.items.length }} {{ group.items.length === 1 ? 'item' : 'items' }}</span>
+            </button>
+            @if (isMediumExpanded(group.medium)) {
+              <ul class="item-list">
+                @for (item of group.items; track item.id) {
+                  <li>
+                    <app-tracked-item-row
+                      [item]="item"
+                      [showReorder]="false"
+                      (statusChange)="setStatus(item.id, $event)"
+                      (remove)="removeTracked(item.id)"
+                      (groupStatusChange)="setGroupStatus(item.id, $event.unitId, $event.status)"
+                      (groupRemove)="clearGroupProgress(item.id, $event.unitId)" />
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      } @else if (isLoading()) {
+        <p class="form-status" role="status" aria-live="polite">Loading your tracked items…</p>
+      } @else if (error()) {
+        <p class="form-status" role="alert" aria-live="polite">{{ error() }}</p>
+      } @else if (isFiltering()) {
+        <p class="empty-state">No tracked items match the selected statuses.</p>
+      } @else {
+        <p class="empty-state">No tracked items yet — track materials from the catalog page.</p>
+      }
+      <!-- ─── End Tracked Items Grouped By Medium ────────────────────── -->
+    </div>
+  }
+</section>
+<!-- ─── End Tracked Events Page ───────────────────────────────────────────── -->

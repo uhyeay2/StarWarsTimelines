@@ -1,0 +1,105 @@
+@use '../../../../../styles/tokens' as *;
+@use '../../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.character-catalog h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.15rem;
+  margin: 0;
+  color: $color-text;
+}
+
+.character-search input,
+.character-edit input,
+.character-edit select {
+  box-sizing: border-box;
+  width: 100%;
+
+  @include dark-control;
+}
+
+.character-edit select option {
+  background: $color-on-accent;
+  color: $color-text;
+}
+
+.character-edit input::placeholder {
+  color: $color-placeholder;
+}
+
+.character-hint {
+  margin: 0 0 1rem;
+  color: $color-text-muted;
+  font-size: 0.8rem;
+}
+
+.character-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.character-search {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.character-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+}
+
+.character-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.character-name {
+  color: $color-text;
+  font-size: 0.95rem;
+}
+
+.character-meta {
+  color: $color-text-muted;
+  font-size: 0.82rem;
+}
+
+.character-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.character-edit-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.character-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.character-edit input,
+.character-edit select {
+  padding: 0.45rem 0.6rem;
+  width: auto;
+  flex: 1 1 7rem;
+}

@@ -1,0 +1,80 @@
+@use '../../../../styles/tokens' as *;
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: $color-text-secondary;
+}
+
+.filter-option:hover {
+  background: $color-surface-control;
+}
+
+.filter-option input {
+  accent-color: $color-accent;
+}
+
+.filter-option--selected {
+  color: $color-text-heading;
+}
+
+.filter-option--parent {
+  font-weight: 600;
+  color: $color-text;
+}
+
+.filter-option-expand {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: $color-text-muted;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filter-option-expand:hover {
+  color: $color-accent;
+}
+
+.filter-option-chevron {
+  display: inline-block;
+  font-size: 0.6rem;
+  transition: transform 0.15s ease;
+}
+
+.filter-option-chevron--open {
+  transform: rotate(90deg);
+}
+
+.filter-option-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.filter-option-children {
+  margin: 0.05rem 0 0.3rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid $color-border-subtle;
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-option--child {
+  padding-left: 0.5rem;
+  font-weight: 400;
+  color: $color-text-secondary;
+}

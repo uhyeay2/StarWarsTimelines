@@ -3,15 +3,20 @@ import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } f
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
-import { AppErrorHandler } from './app.error-handler';
-import { authInterceptor } from './auth.interceptor';
-import { httpErrorInterceptor } from './http-error.interceptor';
+import { AppErrorHandler } from './core/error-handler/app.error-handler';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
+import { securityHeadersInterceptor } from './core/interceptors/security-headers.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: ErrorHandler, useClass: AppErrorHandler },
-    provideHttpClient(withInterceptors([authInterceptor, httpErrorInterceptor])),
+    provideHttpClient(withInterceptors([
+      authInterceptor,
+      httpErrorInterceptor,
+      securityHeadersInterceptor,
+    ])),
     provideRouter(
       routes,
       withInMemoryScrolling({

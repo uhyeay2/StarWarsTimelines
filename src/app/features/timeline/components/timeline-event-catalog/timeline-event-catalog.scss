@@ -1,0 +1,153 @@
+@use '../../../../../styles/tokens' as *;
+@use '../../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.event-catalog h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.15rem;
+  margin: 0;
+  color: $color-text;
+}
+
+.event-search input {
+  box-sizing: border-box;
+  width: 100%;
+
+  @include dark-control;
+}
+
+.event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-search {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+}
+
+.event-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.event-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.event-item-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.event-years {
+  color: $color-accent;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.event-name {
+  color: $color-text;
+  font-size: 0.95rem;
+}
+
+.event-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.event-details-toggle {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.3rem;
+  text-decoration: underline dotted;
+
+  &:hover {
+    color: $color-text;
+  }
+}
+
+.event-details {
+  border-top: 1px solid $color-border;
+  padding-top: 0.5rem;
+}
+
+.event-details-description {
+  color: $color-text-secondary;
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+
+.event-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.3rem;
+  margin: 0;
+
+  dt {
+    color: $color-text-muted;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding-top: 0.1rem;
+  }
+
+  dd {
+    color: $color-text-secondary;
+    font-size: 0.82rem;
+    margin: 0;
+    min-width: 0;
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .event-details-medium {
+      color: $color-accent;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+  }
+}

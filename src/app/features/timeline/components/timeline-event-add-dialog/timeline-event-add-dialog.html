@@ -1,0 +1,175 @@
+<div class="admin-popup-backdrop" (click)="onBackdropClick()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div
+  class="admin-popup admin-popup--event"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="heading()"
+>
+  <h3>{{ heading() }}</h3>
+  <form (ngSubmit)="save.emit()">
+    <label class="source-field">
+      <span>Title</span>
+      <input name="eventTitle" [(ngModel)]="title" placeholder="Event title…" required autofocus />
+    </label>
+
+    <label class="source-field">
+      <span>Description</span>
+      <textarea
+        name="eventDescription"
+        rows="3"
+        [(ngModel)]="description"
+        placeholder="What happens during the event…"
+      ></textarea>
+    </label>
+
+    <div class="year-row">
+      <label class="source-field">
+        <span>Year start</span>
+        <input
+          name="yearStart"
+          type="number"
+          step="1"
+          placeholder="-32 = 32 BBY"
+          [(ngModel)]="yearStart"
+        />
+      </label>
+      <label class="source-field">
+        <span>Year end</span>
+        <input
+          name="yearEnd"
+          type="number"
+          step="1"
+          placeholder="-32 = 32 BBY"
+          [(ngModel)]="yearEnd"
+        />
+      </label>
+      <label class="source-field">
+        <span>Sequence</span>
+        <input name="sequence" type="number" step="1" placeholder="1" [(ngModel)]="sequence" />
+      </label>
+    </div>
+
+    <div class="source-field">
+      <span>Source materials</span>
+      <app-filter-group
+        label="Sources"
+        [options]="sourceOptions()"
+        [defaultExpandedDepth]="1"
+        [(selected)]="sourceSelection"
+      />
+      @if (hasLinks()) {
+        <ul class="link-chips">
+          @for (chip of resolvedLinks(); track $index) {
+            <li class="link-chip">
+              {{ chip.material }}
+              @if (chip.unit; as unit) {
+                <span class="link-chip-unit"> — {{ unit }}</span>
+              }
+              <button
+                type="button"
+                class="link-chip-remove"
+                (click)="removeLink(chip)"
+                [attr.aria-label]="'Remove ' + chip.material"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="source-field">
+      <span>Characters</span>
+      <app-filter-group
+        label="Characters"
+        [options]="characterNodes()"
+        [(selected)]="characterSelection"
+      />
+      @if (characterChips().length > 0) {
+        <ul class="link-chips">
+          @for (chip of characterChips(); track chip.value) {
+            <li class="link-chip">
+              {{ chip.name }}
+              <button
+                type="button"
+                class="link-chip-remove"
+                (click)="removeCharacter(chip.value)"
+                [attr.aria-label]="'Remove ' + chip.name"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="source-field">
+      <span>Locations</span>
+      <app-filter-group
+        label="Locations"
+        [options]="locationNodes()"
+        [(selected)]="locationSelection"
+      />
+      @if (locationChips().length > 0) {
+        <ul class="link-chips">
+          @for (chip of locationChips(); track chip.value) {
+            <li class="link-chip">
+              {{ chip.name }}
+              <button
+                type="button"
+                class="link-chip-remove"
+                (click)="removeLocation(chip.value)"
+                [attr.aria-label]="'Remove ' + chip.name"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="source-field">
+      <span>Vehicles</span>
+      <app-filter-group
+        label="Vehicles"
+        [options]="vehicleNodes()"
+        [(selected)]="vehicleSelection"
+      />
+      @if (vehicleChips().length > 0) {
+        <ul class="link-chips">
+          @for (chip of vehicleChips(); track chip.value) {
+            <li class="link-chip">
+              {{ chip.name }}
+              <button
+                type="button"
+                class="link-chip-remove"
+                (click)="removeVehicle(chip.value)"
+                [attr.aria-label]="'Remove ' + chip.name"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <p class="admin-popup-hint">
+      Years use the galactic timeline: negative for BBY, positive for ABY. Every checked scope
+      becomes its own link — pick the most specific option available (an episode, issue, or chapter)
+      rather than a broad grouping. Dismiss a chip to uncheck what produced it.
+    </p>
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <div class="admin-popup-actions">
+      <button class="btn btn-primary btn-sm" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : submitLabel() }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</div>

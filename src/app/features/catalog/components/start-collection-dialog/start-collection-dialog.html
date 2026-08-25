@@ -1,0 +1,69 @@
+<div class="admin-popup-backdrop" (click)="cancel.emit()" (keydown.escape)="cancel.emit()" tabindex="-1"></div>
+<div class="admin-popup admin-popup--wide" role="dialog" aria-modal="true" aria-label="Start collection">
+  <h3>Start collection</h3>
+  <p class="admin-popup-hint">
+    List the books in order — their numbers are assigned automatically. Use the arrows to reorder
+    before saving.
+  </p>
+  <form (ngSubmit)="submit()">
+    <label class="source-field">
+      <span>Collection Name</span>
+      <input
+        name="collectionName"
+        [(ngModel)]="collectionName"
+        placeholder="Collection name…"
+        required
+        autofocus />
+    </label>
+
+    <ol class="book-list">
+      @for (book of books(); track $index; let i = $index, first = $first, last = $last) {
+        <li class="book-row">
+          <span class="book-number" aria-hidden="true">{{ i + 1 }}.</span>
+          <input
+            name="bookTitle{{ i }}"
+            [ngModel]="book"
+            (ngModelChange)="setBook(i, $event)"
+            [attr.aria-label]="'Book ' + (i + 1) + ' title'"
+            placeholder="Book title…" />
+          <span class="book-row-buttons">
+            <button
+              class="btn btn-sm book-move"
+              type="button"
+              [disabled]="first || saving()"
+              (click)="moveBook(i, -1)"
+              aria-label="Move book up">↑</button>
+            <button
+              class="btn btn-sm book-move"
+              type="button"
+              [disabled]="last || saving()"
+              (click)="moveBook(i, 1)"
+              aria-label="Move book down">↓</button>
+            @if (books().length > 1) {
+              <button
+                class="btn btn-sm btn-danger book-remove"
+                type="button"
+                [disabled]="saving()"
+                (click)="removeBook(i)"
+                [attr.aria-label]="'Remove book ' + (i + 1)">✕</button>
+            }
+          </span>
+        </li>
+      }
+    </ol>
+
+    <button class="btn btn-sm add-another" type="button" [disabled]="saving()" (click)="addBook()">
+      + Add Another Book
+    </button>
+
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <div class="admin-popup-actions">
+      <button class="btn btn-primary btn-sm" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Creating…' : 'Create Collection' }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</div>

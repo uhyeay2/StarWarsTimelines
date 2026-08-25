@@ -5,6 +5,8 @@
 /tmp
 /out-tsc
 /bazel-out
+*.tsbuildinfo
+src/**/*.js
 
 # Node
 /node_modules
@@ -36,6 +38,7 @@ yarn-error.log
 /coverage
 /libpeerconnection.log
 testem.log
+test-output.txt
 /typings
 __screenshots__/
 

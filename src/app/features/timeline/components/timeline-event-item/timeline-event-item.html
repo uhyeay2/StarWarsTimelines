@@ -1,0 +1,172 @@
+<!-- ─── Timeline Event Item ─────────────────────────────────────────────── -->
+@let item = event();
+@let detailsId = 'event-details-' + item.id;
+
+<article class="timeline-event">
+  <!-- ─── Timeline Marker ────────────────────────────────────────────── -->
+  <div class="event-marker" aria-hidden="true"></div>
+  <!-- ─── End Timeline Marker ────────────────────────────────────────── -->
+
+  <div class="event-card">
+
+    <!-- ─── Event Meta (date, canons, details toggle) ────────────────── -->
+    <header class="event-meta">
+      <time class="event-date">
+        {{ formatDate(item.yearStart, item.yearEnd) }}
+      </time>
+      <div class="event-meta-actions">
+        <!-- ─── Canon Badges ─────────────────────────────────────────── -->
+        <div class="event-canons">
+          @for (canon of item.canon; track canon) {
+            <span class="canon-badge" [class.canon-badge--canon]="canon === 'Canon'" [class.canon-badge--legends]="canon === 'Legends'">
+              {{ canon }}
+            </span>
+          }
+        </div>
+        <!-- ─── End Canon Badges ─────────────────────────────────────── -->
+
+        <!-- ─── Details Toggle ───────────────────────────────────────── -->
+        <button
+          type="button"
+          class="details-toggle"
+          [attr.aria-expanded]="detailsOpen()"
+          [attr.aria-controls]="detailsId"
+          (click)="toggleDetails()">
+          <span class="details-toggle-label">{{ detailsOpen() ? 'Hide details' : 'Show details' }}</span>
+          <span
+            class="details-toggle-chevron"
+            [class.details-toggle-chevron--open]="detailsOpen()"
+            aria-hidden="true">&#9662;</span>
+        </button>
+        <!-- ─── End Details Toggle ───────────────────────────────────── -->
+      </div>
+    </header>
+    <!-- ─── End Event Meta ───────────────────────────────────────────── -->
+
+    <!-- ─── Event Title ──────────────────────────────────────────────── -->
+    <h3 class="event-title">{{ item.title }}</h3>
+    <!-- ─── End Event Title ──────────────────────────────────────────── -->
+
+    <!-- ─── Event Source & Tracking Controls ─────────────────────────── -->
+    <p class="event-source">
+      <!-- ─── Source Chips ────────────────────────────────────────────── -->
+      @for (chip of sourceChips(); track chip.label) {
+        <button
+          type="button"
+          class="chip source-chip source-chip--source"
+          [class.source-chip--medium]="chip.medium === true"
+          [class.chip--selected]="sourceChipSelected(chip)"
+          [attr.aria-pressed]="sourceChipSelected(chip)"
+          (click)="emitToggle('sources', chip.values)">
+          @if (chip.medium === true) {
+            <span class="event-medium">{{ chip.label }}</span>
+          } @else {
+            <span>{{ chip.label }}</span>
+          }
+        </button>
+      }
+      <!-- ─── End Source Chips ────────────────────────────────────────── -->
+
+      @for (source of item.sources; track trackSource(source)) {
+        @let sourceKey = trackSource(source);
+        @let tracking = sourceTrackingData().get(sourceKey);
+
+        @if (sourceDetail(source); as detail) {
+          @if (!isNestedContainerUnit(source)) {
+            <span class="event-source-unit">{{ detail }}</span>
+          }
+        }
+
+        <!-- ─── Tracking Status Dropdown ──────────────────────────────────── -->
+        @if (tracking; as t) {
+          @if (t.showTracking) {
+            <select
+              class="track-select event-track-select"
+              [attr.aria-label]="'Track ' + source.title"
+              (change)="onTrackChange($event, source)">
+              <option
+                value=""
+                disabled
+                [selected]="t.status === null"
+                hidden>Track…</option>
+              @for (status of t.options; track status) {
+                <option
+                  [value]="status"
+                  [selected]="t.status === status"
+                  [class.remove-option]="status === 'remove'">
+                  {{ status === 'remove' ? 'Remove From Library' : status }}
+                </option>
+              }
+            </select>
+          }
+        }
+        <!-- ─── End Tracking Status Dropdown ─────────────────────────────── -->
+      }
+
+    </p>
+    <!-- ─── End Event Source & Tracking Controls ─────────────────────── -->
+
+    <!-- ─── Event Details (expandable) ───────────────────────────────── -->
+    @if (detailsOpen()) {
+      <div class="event-details" [id]="detailsId">
+        <p class="event-description">{{ item.description }}</p>
+
+        @if (item.locations.length) {
+          <div class="event-detail">
+            <span class="detail-label">Locations</span>
+            <div class="detail-chips">
+              @for (location of item.locations; track location) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedLocationSet().has(location)"
+                  [attr.aria-pressed]="selectedLocationSet().has(location)"
+                  (click)="emitToggle('locations', [location])">
+                  {{ location }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (item.characters.length) {
+          <div class="event-detail">
+            <span class="detail-label">Characters</span>
+            <div class="detail-chips">
+              @for (character of item.characters; track character) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedCharacterSet().has(character)"
+                  [attr.aria-pressed]="selectedCharacterSet().has(character)"
+                  (click)="emitToggle('characters', [character])">
+                  {{ character }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (item.vehicles.length) {
+          <div class="event-detail">
+            <span class="detail-label">Vehicles</span>
+            <div class="detail-chips">
+              @for (vehicle of item.vehicles; track vehicle) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip--selected]="selectedVehicleSet().has(vehicle)"
+                  [attr.aria-pressed]="selectedVehicleSet().has(vehicle)"
+                  (click)="emitToggle('vehicles', [vehicle])">
+                  {{ vehicle }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+    <!-- ─── End Event Details ─────────────────────────────────────────── -->
+  </div>
+</article>
+<!-- ─── End Timeline Event Item ───────────────────────────────────────────── -->
