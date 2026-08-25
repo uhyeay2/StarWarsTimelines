@@ -11,10 +11,11 @@ import { CharacterCatalog } from '../character-catalog/character-catalog';
 import { NameCatalog } from '../name-catalog/name-catalog';
 import { SourceMaterialCatalog } from '../source-material-catalog/source-material-catalog';
 import { SpeciesCatalog } from '../species-catalog/species-catalog';
+import { TimelineEventCatalog } from '../timeline-event-catalog/timeline-event-catalog';
 
 @Component({
   selector: 'app-catalog-page',
-  imports: [CharacterCatalog, NameCatalog, SourceMaterialCatalog, SpeciesCatalog],
+  imports: [CharacterCatalog, NameCatalog, SourceMaterialCatalog, SpeciesCatalog, TimelineEventCatalog],
   templateUrl: './catalog-page.html',
   styleUrl: './catalog-page.scss',
 })
@@ -31,6 +32,7 @@ export class CatalogPage {
 
   readonly tabs: readonly { key: CatalogTab; label: string }[] = [
     { key: 'sources', label: 'Source materials' },
+    { key: 'events', label: 'Timeline events' },
     { key: 'characters', label: 'Characters' },
     { key: 'vehicles', label: 'Vehicles' },
     { key: 'locations', label: 'Locations' },

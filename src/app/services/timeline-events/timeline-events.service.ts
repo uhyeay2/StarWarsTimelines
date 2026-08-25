@@ -46,6 +46,10 @@ import { environment } from '../../../environments/environment';
 import { readProblemDetail } from '../../utils/problem-detail';
 import { SignalCache } from '../../utils/signal-cache';
 import { TimelineEvent } from '../../models/timeline-event';
+import {
+  CreateTimelineEventInput,
+  EventSourceLinkInput,
+} from '../../models/catalog/create-timeline-event-input';
 import { TimelineError, TimelineErrorCode } from '../../models/timeline/timeline-error';
 import { LoggerService } from '../logging/logger.service';
 import { TimelineEventDto } from './timeline-events.dto';
@@ -227,6 +231,59 @@ export class TimelineEventsService {
     );
   }
 
+  // ─── Admin mutations ───────────────────────────────────────────────────
+
+  /**
+   * Creates a new timeline event (admin only).
+   *
+   * @param input  The event payload, including source-material links.
+   * @returns An observable of the created event.
+   */
+  createEvent(input: CreateTimelineEventInput): Observable<TimelineEvent> {
+    return this.mutate(
+      this.http.post<TimelineEventDto>(BASE, toRequestPayload(input)),
+      'Unable to create the timeline event. Please try again.',
+      'createEvent',
+    );
+  }
+
+  /**
+   * Replaces an existing timeline event (admin only).
+   *
+   * All fields are sent on every call, so linked entities omitted from the
+   * payload are cleared — mirroring the catalog update semantics.
+   *
+   * @param id     The ID of the event to replace.
+   * @param input  The updated payload.
+   * @returns An observable of the updated event.
+   */
+  updateEvent(id: number, input: CreateTimelineEventInput): Observable<TimelineEvent> {
+    return this.mutate(
+      this.http.put<TimelineEventDto>(`${BASE}/${id}`, toRequestPayload(input)),
+      'Unable to update the timeline event. Please try again.',
+      'updateEvent',
+    );
+  }
+
+  /**
+   * Deletes a timeline event (admin only).
+   *
+   * @param id  The ID of the event to delete.
+   * @returns An observable that completes when the event has been deleted.
+   */
+  deleteEvent(id: number): Observable<void> {
+    return this.http.delete<void>(`${BASE}/${id}`).pipe(
+      catchError((err: unknown) =>
+        this.fail(err, 'Unable to delete the timeline event. Please try again.', 'deleteEvent'),
+      ),
+      // Refresh lazily: clear the stale list, then re-fetch in place.
+      tap(() => {
+        this.eventsCache.invalidate();
+        this.eventsCache.fetch();
+      }),
+    );
+  }
+
   // ─── Internal ──────────────────────────────────────────────────────────
 
   /**
@@ -327,4 +384,82 @@ export class TimelineEventsService {
     }
     return TimelineErrorCode.NetworkError;
   }
+
+  /**
+   * Runs a create/update mutation: validates the mapped response, refreshes
+   * the events cache, and wraps failures in a {@link TimelineError}.
+   *
+   * @param request$  The HTTP request returning the event DTO.
+   * @param fallback  A human-readable default when the server provides none.
+   * @param context   A short label for log context.
+   * @returns An observable of the validated and mapped event.
+   */
+  private mutate(
+    request$: Observable<TimelineEventDto>,
+    fallback: string,
+    context: string,
+  ): Observable<TimelineEvent> {
+    return request$.pipe(
+      map((dto) => {
+        if (!isValidTimelineEventDto(dto)) {
+          throw new TimelineError(fallback, TimelineErrorCode.ValidationError);
+        }
+        return mapTimelineEvent(dto);
+      }),
+      // Linked-entity edits can affect other cached events; refresh in place.
+      tap(() => {
+        this.eventsCache.invalidate();
+        this.eventsCache.fetch();
+      }),
+      catchError((err: unknown) => this.fail(err, fallback, context)),
+    );
+  }
+
+  /**
+   * Wraps a mutation failure in a {@link TimelineError} after logging it.
+   *
+   * @param err       The caught error.
+   * @param fallback  A human-readable default when the server provides none.
+   * @param context   A short label for log context.
+   */
+  private fail(err: unknown, fallback: string, context: string): Observable<never> {
+    if (err instanceof TimelineError) {
+      this.logger.error(`[TimelineEventsService] ${context}: ${err.message}`, { error: err });
+      return throwError(() => err);
+    }
+    const message =
+      err instanceof HttpErrorResponse
+        ? readProblemDetail(err, fallback)
+        : fallback;
+    this.logger.error(`[TimelineEventsService] ${context}: ${message}`, { error: err });
+    return throwError(() => new TimelineError(message, this.classifyError(err)));
+  }
+}
+
+/**
+ * Converts a domain-level input into the wire format expected by the API:
+ * nullable optionals become explicit `null`s and readonly arrays become
+ * mutable lists.
+ *
+ * @param input  The domain-level event payload.
+ * @returns The JSON request body.
+ */
+function toRequestPayload(input: CreateTimelineEventInput): Record<string, unknown> {
+  const links = input.sourceMaterials.map(
+    (link: EventSourceLinkInput) =>
+      link.sourceMaterialUnitId !== null
+        ? { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: link.sourceMaterialUnitId }
+        : { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: null },
+  );
+  return {
+    title: input.title,
+    description: input.description,
+    yearStart: input.yearStart,
+    yearEnd: input.yearEnd,
+    sequence: input.sequence,
+    sourceMaterials: links,
+    characterIds: [...input.characterIds],
+    locationIds: [...input.locationIds],
+    vehicleIds: [...input.vehicleIds],
+  };
 }

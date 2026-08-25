@@ -14,7 +14,7 @@ import { CANON_VIEWS, CanonView } from '../../models/canon';
 import { StorageService } from '../storage.service';
 
 /** Available catalog tab keys, shared by the catalog page and the navbar. */
-export const CATALOG_TABS = ['sources', 'characters', 'vehicles', 'locations', 'species'] as const;
+export const CATALOG_TABS = ['sources', 'events', 'characters', 'vehicles', 'locations', 'species'] as const;
 
 /** A single catalog tab key. */
 export type CatalogTab = (typeof CATALOG_TABS)[number];

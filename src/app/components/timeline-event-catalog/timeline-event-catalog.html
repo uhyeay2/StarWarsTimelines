@@ -1,0 +1,129 @@
+<section class="event-catalog">
+  <div class="catalog-header">
+    <h2>Timeline events</h2>
+    @if (isAdmin()) {
+      <button class="btn btn-sm catalog-add-button" type="button" (click)="openAdd()">+ Add</button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="form-status" role="status">Loading…</p>
+  } @else if (loadError()) {
+    <p class="event-error" role="alert">{{ loadError() }}</p>
+  } @else {
+    <label class="event-search">
+      <span class="sr-only">Search timeline events</span>
+      <input
+        name="search"
+        type="search"
+        placeholder="Search timeline events…"
+        [(ngModel)]="searchTerm"
+      />
+    </label>
+
+    <ul class="event-list">
+      @for (item of filteredItems(); track item.id) {
+        <li class="event-item">
+          @if (confirmDeleteId() === item.id) {
+            <div class="delete-prompt">
+              <p>Delete “{{ item.title }}”? Its linked sources and entities are removed with it.</p>
+              <div class="delete-actions">
+                <button
+                  class="btn btn-sm btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === item.id"
+                  (click)="confirmDelete()"
+                >
+                  {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
+                </button>
+                <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
+              </div>
+            </div>
+          } @else {
+            <div class="event-item-main">
+              <span class="event-item-text">
+                <span class="event-item-heading">
+                  <span class="event-years">{{ years(item) }}</span>
+                  <span class="event-name">{{ item.title }}</span>
+                </span>
+              </span>
+              <div class="event-actions">
+                <button class="event-details-toggle" type="button" (click)="toggleDetails(item)">
+                  {{ expandedIds().has(item.id) ? 'Hide details' : 'Show details' }}
+                </button>
+                @if (isAdmin()) {
+                  <button class="btn btn-sm" type="button" (click)="beginEdit(item)">Edit</button>
+                  <button class="btn btn-sm btn-danger" type="button" (click)="requestDelete(item)">
+                    Delete
+                  </button>
+                }
+              </div>
+            </div>
+            @if (expandedIds().has(item.id)) {
+              <div class="event-details">
+                @if (item.description) {
+                  <p class="event-details-description">{{ item.description }}</p>
+                }
+                <dl class="event-details-grid">
+                  <dt>Sources</dt>
+                  <dd>
+                    <ul>
+                      @for (source of item.sources; track $index) {
+                        <li>
+                          <span class="event-details-medium">{{ source.medium }}</span>
+                          {{ sourceLabel(source) }}
+                        </li>
+                      }
+                    </ul>
+                  </dd>
+                  @if (item.characters.length > 0) {
+                    <dt>Characters</dt>
+                    <dd>{{ item.characters.join(', ') }}</dd>
+                  }
+                  @if (item.locations.length > 0) {
+                    <dt>Locations</dt>
+                    <dd>{{ item.locations.join(', ') }}</dd>
+                  }
+                  @if (item.vehicles.length > 0) {
+                    <dt>Vehicles</dt>
+                    <dd>{{ item.vehicles.join(', ') }}</dd>
+                  }
+                </dl>
+              </div>
+            }
+          }
+        </li>
+      }
+    </ul>
+    @if (searchTerm() && filteredItems().length === 0 && items().length > 0) {
+      <p class="form-status" role="status">No events match your search.</p>
+    }
+    @if (actionError()) {
+      <p class="form-error" role="alert">{{ actionError() }}</p>
+    }
+  }
+
+  @if (isAdmin() && dialogOpen()) {
+    <app-timeline-event-add-dialog
+      [sourceContext]="sourceContext()"
+      [characterOptions]="sortedCharacters()"
+      [locationOptions]="sortedLocations()"
+      [vehicleOptions]="sortedVehicles()"
+      [heading]="dialogHeading()"
+      [submitLabel]="dialogSubmitLabel()"
+      [(title)]="title"
+      [(description)]="description"
+      [(yearStart)]="yearStart"
+      [(yearEnd)]="yearEnd"
+      [(sequence)]="sequence"
+      [(sourceSelection)]="sourceSelection"
+      [(characterSelection)]="characterSelection"
+      [(locationSelection)]="locationSelection"
+      [(vehicleSelection)]="vehicleSelection"
+      [error]="formError()"
+      [saving]="saving()"
+      (save)="submitDialog()"
+      (cancel)="cancelDialog()"
+    />
+  }
+</section>

@@ -9,6 +9,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { CreateTimelineEventInput } from '../../models/catalog/create-timeline-event-input';
 import { TimelineError, TimelineErrorCode } from '../../models/timeline/timeline-error';
 import { TimelineEventsService } from './timeline-events.service';
 
@@ -490,6 +491,181 @@ describe('TimelineEventsService', () => {
       await promise;
 
       expect(service.events()).toBeNull();
+    });
+  });
+
+  // ── Admin mutations ───────────────────────────────────────────────────
+
+  describe('createEvent', () => {
+    const INPUT: CreateTimelineEventInput = {
+      title: 'Duel on Mustafar',
+      description: 'Obi-Wan defeats Anakin.',
+      yearStart: -19,
+      yearEnd: -19,
+      sequence: 1,
+      sourceMaterials: [{ sourceMaterialId: EPISODE_ONE, sourceMaterialUnitId: null }],
+      characterIds: [7],
+      locationIds: [12],
+      vehicleIds: [],
+    };
+
+    it('POSTs the payload and maps the created event', async () => {
+      const promise = firstValueFrom(service.createEvent(INPUT));
+
+      const request = httpMock.expectOne(EVENTS_URL);
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual({
+        title: 'Duel on Mustafar',
+        description: 'Obi-Wan defeats Anakin.',
+        yearStart: -19,
+        yearEnd: -19,
+        sequence: 1,
+        sourceMaterials: [{ sourceMaterialId: EPISODE_ONE, sourceMaterialUnitId: null }],
+        characterIds: [7],
+        locationIds: [12],
+        vehicleIds: [],
+      });
+      request.flush(EVENT_DTO[0]);
+
+      const created = await promise;
+      expect(created.title).toBe('The Invasion of Naboo');
+      expect(created.sources[0].sourceId).toBe(EPISODE_ONE);
+
+      // The mutation triggers an automatic list refresh.
+      httpMock.expectOne(EVENTS_URL).flush([]);
+    });
+
+    it('invalidates and re-fetches the events cache after create', async () => {
+      service.getEvents();
+      httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
+      expect(service.events()).not.toBeNull();
+
+      const promise = firstValueFrom(service.createEvent(INPUT));
+      httpMock.expectOne(EVENTS_URL).flush({ ...EVENT_DTO[0], id: 2 });
+      await promise;
+
+      // The mutation triggers an automatic list refresh.
+      httpMock.expectOne(EVENTS_URL).flush([EVENT_DTO[0], { ...EVENT_DTO[0], id: 2 }]);
+      expect(service.events()).toHaveLength(2);
+    });
+
+    it('wraps server errors with the create fallback message', async () => {
+      const promise = firstValueFrom(service.createEvent(INPUT));
+      httpMock.expectOne(EVENTS_URL).flush('Server Error', {
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      await expect(promise).rejects.toMatchObject({
+        name: 'TimelineError',
+        message: 'Unable to create the timeline event. Please try again.',
+      });
+    });
+
+    it('wraps malformed responses as validation errors', async () => {
+      const promise = firstValueFrom(service.createEvent(INPUT));
+      httpMock.expectOne(EVENTS_URL).flush({ id: '', title: null });
+
+      await expect(promise).rejects.toMatchObject({
+        code: TimelineErrorCode.ValidationError,
+      });
+    });
+  });
+
+  describe('updateEvent', () => {
+    const INPUT: CreateTimelineEventInput = {
+      title: 'The Invasion of Naboo (edited)',
+      description: 'Updated.',
+      yearStart: -32,
+      yearEnd: -31,
+      sequence: 4,
+      sourceMaterials: [{ sourceMaterialId: EPISODE_ONE, sourceMaterialUnitId: 201 }],
+      characterIds: [8],
+      locationIds: [],
+      vehicleIds: [15],
+    };
+
+    it('PUTs the full payload to the event URL', async () => {
+      const promise = firstValueFrom(service.updateEvent(1, INPUT));
+
+      const request = httpMock.expectOne(`${EVENTS_URL}/1`);
+      expect(request.request.method).toBe('PUT');
+      expect(request.request.body).toEqual({
+        title: 'The Invasion of Naboo (edited)',
+        description: 'Updated.',
+        yearStart: -32,
+        yearEnd: -31,
+        sequence: 4,
+        sourceMaterials: [{ sourceMaterialId: EPISODE_ONE, sourceMaterialUnitId: 201 }],
+        characterIds: [8],
+        locationIds: [],
+        vehicleIds: [15],
+      });
+      request.flush({ ...EVENT_DTO[0], title: INPUT.title });
+
+      const updated = await promise;
+      expect(updated.title).toBe('The Invasion of Naboo (edited)');
+
+      // The mutation triggers an automatic list refresh.
+      httpMock.expectOne(EVENTS_URL).flush([{ ...EVENT_DTO[0], title: INPUT.title }]);
+    });
+
+    it('invalidates and re-fetches the events cache after update', async () => {
+      service.getEvents();
+      httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
+      expect(service.events()).not.toBeNull();
+
+      const promise = firstValueFrom(service.updateEvent(1, INPUT));
+      httpMock.expectOne(`${EVENTS_URL}/1`).flush({ ...EVENT_DTO[0], title: INPUT.title });
+      await promise;
+
+      httpMock.expectOne(EVENTS_URL).flush([{ ...EVENT_DTO[0], title: INPUT.title }]);
+      expect(service.events()![0].title).toBe('The Invasion of Naboo (edited)');
+    });
+
+    it('wraps 404 errors as NotFound', async () => {
+      const promise = firstValueFrom(service.updateEvent(999, INPUT));
+      httpMock
+        .expectOne(`${EVENTS_URL}/999`)
+        .flush('Not Found', { status: 404, statusText: 'Not Found' });
+
+      await expect(promise).rejects.toMatchObject({
+        code: TimelineErrorCode.NotFound,
+      });
+    });
+  });
+
+  describe('deleteEvent', () => {
+    it('DELETEs the event and refreshes the list', async () => {
+      service.getEvents();
+      httpMock.expectOne(EVENTS_URL).flush(EVENT_DTO);
+
+      let completed = false;
+      service.deleteEvent(1).subscribe({
+        complete: () => (completed = true),
+      });
+
+      const request = httpMock.expectOne(`${EVENTS_URL}/1`);
+      expect(request.request.method).toBe('DELETE');
+      request.flush(null);
+
+      expect(completed).toBe(true);
+
+      httpMock.expectOne(EVENTS_URL).flush([]);
+      expect(service.events()).toEqual([]);
+    });
+
+    it('wraps failures with the delete fallback message', async () => {
+      const promise = firstValueFrom(service.deleteEvent(1));
+      httpMock.expectOne(`${EVENTS_URL}/1`).flush('Server Error', {
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      await expect(promise).rejects.toMatchObject({
+        name: 'TimelineError',
+        message: 'Unable to delete the timeline event. Please try again.',
+      });
     });
   });
 });

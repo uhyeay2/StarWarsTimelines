@@ -37,17 +37,31 @@ describe('CatalogPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Browse the timeline catalog');
   });
 
-  it('renders all five tabs', () => {
+  it('renders all six tabs', () => {
     const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
-    expect(tabs.length).toBe(5);
+    expect(tabs.length).toBe(6);
     expect(Array.from(tabs).map((t) => t.textContent?.trim())).toEqual([
       'Source materials',
+      'Timeline events',
       'Characters',
       'Vehicles',
       'Locations',
       'Species',
     ]);
   });
+
+  /** Clicks the catalog tab with the given label. */
+  function clickTab(label: string): void {
+    const tabs = Array.from(
+      fixture.nativeElement.querySelectorAll('.catalog-tab') as NodeListOf<HTMLButtonElement>,
+    );
+    const tab = tabs.find((t) => t.textContent?.trim() === label);
+    if (!tab) {
+      throw new Error(`Tab not found: ${label}`);
+    }
+    tab.click();
+    fixture.detectChanges();
+  }
 
   it('defaults to the source materials tab', () => {
     expect(component.activeTab()).toBe('sources');
@@ -57,9 +71,7 @@ describe('CatalogPage', () => {
   });
 
   it('switches to the vehicles tab on click', () => {
-    const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
-    tabs[2].click();
-    fixture.detectChanges();
+    clickTab('Vehicles');
 
     const vehiclesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/vehicles'));
     vehiclesRequest.flush([]);
@@ -72,9 +84,7 @@ describe('CatalogPage', () => {
   });
 
   it('switches to the species tab on click', () => {
-    const tabs = fixture.nativeElement.querySelectorAll('.catalog-tab') as HTMLButtonElement[];
-    tabs[4].click();
-    fixture.detectChanges();
+    clickTab('Species');
 
     const speciesRequest = httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/species'));
     speciesRequest.flush([]);

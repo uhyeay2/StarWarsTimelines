@@ -20,6 +20,7 @@ import { NavDropdown, NavDropdownOption } from '../nav-dropdown/nav-dropdown';
 /** Human-readable labels for the catalog tab keys. */
 const CATALOG_TAB_LABELS: Record<(typeof CATALOG_TABS)[number], string> = {
   sources: 'Source Materials',
+  events: 'Timeline Events',
   characters: 'Characters',
   vehicles: 'Vehicles',
   locations: 'Locations',
