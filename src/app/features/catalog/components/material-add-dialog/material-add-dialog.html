@@ -4,7 +4,13 @@
   (keydown.escape)="cancel.emit()"
   tabindex="-1"
 ></div>
-<div class="admin-popup" role="dialog" aria-modal="true" [attr.aria-label]="'Add ' + medium()">
+<div
+  class="admin-popup"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="'Add ' + medium()"
+  cdkTrapFocus
+>
   <h3>Add {{ medium() }}</h3>
   <form (ngSubmit)="save.emit()">
     <label class="source-field">

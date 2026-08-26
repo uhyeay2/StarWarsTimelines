@@ -4,7 +4,7 @@
   (keydown.escape)="cancel.emit()"
   tabindex="-1"
 ></div>
-<div class="admin-popup" role="dialog" aria-modal="true" aria-label="Add character">
+<div class="admin-popup" role="dialog" aria-modal="true" aria-label="Add character" cdkTrapFocus>
   <h3>Add character</h3>
   <form (ngSubmit)="save.emit()">
     <label class="source-field">

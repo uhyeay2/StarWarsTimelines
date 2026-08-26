@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 /**
  * Modal dialog for converting a standalone book into a book collection
@@ -19,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-convert-collection-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CdkTrapFocus],
   templateUrl: './convert-collection-dialog.html',
   styleUrl: './convert-collection-dialog.scss',
 })

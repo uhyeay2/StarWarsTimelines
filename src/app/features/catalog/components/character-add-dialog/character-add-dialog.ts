@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { CatalogSelectOption } from '../../../../shared/components/searchable-select/searchable-select';
 import { SearchableSelect } from '../../../../shared/components/searchable-select/searchable-select';
 
@@ -24,7 +25,7 @@ export type { CatalogSelectOption };
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-character-add-dialog',
-  imports: [FormsModule, SearchableSelect],
+  imports: [FormsModule, SearchableSelect, CdkTrapFocus],
   templateUrl: './character-add-dialog.html',
   styleUrl: './character-add-dialog.scss',
 })

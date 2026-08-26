@@ -4,7 +4,13 @@
   (keydown.escape)="cancel.emit()"
   tabindex="-1"
 ></div>
-<div class="admin-popup" role="dialog" aria-modal="true" aria-label="Convert to Collection">
+<div
+  class="admin-popup"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Convert to Collection"
+  cdkTrapFocus
+>
   <h3>Convert to Collection</h3>
   <p class="admin-popup-hint">
     "{{ title() }}" becomes the collection's title. The current book stays as book 1 under its

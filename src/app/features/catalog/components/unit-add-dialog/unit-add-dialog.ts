@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 /**
  * Modal dialog for adding a unit to a source material (admin catalog view).
@@ -19,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-unit-add-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CdkTrapFocus],
   templateUrl: './unit-add-dialog.html',
   styleUrl: './unit-add-dialog.scss',
 })

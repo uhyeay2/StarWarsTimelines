@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { CANON_TYPES, CanonType } from '../../../../shared/models/canon-type';
 
 /**
@@ -20,7 +21,7 @@ import { CANON_TYPES, CanonType } from '../../../../shared/models/canon-type';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-material-add-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CdkTrapFocus],
   templateUrl: './material-add-dialog.html',
   styleUrl: './material-add-dialog.scss',
 })

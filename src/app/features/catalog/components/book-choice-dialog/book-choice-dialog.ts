@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, output } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 /**
  * Choice dialog shown when the admin adds a unit to a Book material that has
@@ -8,7 +9,7 @@ import { ChangeDetectionStrategy, Component, HostListener, output } from '@angul
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-book-choice-dialog',
-  imports: [],
+  imports: [CdkTrapFocus],
   templateUrl: './book-choice-dialog.html',
   styleUrl: './book-choice-dialog.scss',
 })

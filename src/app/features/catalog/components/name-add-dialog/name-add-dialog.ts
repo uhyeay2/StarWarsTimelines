@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 /**
  * Modal dialog for creating a simple named catalog entry (locations,
@@ -18,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-name-add-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CdkTrapFocus],
   templateUrl: './name-add-dialog.html',
   styleUrl: './name-add-dialog.scss',
 })

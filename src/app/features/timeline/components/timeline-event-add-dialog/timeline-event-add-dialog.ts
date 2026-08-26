@@ -11,6 +11,7 @@ import {
   output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { EventSourceLinkInput } from '../../models/create-timeline-event-input';
 import {
   buildSourceOptions,
@@ -57,7 +58,7 @@ export interface EntityChip {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-timeline-event-add-dialog',
-  imports: [FormsModule, FilterGroup],
+  imports: [FormsModule, FilterGroup, CdkTrapFocus],
   templateUrl: './timeline-event-add-dialog.html',
   styleUrl: './timeline-event-add-dialog.scss',
 })

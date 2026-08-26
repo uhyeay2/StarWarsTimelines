@@ -9,6 +9,7 @@
   role="dialog"
   aria-modal="true"
   [attr.aria-label]="heading()"
+  cdkTrapFocus
 >
   <h3>{{ heading() }}</h3>
   <form (ngSubmit)="save.emit()">

@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 /** Payload emitted when the user saves the new collection. */
 export interface StartCollectionPayload {
@@ -30,7 +31,7 @@ export interface StartCollectionPayload {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-start-collection-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CdkTrapFocus],
   templateUrl: './start-collection-dialog.html',
   styleUrl: './start-collection-dialog.scss',
 })
