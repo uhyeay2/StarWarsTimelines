@@ -87,6 +87,34 @@ const UNIT_ITEM_MULTI_SEASON: LibraryItem = {
   ],
 };
 
+const UNIT_ITEM_TWO_COMPLETED_SEASONS: LibraryItem = {
+  id: 90,
+  title: 'Star Wars: The Clone Wars',
+  medium: 'Animated Show',
+  status: null,
+  favorite: false,
+  units: [
+    { id: 201, unitType: 'Season', number: 2, title: 'Season 2', status: 'Completed' },
+    { id: 202, unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
+    {
+      id: 211,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Cargo of Doom',
+      parentUnitId: 201,
+      status: 'Completed',
+    },
+    {
+      id: 212,
+      unitType: 'Episode',
+      number: 1,
+      title: 'Holocron Heist',
+      parentUnitId: 202,
+      status: 'Completed',
+    },
+  ],
+};
+
 const UNIT_ITEM_NO_TRACKED_SEASONS: LibraryItem = {
   id: 31,
   title: 'The Mandalorian',
@@ -388,5 +416,48 @@ describe('TrackedItemRow', () => {
     expect(compiled.textContent).toContain('Season 1');
     expect(compiled.textContent).toContain('Season 2');
     expect(compiled.querySelectorAll('select.group-status-select').length).toBe(2);
+  });
+
+  it('keeps the real status shown on the remaining season after removing another season', () => {
+    fixture.componentRef.setInput('item', UNIT_ITEM_TWO_COMPLETED_SEASONS);
+    fixture.detectChanges();
+    const selects = () =>
+      fixture.nativeElement.querySelectorAll(
+        'select.group-status-select',
+      ) as NodeListOf<HTMLSelectElement>;
+    expect(selects().length).toBe(2);
+    expect(selects()[0]!.value).toBe('Completed');
+    expect(selects()[1]!.value).toBe('Completed');
+
+    const removed: { unitId: number }[] = [];
+    component.groupRemove.subscribe((value) => removed.push(value));
+
+    // The user picks "Remove From Library" on the first season's dropdown.
+    const firstSelect = selects()[0]!;
+    firstSelect.value = 'remove';
+    firstSelect.dispatchEvent(new Event('change'));
+    expect(removed).toEqual([{ unitId: 201 }]);
+
+    // The backend clears Season 2's progress; only Season 3 stays tracked.
+    fixture.componentRef.setInput('item', {
+      ...UNIT_ITEM_TWO_COMPLETED_SEASONS,
+      units: [
+        { id: 202, unitType: 'Season', number: 3, title: 'Season 3', status: 'Completed' },
+        {
+          id: 212,
+          unitType: 'Episode',
+          number: 1,
+          title: 'Holocron Heist',
+          parentUnitId: 202,
+          status: 'Completed',
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    // The surviving select must still show its actual status, not the
+    // "remove" option the user chose on the now-removed row.
+    expect(selects().length).toBe(1);
+    expect(selects()[0]!.value).toBe('Completed');
   });
 });

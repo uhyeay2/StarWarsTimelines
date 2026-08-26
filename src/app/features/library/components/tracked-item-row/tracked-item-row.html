@@ -37,7 +37,7 @@
     }
     @if (hasGroupUnits()) {
       <ul class="unit-list" [attr.aria-label]="'Progress for ' + item().title">
-        @for (group of groupUnits(); track $index) {
+        @for (group of groupUnits(); track group.containerId) {
           <li class="unit-group">
             <div class="unit-group-header">
               @if (group.groupTitle) {
