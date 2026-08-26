@@ -49,7 +49,12 @@ function handle401(
       switchMap(() => {
         const newToken = auth.getToken();
         if (!newToken) {
-          void router.navigateByUrl(ROUTES.LOGIN);
+          // A missing token after refresh means an explicit logout happened
+          // concurrently; let that flow own the redirect instead of forcing
+          // the user to /login.
+          if (auth.isLoggedIn()) {
+            void router.navigateByUrl(ROUTES.LOGIN);
+          }
           return next(request);
         }
         return next(request.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } }));

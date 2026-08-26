@@ -9,7 +9,7 @@
 
 import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CANON_VIEWS } from '../../models/canon';
 import { ROUTES } from '../../constants/routes.constants';
 import { AuthService } from '../../../features/auth/services/auth.service';
@@ -38,6 +38,7 @@ const CATALOG_TAB_LABELS: Record<(typeof CATALOG_TABS)[number], string> = {
 })
 export class SiteHeader {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly user = this.auth.currentUser;
 
@@ -66,6 +67,9 @@ export class SiteHeader {
   ];
 
   logout(): void {
-    this.auth.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    this.auth
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => void this.router.navigateByUrl(ROUTES.HOME));
   }
 }

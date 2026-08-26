@@ -1,7 +1,7 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { authInterceptor } from './auth.interceptor';
 import { STORAGE_KEYS } from '../../shared/services/storage.service';
@@ -112,5 +112,28 @@ describe('authInterceptor', () => {
     retryCatalog.flush([]);
 
     expect(results).toEqual([1, 2]);
+  });
+
+  it('logs out and redirects to the login page when the session times out', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    http.get(`${API}/api/library`).subscribe();
+
+    httpMock
+      .expectOne(`${API}/api/library`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    httpMock
+      .expectOne(`${API}/api/auth/refresh`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    // The original request is retried unauthenticated before the redirect.
+    httpMock.expectOne(`${API}/api/library`).flush([]);
+
+    await new Promise<void>((resolve) => setTimeout(resolve));
+
+    expect(navigateSpy).toHaveBeenCalledWith('/login');
+    expect(sessionStorage.getItem(STORAGE_KEYS.token)).toBeNull();
+    expect(sessionStorage.getItem(STORAGE_KEYS.refreshToken)).toBeNull();
   });
 });

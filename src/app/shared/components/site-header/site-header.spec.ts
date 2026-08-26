@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { SiteHeader } from './site-header';
 
 describe('SiteHeader', () => {
@@ -63,7 +63,7 @@ describe('SiteHeader', () => {
     expect(dropdowns[2]!.textContent?.trim().startsWith('Catalog')).toBe(true);
   });
 
-  it('clears the session and returns to visitor controls on log out', async () => {
+  it('clears the session, navigates home, and returns to visitor controls on log out', async () => {
     await create({
       'starwars-timelines.user': JSON.stringify({
         id: 'u1',
@@ -71,12 +71,15 @@ describe('SiteHeader', () => {
         displayName: 'Luke',
       }),
     });
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
 
     (fixture.nativeElement.querySelector('.logout-button') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(sessionStorage.getItem('starwars-timelines.user')).toBeNull();
+    expect(navigateSpy).toHaveBeenCalledWith('/');
     expect(fixture.nativeElement.querySelector('.login-link')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.logout-button')).toBeNull();
   });
