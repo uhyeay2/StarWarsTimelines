@@ -24,15 +24,23 @@ describe('LandingPage', () => {
 
   it('provides a button that navigates to the Canon timeline', () => {
     fixture.detectChanges();
-    const link = fixture.nativeElement.querySelector('a.btn-primary') as HTMLAnchorElement;
-    expect(link.textContent).toContain('Explore Canon Timeline');
-    expect(link.getAttribute('href')).toBe('/timeline?view=Canon');
+    const element = fixture.nativeElement as HTMLElement;
+    const link = Array.from(element.querySelectorAll<HTMLAnchorElement>('a.btn-secondary')).find(
+      (el) => el.textContent?.includes('Explore Canon Timeline'),
+    );
+    expect(link).toBeDefined();
+    expect(link!.textContent).toContain('Explore Canon Timeline');
+    expect(link!.getAttribute('href')).toBe('/timeline?view=Canon');
   });
 
   it('provides a button that navigates to the Legends timeline', () => {
     fixture.detectChanges();
-    const link = fixture.nativeElement.querySelector('a.btn-secondary') as HTMLAnchorElement;
-    expect(link.textContent).toContain('Explore Legends Timeline');
-    expect(link.getAttribute('href')).toBe('/timeline?view=Legends');
+    const element = fixture.nativeElement as HTMLElement;
+    const link = Array.from(element.querySelectorAll<HTMLAnchorElement>('a.btn-secondary')).find(
+      (el) => el.textContent?.includes('Explore Legends Timeline'),
+    );
+    expect(link).toBeDefined();
+    expect(link!.textContent).toContain('Explore Legends Timeline');
+    expect(link!.getAttribute('href')).toBe('/timeline?view=Legends');
   });
 });

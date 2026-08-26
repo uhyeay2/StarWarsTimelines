@@ -1,5 +1,11 @@
 @use '../../../../styles/tokens' as *;
+:host {
+  display: block;
+}
+
 .feature-card {
+  height: 100%;
+  box-sizing: border-box;
   background: $color-surface-raised;
   border: 1px solid $color-border;
   border-radius: 12px;
