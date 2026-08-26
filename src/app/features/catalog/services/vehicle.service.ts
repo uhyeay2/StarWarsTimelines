@@ -4,7 +4,8 @@ import { catchError, Observable, tap } from 'rxjs';
 import { ApiVehicle } from '../../../shared/models/api-vehicle';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogErrorCode } from '../models/catalog-error';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 
@@ -15,7 +16,12 @@ export class VehicleService {
 
   private readonly cache = new SignalCache<readonly ApiVehicle[]>(
     () => this.http.get<readonly ApiVehicle[]>(`${CATALOG_API_BASE}/vehicles`),
-    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load vehicles'),
+    (err) => {
+      if (err instanceof HttpErrorResponse) {
+        return readProblemDetail(err, 'Failed to load vehicles');
+      }
+      return 'Failed to load vehicles';
+    },
     CACHE_TTL_MS,
   );
 
@@ -48,7 +54,7 @@ export class VehicleService {
         catalogErrorHandler(
           'Unable to create the vehicle. Please try again.',
           'createVehicle',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),
@@ -68,7 +74,7 @@ export class VehicleService {
         catalogErrorHandler(
           'Unable to update the vehicle. Please try again.',
           'updateVehicle',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),
@@ -87,7 +93,7 @@ export class VehicleService {
         catalogErrorHandler(
           'Unable to delete the vehicle. Please try again.',
           'deleteVehicle',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),

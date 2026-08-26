@@ -3,8 +3,8 @@ import { signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { User } from '../../../shared/models/user';
 import { AuthService } from '../../auth/services/auth.service';
-import { CatalogInvalidator } from '../../catalog/services/catalog-invalidator.service';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogInvalidator } from './catalog-invalidator.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { STORAGE_KEYS, StorageService } from '../../../shared/services/storage.service';
 import { CatalogEventService } from './catalog-event.service';
 

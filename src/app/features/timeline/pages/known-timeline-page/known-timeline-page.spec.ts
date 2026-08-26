@@ -9,7 +9,7 @@ import { LibraryItem } from '../../../../shared/models/library-item';
 import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { User } from '../../../../shared/models/user';
 import { AuthService } from '../../../auth/services/auth.service';
-import { CatalogEventService, CatalogEvent } from '../../../library/services/catalog-event.service';
+import { CatalogEventService, CatalogEvent } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
 import { LocationService } from '../../../catalog/services/location.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';

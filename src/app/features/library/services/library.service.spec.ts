@@ -10,7 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { LibraryItem, LibraryUnit } from '../../../shared/models/library-item';
 import { LibraryError, LibraryErrorCode } from '../models/library-error';
 import { environment } from '../../../../environments/environment';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { LibraryItemDto, LibraryUnitDto } from './library.dto';
 import { isValidItemDto, isValidUnitDto, mapLibraryItem, mapLibraryUnit } from './library.mapper';
 import { LibraryService } from './library.service';

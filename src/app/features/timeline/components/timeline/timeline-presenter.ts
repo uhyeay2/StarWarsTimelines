@@ -12,13 +12,13 @@ import {
   sourceChipsForEvent,
   TimelineFilters,
 } from '../../models/timeline-filters';
-import { CatalogEventService } from '../../../library/services/catalog-event.service';
+import { CatalogEventService } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
 import { LocationService } from '../../../catalog/services/location.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { NavPreferencesService } from '../../../../shared/services/nav-preferences/nav-preferences.service';
-import { LoggerService } from '../../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../../core/services/logging/logger.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
 import { depictionIsTracked, TrackedScopeMap } from '../../../../shared/models/tracking-selection';
 import { ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';

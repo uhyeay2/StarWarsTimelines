@@ -94,3 +94,23 @@ export interface TimelineEventDto {
   /** Vehicles featured in this event. */
   readonly vehicles: readonly NamedEntityDto[];
 }
+
+/**
+ * Request body for creating or updating a timeline event.
+ *
+ * Mirrors the wire format expected by the ASP.NET Core backend.
+ */
+export interface CreateTimelineEventRequest {
+  readonly title: string;
+  readonly description: string;
+  readonly yearStart: number;
+  readonly yearEnd: number;
+  readonly sequence: number;
+  readonly sourceMaterials: readonly {
+    readonly sourceMaterialId: number;
+    readonly sourceMaterialUnitId: number | null;
+  }[];
+  readonly characterIds: readonly number[];
+  readonly locationIds: readonly number[];
+  readonly vehicleIds: readonly number[];
+}

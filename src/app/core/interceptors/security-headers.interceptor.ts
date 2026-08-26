@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { tap } from 'rxjs';
-import { LoggerService } from '../../shared/services/logging/logger.service';
+import { LoggerService } from '../../core/services/logging/logger.service';
 
 /** Security headers the API should include in every response. */
 const EXPECTED_SECURITY_HEADERS = ['x-content-type-options', 'x-frame-options'] as const;

@@ -101,7 +101,7 @@ describe('TimelineEventItem', () => {
     expect(compiled.querySelector('.event-description')?.textContent).toContain(
       'A test event description.',
     );
-    expect(compiled.querySelector('.event-date')?.textContent).toContain('0 BBY');
+    expect(compiled.querySelector('.event-date')?.textContent).toContain('0 ABY');
     expect(compiled.querySelector('.event-source')?.textContent).toContain('Test Source');
     expect(compiled.querySelectorAll('.canon-badge').length).toBe(2);
     expect(compiled.textContent).toContain('Tatooine');

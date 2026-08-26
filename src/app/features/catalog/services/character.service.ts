@@ -5,7 +5,8 @@ import { ApiCharacter } from '../../../shared/models/api-character';
 import { CreateCharacterInput } from '../models/create-character-input';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogErrorCode } from '../models/catalog-error';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 
@@ -16,7 +17,12 @@ export class CharacterService {
 
   private readonly cache = new SignalCache<readonly ApiCharacter[]>(
     () => this.http.get<readonly ApiCharacter[]>(`${CATALOG_API_BASE}/characters`),
-    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load characters'),
+    (err) => {
+      if (err instanceof HttpErrorResponse) {
+        return readProblemDetail(err, 'Failed to load characters');
+      }
+      return 'Failed to load characters';
+    },
     CACHE_TTL_MS,
   );
 
@@ -59,7 +65,7 @@ export class CharacterService {
           catalogErrorHandler(
             'Unable to create the character. Please try again.',
             'createCharacter',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),
@@ -89,7 +95,7 @@ export class CharacterService {
           catalogErrorHandler(
             'Unable to update the character. Please try again.',
             'updateCharacter',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),

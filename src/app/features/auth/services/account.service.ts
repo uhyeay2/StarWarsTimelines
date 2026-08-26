@@ -14,7 +14,7 @@ import { User } from '../../../shared/models/user';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { AccountResponse } from './auth.dto';
 import { AuthService } from './auth.service';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { mapRole } from './role.helper';
 
 /** Base URL for account-related endpoints. */

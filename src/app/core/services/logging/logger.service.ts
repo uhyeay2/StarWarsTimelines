@@ -41,7 +41,7 @@
 
 import { Inject, Injectable, InjectionToken, Optional } from '@angular/core';
 import { environment } from '../../../../environments/environment';
-import { safeSerialize } from '../../utils/log-serialization';
+import { safeSerialize } from '../../../shared/utils/log-serialization';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

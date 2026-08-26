@@ -1,18 +1,18 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { TimelineEvent } from '../models/timeline-event';
 import {
   CreateTimelineEventInput,
   EventSourceLinkInput,
 } from '../models/create-timeline-event-input';
 import { TimelineError, TimelineErrorCode } from '../models/timeline-error';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
-import { TimelineEventDto } from './timeline-events.dto';
+import { LoggerService } from '../../../core/services/logging/logger.service';
+import { TimelineEventDto, CreateTimelineEventRequest } from './timeline-events.dto';
 import { isValidTimelineEventDto, mapTimelineEvent } from './timeline-events.mapper';
 import { TimelineEventsService } from './timeline-events.service';
+import { classifyTimelineError, mapTimelineError } from './timeline-error-handler';
 
 const BASE = `${environment.apiBaseUrl}/api/timeline-events`;
 
@@ -97,29 +97,13 @@ export class TimelineEventsAdminService {
       this.logger.error(`[TimelineEventsAdminService] ${context}: ${err.message}`, { error: err });
       return throwError(() => err);
     }
-    const message = err instanceof HttpErrorResponse ? readProblemDetail(err, fallback) : fallback;
+    const message = mapTimelineError(err, fallback);
     this.logger.error(`[TimelineEventsAdminService] ${context}: ${message}`, { error: err });
-    return throwError(() => new TimelineError(message, this.classifyError(err)));
-  }
-
-  private classifyError(err: unknown): TimelineErrorCode {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 0) {
-        return TimelineErrorCode.NetworkError;
-      }
-      if (err.status === 404) {
-        return TimelineErrorCode.NotFound;
-      }
-      if ([503, 504].includes(err.status)) {
-        return TimelineErrorCode.NetworkError;
-      }
-      return TimelineErrorCode.ServerError;
-    }
-    return TimelineErrorCode.NetworkError;
+    return throwError(() => new TimelineError(message, classifyTimelineError(err)));
   }
 }
 
-function toRequestPayload(input: CreateTimelineEventInput): Record<string, unknown> {
+function toRequestPayload(input: CreateTimelineEventInput): CreateTimelineEventRequest {
   const links = input.sourceMaterials.map((link: EventSourceLinkInput) =>
     link.sourceMaterialUnitId !== null
       ? { sourceMaterialId: link.sourceMaterialId, sourceMaterialUnitId: link.sourceMaterialUnitId }

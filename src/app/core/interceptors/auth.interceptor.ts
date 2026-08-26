@@ -1,11 +1,9 @@
 import { HttpErrorResponse, HttpEvent, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, filter, finalize, switchMap, take } from 'rxjs';
+import { Observable, catchError, filter, finalize, switchMap, take } from 'rxjs';
 import { AuthService } from '../../features/auth/services/auth.service';
 import { ROUTES } from '../../shared/constants/routes.constants';
-
-let refreshInProgress$: BehaviorSubject<boolean> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
@@ -42,16 +40,13 @@ function handle401(
     return next(request);
   }
 
-  if (refreshInProgress$) {
-    return refreshInProgress$.pipe(
+  if (auth.refreshMutex$.value) {
+    return auth.refreshMutex$.pipe(
       filter((inProgress) => !inProgress),
       take(1),
       switchMap(() => {
         const newToken = auth.getToken();
         if (!newToken) {
-          // A missing token after refresh means an explicit logout happened
-          // concurrently; let that flow own the redirect instead of forcing
-          // the user to /login.
           if (auth.isLoggedIn()) {
             void router.navigateByUrl(ROUTES.LOGIN);
           }
@@ -62,7 +57,7 @@ function handle401(
     );
   }
 
-  refreshInProgress$ = new BehaviorSubject<boolean>(true);
+  auth.refreshMutex$.next(true);
 
   return auth.refreshAccessToken().pipe(
     switchMap((success) => {
@@ -73,8 +68,7 @@ function handle401(
       return next(request.clone({ setHeaders: { Authorization: `Bearer ${auth.getToken()!}` } }));
     }),
     finalize(() => {
-      refreshInProgress$?.next(false);
-      refreshInProgress$ = null;
+      auth.refreshMutex$.next(false);
     }),
   );
 }

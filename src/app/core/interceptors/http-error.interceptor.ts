@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
-import { LoggerService } from '../../shared/services/logging/logger.service';
+import { LoggerService } from '../../core/services/logging/logger.service';
 
 export const httpErrorInterceptor: HttpInterceptorFn = (request, next) => {
   const logger = inject(LoggerService);

@@ -20,6 +20,14 @@
 export type CatalogErrorCode =
   'entity-in-use' | 'duplicate-entity' | 'not-found' | 'validation-error' | 'network-error';
 
+export const CatalogErrorCode = {
+  EntityInUse: 'entity-in-use' as const,
+  DuplicateEntity: 'duplicate-entity' as const,
+  NotFound: 'not-found' as const,
+  ValidationError: 'validation-error' as const,
+  NetworkError: 'network-error' as const,
+} satisfies Record<string, CatalogErrorCode>;
+
 /**
  * A domain-specific error thrown when a catalog CRUD operation fails.
  *

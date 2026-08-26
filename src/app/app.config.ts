@@ -3,7 +3,7 @@ import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } f
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
-import { AppErrorHandler } from './core/error-handler/app.error-handler';
+import { AppErrorHandler } from './core/error-handler/app-error-handler';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
 import { securityHeadersInterceptor } from './core/interceptors/security-headers.interceptor';

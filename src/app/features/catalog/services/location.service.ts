@@ -4,7 +4,8 @@ import { catchError, Observable, tap } from 'rxjs';
 import { ApiLocation } from '../../../shared/models/api-location';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogErrorCode } from '../models/catalog-error';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 
@@ -15,7 +16,12 @@ export class LocationService {
 
   private readonly cache = new SignalCache<readonly ApiLocation[]>(
     () => this.http.get<readonly ApiLocation[]>(`${CATALOG_API_BASE}/locations`),
-    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load locations'),
+    (err) => {
+      if (err instanceof HttpErrorResponse) {
+        return readProblemDetail(err, 'Failed to load locations');
+      }
+      return 'Failed to load locations';
+    },
     CACHE_TTL_MS,
   );
 
@@ -48,7 +54,7 @@ export class LocationService {
         catalogErrorHandler(
           'Unable to create the location. Please try again.',
           'createLocation',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),
@@ -68,7 +74,7 @@ export class LocationService {
         catalogErrorHandler(
           'Unable to update the location. Please try again.',
           'updateLocation',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),
@@ -87,7 +93,7 @@ export class LocationService {
         catalogErrorHandler(
           'Unable to delete the location. Please try again.',
           'deleteLocation',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),

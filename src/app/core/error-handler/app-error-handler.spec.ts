@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { AppErrorHandler } from './app.error-handler';
-import { LoggerService } from '../../shared/services/logging/logger.service';
+import { AppErrorHandler } from './app-error-handler';
+import { LoggerService } from '../../core/services/logging/logger.service';
 
 describe('AppErrorHandler', () => {
   let handler: AppErrorHandler;

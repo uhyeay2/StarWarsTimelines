@@ -12,8 +12,18 @@
  * - `'email-not-verified'` — The user's account exists but their email has not
  *   been verified yet.
  * - `'invalid-credentials'` — The username or password was incorrect.
+ * - `'server-error'` — The server returned an unexpected error (HTTP 5xx / network).
+ * - `'network-error'` — The HTTP request failed entirely (network / offline).
  */
-export type AuthErrorCode = 'email-not-verified' | 'invalid-credentials';
+export type AuthErrorCode =
+  'email-not-verified' | 'invalid-credentials' | 'server-error' | 'network-error';
+
+export const AuthErrorCode = {
+  EmailNotVerified: 'email-not-verified' as const,
+  InvalidCredentials: 'invalid-credentials' as const,
+  ServerError: 'server-error' as const,
+  NetworkError: 'network-error' as const,
+} satisfies Record<string, AuthErrorCode>;
 
 /**
  * A domain-specific error thrown when an authentication operation fails.
@@ -24,7 +34,7 @@ export type AuthErrorCode = 'email-not-verified' | 'invalid-credentials';
  * @example
  * ```ts
  * catch (err) {
- *   if (err instanceof AuthError && err.code === 'email-not-verified') {
+ *   if (err instanceof AuthError && err.code === AuthErrorCode.EmailNotVerified) {
  *     showResendPrompt();
  *   }
  * }

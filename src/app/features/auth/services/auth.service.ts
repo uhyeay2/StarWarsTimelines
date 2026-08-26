@@ -11,7 +11,7 @@
 
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthError, AuthErrorCode } from '../models/auth-error';
 import { RegisterRequest } from '../models/register-request';
@@ -20,7 +20,7 @@ import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { LoginResponse, RefreshTokenResponse } from './auth.dto';
 import { fetchUserProfile } from './account.service';
 import { mapRole } from './role.helper';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { STORAGE_KEYS, StorageService } from '../../../shared/services/storage.service';
 
 /** Re-export so existing consumers can import from this module. */
@@ -62,6 +62,9 @@ export class AuthService {
   /** Cached refresh token — kept in sync with sessionStorage. */
   private refreshTokenValue = this.restoreRefreshToken();
 
+  /** Serializes concurrent 401 retries — `null` when no refresh is in flight. */
+  readonly refreshMutex$ = new BehaviorSubject<boolean>(false);
+
   /**
    * Authenticates a user with username and password.
    *
@@ -85,12 +88,20 @@ export class AuthService {
             const body = error.error as { title?: string; detail?: string } | null;
             const detail = body?.detail || 'Invalid username or password';
             const code: AuthErrorCode =
-              body?.title === 'Email not verified' ? 'email-not-verified' : 'invalid-credentials';
+              body?.title === 'Email not verified'
+                ? AuthErrorCode.EmailNotVerified
+                : AuthErrorCode.InvalidCredentials;
             this.logger.warn('Login failed', { code, detail });
             return throwError(() => new AuthError(detail, code));
           }
           this.logger.error('Login request failed', { error });
-          return throwError(() => new Error('Unable to log in. Please try again.'));
+          return throwError(
+            () =>
+              new AuthError(
+                'Unable to log in. Please try again.',
+                error.status >= 500 ? AuthErrorCode.ServerError : AuthErrorCode.NetworkError,
+              ),
+          );
         }),
         map((response) => {
           const partialUser = this.mapUser(response.user);
@@ -129,7 +140,10 @@ export class AuthService {
         this.logger.warn('Registration failed', { error });
         return throwError(
           () =>
-            new Error(readProblemDetail(error, 'Unable to create your account. Please try again.')),
+            new AuthError(
+              readProblemDetail(error, 'Unable to create your account. Please try again.'),
+              error.status >= 500 ? AuthErrorCode.ServerError : AuthErrorCode.NetworkError,
+            ),
         );
       }),
     );
@@ -147,8 +161,9 @@ export class AuthService {
         this.logger.warn('Email verification failed', { error });
         return throwError(
           () =>
-            new Error(
+            new AuthError(
               readProblemDetail(error, 'Unable to verify your email address. Please try again.'),
+              error.status >= 500 ? AuthErrorCode.ServerError : AuthErrorCode.NetworkError,
             ),
         );
       }),
@@ -177,11 +192,12 @@ export class AuthService {
           this.logger.warn('Resend verification email failed', { error });
           return throwError(
             () =>
-              new Error(
+              new AuthError(
                 readProblemDetail(
                   error,
                   'Unable to resend the verification email. Please try again.',
                 ),
+                error.status >= 500 ? AuthErrorCode.ServerError : AuthErrorCode.NetworkError,
               ),
           );
         }),

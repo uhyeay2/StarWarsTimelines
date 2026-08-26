@@ -27,7 +27,7 @@ import { environment } from '../../../../environments/environment';
 import { LibraryItem } from '../../../shared/models/library-item';
 import { LibraryError, LibraryErrorCode } from '../models/library-error';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { LibraryItemDto } from './library.dto';
 import { isValidItemDto, mapLibraryItem } from './library.mapper';
 
@@ -93,7 +93,11 @@ export class LibraryCacheManager {
           },
         }),
         catchError((err: unknown) => {
-          this.error.set(readProblemDetail(err as HttpErrorResponse, 'Unable to load library.'));
+          if (err instanceof HttpErrorResponse) {
+            this.error.set(readProblemDetail(err, 'Unable to load library.'));
+          } else {
+            this.error.set('Unable to load library.');
+          }
           return EMPTY;
         }),
         finalize(() => this.loading.set(false)),
@@ -166,22 +170,26 @@ export class LibraryCacheManager {
         return throwError(() => error);
       }
 
-      const httpError = error as HttpErrorResponse;
-      const detail = readProblemDetail(httpError, fallback);
-      const logPayload = { ...meta, status: httpError.status, url: httpError.url };
+      if (error instanceof HttpErrorResponse) {
+        const detail = readProblemDetail(error, fallback);
+        const logPayload = { ...meta, status: error.status, url: error.url };
 
-      if (httpError.status === 404) {
-        this.logger.warn(`[LibraryService] ${context}: ${detail}`, logPayload);
-        return throwError(() => new LibraryError(detail, LibraryErrorCode.NotFound));
+        if (error.status === 404) {
+          this.logger.warn(`[LibraryService] ${context}: ${detail}`, logPayload);
+          return throwError(() => new LibraryError(detail, LibraryErrorCode.NotFound));
+        }
+
+        if (error.status === 400) {
+          this.logger.warn(`[LibraryService] ${context}: ${detail}`, logPayload);
+          return throwError(() => new LibraryError(detail, LibraryErrorCode.ValidationError));
+        }
+
+        this.logger.error(`[LibraryService] ${context}: ${detail}`, logPayload);
+        return throwError(() => new LibraryError(detail, LibraryErrorCode.NetworkError));
       }
 
-      if (httpError.status === 400) {
-        this.logger.warn(`[LibraryService] ${context}: ${detail}`, logPayload);
-        return throwError(() => new LibraryError(detail, LibraryErrorCode.ValidationError));
-      }
-
-      this.logger.error(`[LibraryService] ${context}: ${detail}`, logPayload);
-      return throwError(() => new LibraryError(detail, LibraryErrorCode.NetworkError));
+      this.logger.error(`[LibraryService] ${context}: ${fallback}`, { ...meta, error });
+      return throwError(() => new LibraryError(fallback, LibraryErrorCode.NetworkError));
     };
   }
 
@@ -224,7 +232,11 @@ export class LibraryCacheManager {
           this.error.set(null);
         },
         error: (err: unknown) => {
-          this.error.set(readProblemDetail(err as HttpErrorResponse, 'Unable to load library.'));
+          if (err instanceof HttpErrorResponse) {
+            this.error.set(readProblemDetail(err, 'Unable to load library.'));
+          } else {
+            this.error.set('Unable to load library.');
+          }
         },
       }),
       finalize(() => this.loading.set(false)),

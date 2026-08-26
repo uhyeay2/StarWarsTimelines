@@ -4,6 +4,7 @@ import { LocationService } from './location.service';
 import { VehicleService } from './vehicle.service';
 import { SpeciesService } from './species.service';
 import { SourceMaterialService } from './source-material.service';
+import { CatalogEntityType } from './catalog-constants';
 
 /**
  * Coordinates cache invalidation across all catalog entity types.
@@ -26,7 +27,7 @@ export class CatalogInvalidator {
    * When an `id` is provided, only the specific affected cache is invalidated
    * rather than the entire collection.
    */
-  invalidateEntity(entity: string, id?: number): void {
+  invalidateEntity(entity: CatalogEntityType, id?: number): void {
     switch (entity) {
       case 'characters':
         this.characterService.invalidate();

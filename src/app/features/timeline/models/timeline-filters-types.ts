@@ -1,23 +1,14 @@
 import { matchesCanonView, CanonView } from '../../../shared/models/canon';
 import { isContainerOrCollectionUnit } from '../../../shared/models/unit-type';
+import { FilterTreeNode } from '../../../shared/models/filter-tree';
 import { EventSource, TimelineEvent } from './timeline-event';
+
+/** Re-export shared filter tree types for backward compatibility. */
+export type { FilterOption, FilterTreeNode } from '../../../shared/models/filter-tree';
+export { simpleOption, collectTreeLeaves } from '../../../shared/models/filter-tree';
 
 /** Facet category keys for timeline event filtering. */
 export type FacetKey = 'sources' | 'locations' | 'characters' | 'vehicles';
-
-/** A selectable filter option with a value and display label. */
-export interface FilterOption {
-  /** The unique value used for matching. */
-  readonly value: string;
-  /** The human-readable display label. */
-  readonly label: string;
-}
-
-/** A filter option that may contain nested children (tree structure). */
-export interface FilterTreeNode extends FilterOption {
-  /** Optional child nodes for hierarchical filtering. */
-  readonly children?: readonly FilterTreeNode[];
-}
 
 /** Complete filter state for the timeline view. */
 export interface TimelineFilters {
@@ -68,27 +59,6 @@ export function createEmptyFilters(): TimelineFilters {
     characters: [],
     vehicles: [],
   };
-}
-
-/** Creates a simple leaf-level filter option from a value string. */
-export function simpleOption(value: string): FilterTreeNode {
-  return { value, label: value };
-}
-
-/**
- * Recursively collects all leaf values from a tree node.
- *
- * If the node has no children, returns its own value. Otherwise,
- * recursively collects from all descendants.
- *
- * @param node  The tree node to collect leaves from.
- * @returns An array of all leaf values.
- */
-export function collectTreeLeaves(node: FilterTreeNode): string[] {
-  if (node.children !== undefined && node.children.length > 0) {
-    return node.children.flatMap(collectTreeLeaves);
-  }
-  return [node.value];
 }
 
 /**

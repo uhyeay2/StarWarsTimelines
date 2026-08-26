@@ -4,7 +4,8 @@ import { catchError, Observable, tap } from 'rxjs';
 import { ApiSpecies } from '../../../shared/models/api-species';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogErrorCode } from '../models/catalog-error';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 
@@ -15,7 +16,12 @@ export class SpeciesService {
 
   private readonly cache = new SignalCache<readonly ApiSpecies[]>(
     () => this.http.get<readonly ApiSpecies[]>(`${CATALOG_API_BASE}/species`),
-    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load species'),
+    (err) => {
+      if (err instanceof HttpErrorResponse) {
+        return readProblemDetail(err, 'Failed to load species');
+      }
+      return 'Failed to load species';
+    },
     CACHE_TTL_MS,
   );
 
@@ -49,7 +55,7 @@ export class SpeciesService {
         catalogErrorHandler(
           'Unable to create the species. Please try again.',
           'createSpecies',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),
@@ -72,7 +78,7 @@ export class SpeciesService {
           catalogErrorHandler(
             'Unable to update the species. Please try again.',
             'updateSpecies',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),
@@ -91,7 +97,7 @@ export class SpeciesService {
         catalogErrorHandler(
           'Unable to delete the species. Please try again.',
           'deleteSpecies',
-          'entity-in-use',
+          CatalogErrorCode.EntityInUse,
           this.logger,
         ),
       ),

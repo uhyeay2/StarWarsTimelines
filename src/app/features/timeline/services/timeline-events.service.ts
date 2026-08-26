@@ -34,13 +34,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, Observable, of, retry, tap, throwError, timer } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { TimelineEvent } from '../models/timeline-event';
 import { TimelineError, TimelineErrorCode } from '../models/timeline-error';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { TimelineEventDto } from './timeline-events.dto';
 import { isValidTimelineEventDto, mapTimelineEvent } from './timeline-events.mapper';
+import { classifyTimelineError, mapTimelineError } from './timeline-error-handler';
 
 /** Base URL for the timeline events API. */
 const BASE = `${environment.apiBaseUrl}/api/timeline-events`;
@@ -93,7 +93,7 @@ export class TimelineEventsService {
 
   private readonly eventsCache = new SignalCache<readonly TimelineEvent[]>(
     () => this.fetchEventsWithRetry(),
-    (err: unknown) => this.mapError(err),
+    (err: unknown) => mapTimelineError(err, 'Failed to load timeline events'),
     CACHE_TTL_MS,
   );
 
@@ -210,8 +210,8 @@ export class TimelineEventsService {
               ),
           );
         }
-        const message = this.mapError(err);
-        return throwError(() => new TimelineError(message, this.classifyError(err)));
+        const message = mapTimelineError(err, 'Failed to reload timeline event');
+        return throwError(() => new TimelineError(message, classifyTimelineError(err)));
       }),
     );
   }
@@ -256,9 +256,9 @@ export class TimelineEventsService {
         if (err instanceof TimelineError) {
           return throwError(() => err);
         }
-        const message = this.mapError(err);
+        const message = mapTimelineError(err, 'Failed to load timeline events');
         this.logger.error('[TimelineEventsService] Failed to load events', { error: message });
-        return throwError(() => new TimelineError(message, this.classifyError(err)));
+        return throwError(() => new TimelineError(message, classifyTimelineError(err)));
       }),
     );
   }
@@ -277,43 +277,5 @@ export class TimelineEventsService {
     }
     this.eventsCache.data.set(current.filter((ev: TimelineEvent) => ev.id !== eventId));
     this.logger.info('[TimelineEventsService] Removed event from cache', { eventId });
-  }
-
-  /**
-   * Maps a raw error to a human-readable message.
-   *
-   * @param err  The caught error.
-   * @returns A display-friendly error message.
-   */
-  private mapError(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      return readProblemDetail(err, 'Failed to load timeline events');
-    }
-    if (err instanceof TimelineError) {
-      return err.message;
-    }
-    return 'An unexpected error occurred while loading timeline events';
-  }
-
-  /**
-   * Classifies a raw error into a {@link TimelineErrorCode}.
-   *
-   * @param err  The caught error.
-   * @returns The appropriate error code.
-   */
-  private classifyError(err: unknown): TimelineErrorCode {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 0) {
-        return TimelineErrorCode.NetworkError;
-      }
-      if (err.status === 404) {
-        return TimelineErrorCode.NotFound;
-      }
-      if ([503, 504].includes(err.status)) {
-        return TimelineErrorCode.NetworkError;
-      }
-      return TimelineErrorCode.ServerError;
-    }
-    return TimelineErrorCode.NetworkError;
   }
 }

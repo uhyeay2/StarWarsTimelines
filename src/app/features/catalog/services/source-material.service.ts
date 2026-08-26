@@ -6,6 +6,7 @@ import { ApiSourceMaterialUnit } from '../../../shared/models/api-source-materia
 import { canonTypeFromApiCode, canonTypeToApiCode } from '../../../shared/models/canon-type';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
+import { CatalogErrorCode } from '../models/catalog-error';
 import { CreateSourceMaterialInput } from '../models/create-source-material-input';
 import { CreateSourceMaterialUnitInput } from '../models/create-source-material-unit-input';
 import { mediumFromApiCode, mediumToApiCode } from '../../../shared/models/medium';
@@ -13,7 +14,7 @@ import { unitTypeFromApiCode, unitTypeToApiCode } from '../../../shared/models/u
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { SignalCache } from '../../../shared/utils/signal-cache';
 import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog.dto';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 
 export type { CreateSourceMaterialInput } from '../models/create-source-material-input';
 export type { CreateSourceMaterialUnitInput } from '../models/create-source-material-unit-input';
@@ -30,7 +31,12 @@ export class SourceMaterialService {
       this.http
         .get<readonly SourceMaterialDto[]>(`${CATALOG_API_BASE}/source-materials`)
         .pipe(map((items) => items.map((item) => this.mapSourceMaterial(item)))),
-    (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load source materials'),
+    (err) => {
+      if (err instanceof HttpErrorResponse) {
+        return readProblemDetail(err, 'Failed to load source materials');
+      }
+      return 'Failed to load source materials';
+    },
     CACHE_TTL_MS,
   );
 
@@ -111,7 +117,12 @@ export class SourceMaterialService {
               `${CATALOG_API_BASE}/source-materials/${sourceMaterialId}/units`,
             )
             .pipe(map((items) => items.map((item) => this.mapUnit(item)))),
-        (err) => readProblemDetail(err as HttpErrorResponse, 'Failed to load units'),
+        (err) => {
+          if (err instanceof HttpErrorResponse) {
+            return readProblemDetail(err, 'Failed to load units');
+          }
+          return 'Failed to load units';
+        },
         CACHE_TTL_MS,
       );
       this.unitCaches.set(sourceMaterialId, cache);
@@ -173,7 +184,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to create the source material. Please try again.',
             'createSourceMaterial',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),
@@ -203,7 +214,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to update the source material. Please try again.',
             'updateSourceMaterial',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),
@@ -256,7 +267,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to convert the book to a collection. Please try again.',
             'convertStandaloneBookToCollection',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),
@@ -295,7 +306,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to create the unit. Please try again.',
             'createSourceMaterialUnit',
-            'duplicate-entity',
+            CatalogErrorCode.DuplicateEntity,
             this.logger,
           ),
         ),
@@ -331,7 +342,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to update the unit. Please try again.',
             'updateSourceMaterialUnit',
-            'duplicate-entity',
+            CatalogErrorCode.DuplicateEntity,
             this.logger,
           ),
         ),
@@ -354,7 +365,7 @@ export class SourceMaterialService {
           catalogErrorHandler(
             'Unable to delete the unit. Please try again.',
             'deleteSourceMaterialUnit',
-            'entity-in-use',
+            CatalogErrorCode.EntityInUse,
             this.logger,
           ),
         ),

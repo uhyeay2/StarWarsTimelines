@@ -20,6 +20,7 @@
         type="text"
         class="ss-search"
         placeholder="Type to search…"
+        [attr.aria-label]="ariaLabel() + ' search'"
         [(ngModel)]="query"
         (keydown)="onSearchKeydown($event)"
       />

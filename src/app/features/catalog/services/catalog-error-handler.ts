@@ -7,7 +7,7 @@ import {
   EntityInUseError,
 } from '../models/catalog-error';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 
 /**
  * Returns a `catchError` callback that extracts the server-provided error
@@ -23,7 +23,7 @@ import { LoggerService } from '../../../shared/services/logging/logger.service';
 export function catalogErrorHandler(
   fallback: string,
   context: string,
-  conflictCode: CatalogErrorCode = 'entity-in-use',
+  conflictCode: CatalogErrorCode = CatalogErrorCode.EntityInUse,
   logger: LoggerService,
 ): (error: HttpErrorResponse) => Observable<never> {
   return (error: HttpErrorResponse) => {
@@ -32,7 +32,7 @@ export function catalogErrorHandler(
     if (error.status === 409) {
       logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
       return throwError(() =>
-        conflictCode === 'duplicate-entity'
+        conflictCode === CatalogErrorCode.DuplicateEntity
           ? new DuplicateEntityError(detail)
           : new EntityInUseError(detail),
       );
@@ -40,10 +40,10 @@ export function catalogErrorHandler(
 
     if (error.status === 404) {
       logger.warn(`[CatalogService] ${context}: ${detail}`, { error });
-      return throwError(() => new CatalogError(detail, 'not-found'));
+      return throwError(() => new CatalogError(detail, CatalogErrorCode.NotFound));
     }
 
     logger.error(`[CatalogService] ${context}: ${detail}`, { error });
-    return throwError(() => new CatalogError(detail, 'network-error'));
+    return throwError(() => new CatalogError(detail, CatalogErrorCode.NetworkError));
   };
 }

@@ -1,6 +1,7 @@
 import { Canon } from '../../../shared/models/canon';
 import { Medium } from '../../../shared/models/medium';
 import { SourceMaterialUnit } from '../../../shared/models/source-material';
+import { formatGalacticYear, formatGalacticYearRange } from '../../../shared/utils/galactic-year';
 
 /**
  * A single source material that depicts a timeline event, optionally pinned
@@ -42,32 +43,15 @@ export interface TimelineEvent {
   readonly sequence: number;
 }
 
-/** Formats a single galactic-timeline year (negative = BBY, positive = ABY). */
-function formatYear(year: number): string {
-  return year <= 0 ? `${-year} BBY` : `${year} ABY`;
-}
-
 /**
  * Formats a galactic-timeline date or date range for display.
  *
- * - Exact years collapse to a single label (`"32 BBY"`, `"5 ABY"`).
- * - Ranges within one era use an en dash (`"36–32 BBY"`, `"4–5 ABY"`).
- * - Ranges crossing the Battle of Yavin anchor show both eras
- *   (`"1 BBY – 5 ABY"`).
+ * Delegates to the shared galactic-year utilities for consistent formatting.
  *
  * @param yearStart  Earliest in-universe year (negative = BBY).
  * @param yearEnd    Latest in-universe year.
  * @returns A human-readable date label.
  */
 export function formatGalacticYears(yearStart: number, yearEnd: number): string {
-  if (yearStart === yearEnd) {
-    return formatYear(yearStart);
-  }
-  if (yearStart >= 0) {
-    return `${yearStart}–${yearEnd} ABY`;
-  }
-  if (yearEnd <= 0) {
-    return `${-yearStart}–${-yearEnd} BBY`;
-  }
-  return `${formatYear(yearStart)} – ${formatYear(yearEnd)}`;
+  return formatGalacticYearRange(yearStart, yearEnd) ?? formatGalacticYear(yearStart) ?? '';
 }

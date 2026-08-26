@@ -23,15 +23,17 @@ import { Injectable, effect, inject, OnDestroy, signal } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../auth/services/auth.service';
-import { CatalogInvalidator } from '../../catalog/services/catalog-invalidator.service';
-import { LoggerService } from '../../../shared/services/logging/logger.service';
+import { CatalogInvalidator } from './catalog-invalidator.service';
+import { LoggerService } from '../../../core/services/logging/logger.service';
 import { STORAGE_KEYS, StorageService } from '../../../shared/services/storage.service';
+
+import { CatalogEntityType } from './catalog-constants';
 
 /** Shape of the JSON payload delivered by the SSE endpoint. */
 export interface CatalogEvent {
-  entity: string;
-  type: 'created' | 'updated' | 'deleted';
-  id?: number;
+  readonly entity: CatalogEntityType;
+  readonly type: 'created' | 'updated' | 'deleted';
+  readonly id?: number;
 }
 
 /**
@@ -112,7 +114,10 @@ export class CatalogEventService implements OnDestroy {
           '[CatalogEventService] Received event',
           catalogEvent as unknown as Record<string, unknown>,
         );
-        this.invalidator.invalidateEntity(catalogEvent.entity, catalogEvent.id);
+        this.invalidator.invalidateEntity(
+          catalogEvent.entity as CatalogEntityType,
+          catalogEvent.id,
+        );
         this.eventsSubject.next(catalogEvent);
       } catch (err) {
         this.logger.warn('[CatalogEventService] Failed to parse SSE event', { error: err });
