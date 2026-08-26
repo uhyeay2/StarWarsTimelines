@@ -22,15 +22,13 @@
         [highlightItems]="true"
       />
 
-      @if (user()) {
-        <app-nav-dropdown
-          class="site-nav-item"
-          label="Catalog"
-          [toggleLink]="'/catalog'"
-          [toggleQueryParams]="{ tab: navPrefs.catalogTab() }"
-          [options]="catalogOptions"
-        />
-      }
+      <app-nav-dropdown
+        class="site-nav-item"
+        label="Catalog"
+        [toggleLink]="'/catalog'"
+        [toggleQueryParams]="{ tab: navPrefs.catalogTab() }"
+        [options]="catalogOptions"
+      />
     </nav>
     <div class="site-user">
       @if (user(); as currentUser) {

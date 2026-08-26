@@ -1,16 +1,29 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ApiSourceMaterialUnit } from '../../../../shared/models/api-source-material-unit';
+import { User } from '../../../../shared/models/user';
 import { NonAdminUnitsHost, SourceNonAdminUnits } from './source-nonadmin-units';
 
 describe('SourceNonAdminUnits', () => {
   const unit = (id: number): ApiSourceMaterialUnit =>
     ({ id, unitType: 'Chapter', number: id, title: `Chapter ${id}` }) as ApiSourceMaterialUnit;
 
+  const testUser: User = {
+    id: 'test-user',
+    username: 'test',
+    displayName: 'Test',
+    email: 'test@test.com',
+    emailVerified: true,
+    role: 'Standard',
+  };
+
   function host(
     unitsByMaterial: Record<number, readonly ApiSourceMaterialUnit[]>,
+    currentUser: User | null = testUser,
   ): NonAdminUnitsHost {
     return {
       unitsByMaterial: () => unitsByMaterial,
+      currentUser: signal(currentUser),
       getDisplayGroups: () => [],
       isSeasonExpanded: () => false,
       toggleSeason: () => undefined,

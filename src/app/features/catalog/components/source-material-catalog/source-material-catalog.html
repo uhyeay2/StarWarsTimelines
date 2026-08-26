@@ -139,9 +139,10 @@
                         </button>
                       </div>
                     } @else if (
-                      group.medium === 'Movie' ||
-                      group.medium === 'Video Game' ||
-                      (group.medium === 'Book' && !materialTracksViaContainers(material.id))
+                      currentUser() &&
+                      (group.medium === 'Movie' ||
+                        group.medium === 'Video Game' ||
+                        (group.medium === 'Book' && !materialTracksViaContainers(material.id)))
                     ) {
                       <!-- ═══════════════════════════════════════════════════════════════
                            NON-ADMIN: title-level tracking dropdown

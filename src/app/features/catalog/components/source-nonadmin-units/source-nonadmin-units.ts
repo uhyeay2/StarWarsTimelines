@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ApiSourceMaterialUnit } from '../../../../shared/models/api-source-material-unit';
 import { TrackingStatus } from '../../../../shared/models/tracking-status';
+import { User } from '../../../../shared/models/user';
 import { TrackSelect } from '../../../library/components/track-select/track-select';
 import { MaterialDisplayGroup } from '../source-material-catalog/catalog-display-facade';
 
 /** Subset of the catalog host API used by the non-admin units view. */
 export interface NonAdminUnitsHost {
   readonly unitsByMaterial: () => Record<number, readonly ApiSourceMaterialUnit[]>;
+  readonly currentUser: () => User | null;
   getDisplayGroups(materialId: number): readonly MaterialDisplayGroup[];
   isSeasonExpanded(materialId: number, expandKey: number | string | null): boolean;
   toggleSeason(materialId: number, expandKey: number | string | null): void;

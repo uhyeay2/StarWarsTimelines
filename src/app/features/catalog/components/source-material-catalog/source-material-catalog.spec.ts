@@ -1729,4 +1729,41 @@ describe('SourceMaterialCatalog', () => {
       expect((selects[2] as HTMLSelectElement).value).toBe('');
     });
   });
+
+  // ─── Anonymous visitors ─────────────────────────────────────────────────
+
+  describe('anonymous visitors', () => {
+    const season = (id: number, number: number, title: string): ApiSourceMaterialUnit => ({
+      id,
+      sourceMaterialId: 21,
+      unitType: 'Season',
+      parentUnitId: null,
+      number,
+      title,
+    });
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('isAdmin', false);
+      fixture.detectChanges();
+    });
+
+    it('hides title-level tracking dropdowns', () => {
+      loadMaterials([{ id: 21, title: 'A New Hope', medium: 0, canonType: 2 }]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.track-select')).toBeNull();
+    });
+
+    it('hides group-level tracking dropdowns', () => {
+      loadMaterials([{ id: 21, title: 'The Clone Wars', medium: 4, canonType: 0 }], { 21: 4 });
+      fixture.detectChanges();
+
+      component.unitsByMaterial.set({
+        21: [season(101, 1, 'Season 1'), season(102, 2, 'Season 2')],
+      });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.group-track-select')).toBeNull();
+    });
+  });
 });

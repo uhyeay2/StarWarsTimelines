@@ -71,7 +71,6 @@ export const routes: Routes = [
   },
   {
     path: 'catalog',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/catalog/pages/catalog-page/catalog-page').then((m) => m.CatalogPage),
   },

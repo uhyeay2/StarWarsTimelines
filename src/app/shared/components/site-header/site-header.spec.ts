@@ -37,9 +37,10 @@ describe('SiteHeader', () => {
       ...fixture.nativeElement.querySelectorAll('.site-nav-item'),
     ] as HTMLElement[];
 
-    expect(dropdowns.length).toBe(2);
+    expect(dropdowns.length).toBe(3);
     expect(dropdowns[0]!.textContent?.trim().startsWith('Timeline')).toBe(true);
     expect(dropdowns[1]!.textContent?.trim().startsWith('Library')).toBe(true);
+    expect(dropdowns[2]!.textContent?.trim().startsWith('Catalog')).toBe(true);
     expect(fixture.nativeElement.querySelector('.login-link')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.logout-button')).toBeNull();
   });

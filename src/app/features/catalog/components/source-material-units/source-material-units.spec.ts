@@ -9,6 +9,7 @@ describe('SourceMaterialUnits', () => {
       unitsError: () => null,
       showsUnitsFor: () => true,
       unitsByMaterial: () => ({}),
+      currentUser: () => null,
       unitEditKey: () => null,
       unitConfirmDeleteKey: () => null,
       unitDeletingKey: () => null,
