@@ -236,18 +236,16 @@ describe('SourceMaterialService', () => {
     it('maps unitType numeric code to string union', () => {
       const cache = service.getUnitCache(1);
       cache.fetch();
-      httpMock
-        .expectOne(`${BASE}/1/units`)
-        .flush([
-          {
-            id: 10,
-            sourceMaterialId: 1,
-            unitType: 3,
-            number: 1,
-            title: 'Season 1',
-            parentUnitId: null,
-          },
-        ]);
+      httpMock.expectOne(`${BASE}/1/units`).flush([
+        {
+          id: 10,
+          sourceMaterialId: 1,
+          unitType: 3,
+          number: 1,
+          title: 'Season 1',
+          parentUnitId: null,
+        },
+      ]);
 
       expect(cache.data()![0]!.unitType).toBe('Season');
     });

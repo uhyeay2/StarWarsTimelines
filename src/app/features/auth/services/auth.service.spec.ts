@@ -100,15 +100,13 @@ describe('AuthService', () => {
 
   it('surfaces the server message for an unverified account', async () => {
     const loginPromise = firstValueFrom(service.login('new-user', 'password123'));
-    httpMock
-      .expectOne(LOGIN_URL)
-      .flush(
-        {
-          title: 'Email not verified',
-          detail: 'Please verify your email address before logging in.',
-        },
-        { status: 401, statusText: 'Unauthorized' },
-      );
+    httpMock.expectOne(LOGIN_URL).flush(
+      {
+        title: 'Email not verified',
+        detail: 'Please verify your email address before logging in.',
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
 
     await expect(loginPromise).rejects.toMatchObject({
       message: 'Please verify your email address before logging in.',
