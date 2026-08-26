@@ -1,4 +1,4 @@
-<section class="hero">
+<section class="hero" aria-label="Welcome">
   <p class="tagline">A long time ago, in a galaxy far, far away...</p>
   <h1 class="title">Star Wars Timelines</h1>
   <p class="subtitle">
@@ -15,7 +15,7 @@
   </div>
 </section>
 
-<section class="features">
+<section class="features" aria-label="Features">
   @for (feature of features; track feature.title) {
     <app-feature-card [title]="feature.title" [description]="feature.description" />
   }

@@ -76,6 +76,19 @@ export class SignalCache<T> {
   }
 
   /**
+   * Clears the TTL timer and resets all signals.
+   *
+   * Call this when the owning service is destroyed to prevent stale timer
+   * callbacks from firing after the cache is no longer needed.
+   */
+  destroy(): void {
+    this.clearExpiration();
+    this._data.set(null);
+    this._loading.set(false);
+    this._error.set(null);
+  }
+
+  /**
    * Fetches data from the source and updates the signals.
    *
    * Guarded against concurrent calls — if a fetch is already in flight

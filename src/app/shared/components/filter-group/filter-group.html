@@ -6,6 +6,7 @@
       type="button"
       class="filter-group-trigger"
       [attr.aria-expanded]="open()"
+      [attr.aria-label]="'Filter by ' + label()"
       aria-haspopup="listbox"
       (click)="togglePanel()"
     >

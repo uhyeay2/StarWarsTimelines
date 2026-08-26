@@ -13,6 +13,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "analyze": "source-map-explorer dist/**/*.js",
+    "audit": "npm audit --audit-level=moderate",
     "prepare": "husky"
   },
   "private": true,

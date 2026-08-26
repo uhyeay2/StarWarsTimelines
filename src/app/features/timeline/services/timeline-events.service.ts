@@ -10,7 +10,7 @@
  * automatically after the configured TTL.
  *
  * **Retry with backoff:** Transient server errors (503 / 504) are
- * automatically retried up to {@link MAX_RETRIES} times with exponential
+ * automatically retried up to {@link DEFAULT_MAX_RETRIES} times with exponential
  * backoff before failing.
  *
  * **DTO validation:** Raw API responses are validated defensively before
@@ -32,9 +32,14 @@
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, of, retry, tap, throwError, timer } from 'rxjs';
+import { catchError, map, Observable, of, retry, tap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { SignalCache } from '../../../shared/utils/signal-cache';
+import {
+  DEFAULT_MAX_RETRIES,
+  DEFAULT_RETRY_BASE_DELAY_MS,
+  transientRetryDelay,
+} from '../../../shared/utils/retry-config';
 import { TimelineEvent } from '../models/timeline-event';
 import { TimelineError, TimelineErrorCode } from '../models/timeline-error';
 import { LoggerService } from '../../../core/services/logging/logger.service';
@@ -44,12 +49,6 @@ import { classifyTimelineError, mapTimelineError } from './timeline-error-handle
 
 /** Base URL for the timeline events API. */
 const BASE = `${environment.apiBaseUrl}/api/timeline-events`;
-
-/** Maximum number of automatic retries for transient server errors. */
-const MAX_RETRIES = 3;
-
-/** Base delay in milliseconds for exponential retry backoff. */
-const RETRY_BASE_DELAY_MS = 500;
 
 /** 10-minute TTL for the events cache (resilience fallback). */
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -166,13 +165,9 @@ export class TimelineEventsService {
   reloadEvent(eventId: number): Observable<void> {
     return this.http.get<TimelineEventDto>(`${BASE}/${eventId}`).pipe(
       retry({
-        count: MAX_RETRIES,
-        delay: (error: HttpErrorResponse, retryCount: number) => {
-          if (error instanceof HttpErrorResponse && [503, 504].includes(error.status)) {
-            return timer(RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1));
-          }
-          return throwError(() => error);
-        },
+        count: DEFAULT_MAX_RETRIES,
+        delay: (error: HttpErrorResponse, retryCount: number) =>
+          transientRetryDelay(error, retryCount, DEFAULT_RETRY_BASE_DELAY_MS),
       }),
       map((dto) => {
         if (!isValidTimelineEventDto(dto)) {
@@ -229,16 +224,15 @@ export class TimelineEventsService {
   private fetchEventsWithRetry(): Observable<readonly TimelineEvent[]> {
     return this.http.get<readonly TimelineEventDto[]>(BASE).pipe(
       retry({
-        count: MAX_RETRIES,
+        count: DEFAULT_MAX_RETRIES,
         delay: (error: HttpErrorResponse, retryCount: number) => {
           if (error instanceof HttpErrorResponse && [503, 504].includes(error.status)) {
             this.logger.warn('[TimelineEventsService] Retrying after transient error', {
               status: error.status,
               attempt: retryCount,
             });
-            return timer(RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1));
           }
-          return throwError(() => error);
+          return transientRetryDelay(error, retryCount, DEFAULT_RETRY_BASE_DELAY_MS);
         },
       }),
       map((dtos) => {

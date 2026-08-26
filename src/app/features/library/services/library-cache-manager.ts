@@ -21,24 +21,22 @@ import {
   switchMap,
   tap,
   throwError,
-  timer,
 } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { LibraryItem } from '../../../shared/models/library-item';
 import { LibraryError, LibraryErrorCode } from '../models/library-error';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
+import {
+  DEFAULT_MAX_RETRIES,
+  DEFAULT_RETRY_BASE_DELAY_MS,
+  transientRetryDelay,
+} from '../../../shared/utils/retry-config';
 import { LoggerService } from '../../../core/services/logging/logger.service';
 import { LibraryItemDto } from './library.dto';
 import { isValidItemDto, mapLibraryItem } from './library.mapper';
 
 /** Base URL for all library API endpoints. */
 const BASE = `${environment.apiBaseUrl}/api/users`;
-
-/** Maximum number of automatic retries for transient server errors. */
-const RETRY_COUNT = 3;
-
-/** Base delay in milliseconds for exponential retry backoff. */
-const RETRY_BASE_DELAY_MS = 1000;
 
 /** Debounce window in milliseconds for explicit `reload()` calls. */
 const RELOAD_DEBOUNCE_MS = 200;
@@ -47,7 +45,9 @@ const RELOAD_DEBOUNCE_MS = 200;
  * Manages the signal-based cache, reload pipeline, and internal fetch/retry
  * logic for the user's tracked-source-material library.
  *
- * This is a root-scoped singleton (`providedIn: 'root'`).
+ * This is a root-scoped singleton (`providedIn: 'root'`). The debounced
+ * reload pipeline subscribes in the constructor and is intentionally never
+ * torn down — as a singleton it lives for the entire application lifetime.
  */
 @Injectable({ providedIn: 'root' })
 export class LibraryCacheManager {
@@ -128,13 +128,9 @@ export class LibraryCacheManager {
   fetchItems(userId: string): Observable<readonly LibraryItem[]> {
     return this.http.get<readonly LibraryItemDto[]>(this.urlFor(userId)).pipe(
       retry({
-        count: RETRY_COUNT,
-        delay: (error: HttpErrorResponse, retryCount: number) => {
-          if (error instanceof HttpErrorResponse && [503, 504].includes(error.status)) {
-            return timer(RETRY_BASE_DELAY_MS * Math.pow(2, retryCount - 1));
-          }
-          return throwError(() => error);
-        },
+        count: DEFAULT_MAX_RETRIES,
+        delay: (error: HttpErrorResponse, retryCount: number) =>
+          transientRetryDelay(error, retryCount, DEFAULT_RETRY_BASE_DELAY_MS),
       }),
       map((items) => items.filter(isValidItemDto).map(mapLibraryItem) as readonly LibraryItem[]),
     );

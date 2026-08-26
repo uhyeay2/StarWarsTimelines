@@ -27,6 +27,14 @@
               class="medium-header"
               [class.medium-header--open]="expanded"
               [attr.aria-expanded]="expanded"
+              [attr.aria-label]="
+                (expanded ? 'Collapse' : 'Expand') +
+                ' ' +
+                group.medium +
+                ' (' +
+                group.items.length +
+                ' items)'
+              "
               (click)="toggleMedium(group.medium)"
             >
               <span class="medium-toggle">{{ expanded ? '▾' : '▸' }}</span>

@@ -84,6 +84,10 @@ export class CatalogEventService implements OnDestroy {
    * The JWT access token is passed as a query parameter because `EventSource`
    * does not support custom headers. ASP.NET Core's JWT bearer handler reads
    * `access_token` from the query string by default.
+   *
+   * **Security trade-off:** Query parameters appear in server access logs,
+   * browser history, and proxy logs. This is a known `EventSource` limitation
+   * accepted for SSE — the token is short-lived and transmitted over HTTPS.
    */
   private connect(): void {
     if (this.eventSource) {

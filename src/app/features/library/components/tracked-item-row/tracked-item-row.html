@@ -2,6 +2,7 @@
   class="tracked-item-row"
   [class.tracked-item-row--dragging]="dragging()"
   [attr.draggable]="showReorder() ? 'true' : null"
+  [attr.aria-roledescription]="showReorder() ? 'sortable item' : null"
   (dragstart)="emitDragStart()"
   (dragover)="emitDragOver($event)"
   (dragend)="emitDragEnd()"

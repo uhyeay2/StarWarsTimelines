@@ -46,16 +46,16 @@ const OriginalEventSource = globalThis.EventSource;
 
 function installMockEventSource(): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis['EventSource'] = MockEventSource as any;
+  globalThis['EventSource'] = MockEventSource as unknown as any;
 }
 
 function uninstallMockEventSource(): void {
   if (OriginalEventSource) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    globalThis['EventSource'] = OriginalEventSource as any;
+    globalThis['EventSource'] = OriginalEventSource as unknown as any;
   } else {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    globalThis['EventSource'] = undefined as any;
+    globalThis['EventSource'] = undefined as unknown as any;
   }
 }
 

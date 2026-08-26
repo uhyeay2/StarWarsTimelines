@@ -13,13 +13,13 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { AuthError, AuthErrorCode } from '../models/auth-error';
+import { AuthError, AuthErrorCode, EMAIL_NOT_VERIFIED_TITLE } from '../models/auth-error';
 import { RegisterRequest } from '../models/register-request';
 import { User } from '../../../shared/models/user';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { LoginResponse, RefreshTokenResponse } from './auth.dto';
+import { mapLoginUser } from './auth.mapper';
 import { fetchUserProfile } from './account.service';
-import { mapRole } from './role.helper';
 import { LoggerService } from '../../../core/services/logging/logger.service';
 import { STORAGE_KEYS, StorageService } from '../../../shared/services/storage.service';
 
@@ -88,7 +88,7 @@ export class AuthService {
             const body = error.error as { title?: string; detail?: string } | null;
             const detail = body?.detail || 'Invalid username or password';
             const code: AuthErrorCode =
-              body?.title === 'Email not verified'
+              body?.title === EMAIL_NOT_VERIFIED_TITLE
                 ? AuthErrorCode.EmailNotVerified
                 : AuthErrorCode.InvalidCredentials;
             this.logger.warn('Login failed', { code, detail });
@@ -104,7 +104,7 @@ export class AuthService {
           );
         }),
         map((response) => {
-          const partialUser = this.mapUser(response.user);
+          const partialUser = mapLoginUser(response.user);
           this.storage.setItem(STORAGE_KEYS.token, response.accessToken);
           this.storage.setItem(STORAGE_KEYS.refreshToken, response.refreshToken);
           this.storage.setItem(STORAGE_KEYS.user, JSON.stringify(partialUser));
@@ -338,27 +338,6 @@ export class AuthService {
       this.storage.removeItem(STORAGE_KEYS.user);
       return null;
     }
-  }
-
-  /**
-   * Maps the minimal user object from the login response to a partial
-   * {@link User}.
-   *
-   * The returned object does **not** include `email` or `emailVerified` —
-   * the AccountService will fetch the full profile.
-   *
-   * @param response  The `user` field from {@link LoginResponse}.
-   * @returns A partial domain-level {@link User}.
-   */
-  private mapUser(response: LoginResponse['user']): User {
-    return {
-      id: response.id,
-      username: response.username,
-      displayName: response.displayName,
-      email: '',
-      emailVerified: false,
-      role: mapRole(response.role),
-    };
   }
 
   /**

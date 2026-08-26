@@ -25,6 +25,9 @@ export const AuthErrorCode = {
   NetworkError: 'network-error' as const,
 } satisfies Record<string, AuthErrorCode>;
 
+/** Backend error title that signals an unverified email address. */
+export const EMAIL_NOT_VERIFIED_TITLE = 'Email not verified';
+
 /**
  * A domain-specific error thrown when an authentication operation fails.
  *

@@ -13,9 +13,9 @@ import { environment } from '../../../../environments/environment';
 import { User } from '../../../shared/models/user';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { AccountResponse } from './auth.dto';
+import { mapAccountResponse } from './auth.mapper';
 import { AuthService } from './auth.service';
 import { LoggerService } from '../../../core/services/logging/logger.service';
-import { mapRole } from './role.helper';
 
 /** Base URL for account-related endpoints. */
 const USERS_BASE = `${environment.apiBaseUrl}/api/users`;
@@ -41,14 +41,7 @@ export function fetchUserProfile(
           ),
       );
     }),
-    map((response) => ({
-      id: response.id,
-      username: response.username,
-      displayName: response.displayName,
-      email: response.email,
-      emailVerified: response.emailVerified,
-      role: mapRole(response.role),
-    })),
+    map((response) => mapAccountResponse(response)),
   );
 }
 
@@ -166,14 +159,7 @@ export class AccountService {
    * @returns The updated domain-level {@link User}.
    */
   private applyAccount(response: AccountResponse): User {
-    const user: User = {
-      id: response.id,
-      username: response.username,
-      displayName: response.displayName,
-      email: response.email,
-      emailVerified: response.emailVerified,
-      role: mapRole(response.role),
-    };
+    const user = mapAccountResponse(response);
     this.auth.syncUser(user);
     return user;
   }
