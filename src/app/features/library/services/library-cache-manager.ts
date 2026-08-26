@@ -6,7 +6,7 @@
  * from CRUD operations.
  */
 
-import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, signal, untracked, WritableSignal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   catchError,
@@ -233,7 +233,13 @@ export class LibraryCacheManager {
   }
 
   ensureTracked(userId: string): void {
-    if (this.loading() || this.loadedUserId === userId) {
+    // Cache state is read untracked on purpose: callers invoke this from
+    // reactive contexts (page `effect`s). A tracked `loading()` read would
+    // register `loading` as a dependency of the calling effect, and the
+    // true→false toggle when the fetch settles would re-trigger that effect —
+    // refetching (and failing) in an endless loop that freezes the page.
+    const isInFlight = untracked(() => this.loading());
+    if (isInFlight || this.loadedUserId === userId) {
       return;
     }
     this.getTracked(userId).subscribe({ error: () => undefined });
