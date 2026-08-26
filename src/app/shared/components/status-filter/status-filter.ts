@@ -12,7 +12,7 @@
  */
 
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
-import { TRACKING_STATUSES, TrackingStatus } from '../../../../shared/models/tracking-status';
+import { TRACKING_STATUSES, TrackingStatus } from '../../models/tracking-status';
 
 /** Filter options: "All" followed by every tracking status. */
 export const STATUS_FILTER_OPTIONS = ['All', ...TRACKING_STATUSES] as const;

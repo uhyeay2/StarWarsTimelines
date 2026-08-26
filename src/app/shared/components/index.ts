@@ -7,3 +7,4 @@ export * from './login-prompt/login-prompt';
 export * from './nav-dropdown/nav-dropdown';
 export * from './searchable-select/searchable-select';
 export * from './site-header/site-header';
+export * from './status-filter/status-filter';

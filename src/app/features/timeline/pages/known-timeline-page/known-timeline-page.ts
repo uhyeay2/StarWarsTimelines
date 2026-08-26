@@ -31,7 +31,7 @@ import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { buildTrackedScope } from '../../../../shared/models/tracking-selection';
 import { AuthService } from '../../../auth/services/auth.service';
 import { LibraryService } from '../../../library/services/library.service';
-import { StatusFilter } from '../../../library/components/status-filter/status-filter';
+import { StatusFilter } from '../../../../shared/components/status-filter/status-filter';
 import { Timeline } from '../../components/timeline/timeline';
 import { LoginPrompt } from '../../../../shared/components/login-prompt/login-prompt';
 

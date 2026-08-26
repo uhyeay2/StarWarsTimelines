@@ -8,7 +8,7 @@ import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { User } from '../../../../shared/models/user';
 import { AuthService } from '../../../auth/services/auth.service';
 import { LibraryService } from '../../services/library.service';
-import { StatusFilter } from '../../components/status-filter/status-filter';
+import { StatusFilter } from '../../../../shared/components/status-filter/status-filter';
 import { TrackedEventsPage } from './tracked-events-page';
 
 const USER: User = {

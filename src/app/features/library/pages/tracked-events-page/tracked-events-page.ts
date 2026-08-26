@@ -29,7 +29,7 @@ import { MEDIA, Medium } from '../../../../shared/models/medium';
 import { TrackingStatus } from '../../../../shared/models/tracking-status';
 import { AuthService } from '../../../auth/services/auth.service';
 import { LibraryService } from '../../services/library.service';
-import { StatusFilter } from '../../components/status-filter/status-filter';
+import { StatusFilter } from '../../../../shared/components/status-filter/status-filter';
 import { TrackedItemRow } from '../../components/tracked-item-row/tracked-item-row';
 import { LoginPrompt } from '../../../../shared/components/login-prompt/login-prompt';
 

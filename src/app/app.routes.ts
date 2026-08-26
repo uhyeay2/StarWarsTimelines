@@ -10,7 +10,7 @@ export const routes: Routes = [
   {
     path: 'timeline',
     loadComponent: () =>
-      import('./features/timeline/components/timeline/timeline').then((m) => m.Timeline),
+      import('./features/timeline/pages/timeline-page/timeline-page').then((m) => m.TimelinePage),
   },
   {
     path: 'login',
