@@ -5,7 +5,6 @@ import {
   inject,
   OnInit,
   signal,
-  Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../shared/models/user';
@@ -13,22 +12,9 @@ import { AccountService } from '../../../auth/services/account.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { runOperation } from '../../../../shared/utils/async-operation';
 import { LoginPrompt } from '../../../../shared/components/login-prompt/login-prompt';
+import { passwordVisibility } from '../../../../shared/utils/password-visibility';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-interface PasswordVisibility {
-  readonly inputType: Signal<'text' | 'password'>;
-  readonly toggleAriaLabel: Signal<string>;
-  readonly toggleText: Signal<string>;
-}
-
-function passwordVisibility(show: Signal<boolean>): PasswordVisibility {
-  return {
-    inputType: computed(() => (show() ? 'text' : 'password')),
-    toggleAriaLabel: computed(() => (show() ? 'Hide password' : 'Show password')),
-    toggleText: computed(() => (show() ? 'Hide' : 'Show')),
-  };
-}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

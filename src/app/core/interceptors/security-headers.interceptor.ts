@@ -4,7 +4,14 @@ import { tap } from 'rxjs';
 import { LoggerService } from '../../core/services/logging/logger.service';
 
 /** Security headers the API should include in every response. */
-const EXPECTED_SECURITY_HEADERS = ['x-content-type-options', 'x-frame-options'] as const;
+const EXPECTED_SECURITY_HEADERS = [
+  'x-content-type-options',
+  'x-frame-options',
+  'strict-transport-security',
+  'content-security-policy',
+  'referrer-policy',
+  'permissions-policy',
+] as const;
 
 /**
  * Warns when API responses are missing recommended security headers.

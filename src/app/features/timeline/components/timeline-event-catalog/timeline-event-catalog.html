@@ -23,6 +23,7 @@
 
     <ul class="event-list">
       @for (row of rows(); track row.item.id) {
+        @let expanded = expandedIds().has(row.item.id);
         <li class="event-item">
           @if (confirmDeleteId() === row.item.id) {
             <div class="delete-prompt">
@@ -55,7 +56,7 @@
                   type="button"
                   (click)="toggleDetails(row.item)"
                 >
-                  {{ expandedIds().has(row.item.id) ? 'Hide details' : 'Show details' }}
+                  {{ expanded ? 'Hide details' : 'Show details' }}
                 </button>
                 @if (isAdmin()) {
                   <button class="btn btn-sm" type="button" (click)="beginEdit(row.item)">
@@ -71,7 +72,7 @@
                 }
               </div>
             </div>
-            @if (expandedIds().has(row.item.id)) {
+            @if (expanded) {
               <app-event-catalog-details [model]="row.details" />
             }
           }

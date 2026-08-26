@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Handles admin-only mutations (create, update, delete) for
+ * timeline events. Delegates cache invalidation to TimelineEventsService
+ * after each successful mutation.
+ */
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';

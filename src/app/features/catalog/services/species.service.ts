@@ -1,3 +1,7 @@
+/**
+ * @fileoverview CRUD service for catalog species. Manages a SignalCache
+ * of species entities and exposes reactive signals for the UI.
+ */
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, tap } from 'rxjs';
@@ -25,9 +29,9 @@ export class SpeciesService {
     CACHE_TTL_MS,
   );
 
-  readonly species = this.cache.data.asReadonly();
-  readonly speciesLoading = this.cache.loading.asReadonly();
-  readonly speciesError = this.cache.error.asReadonly();
+  readonly species = this.cache.data;
+  readonly speciesLoading = this.cache.loading;
+  readonly speciesError = this.cache.error;
 
   /**
    * Fetches all species from the catalog API.

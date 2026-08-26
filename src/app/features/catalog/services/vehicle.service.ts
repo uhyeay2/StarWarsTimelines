@@ -1,3 +1,7 @@
+/**
+ * @fileoverview CRUD service for catalog vehicles. Manages a SignalCache
+ * of vehicle entities and exposes reactive signals for the UI.
+ */
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, tap } from 'rxjs';
@@ -25,9 +29,9 @@ export class VehicleService {
     CACHE_TTL_MS,
   );
 
-  readonly vehicles = this.cache.data.asReadonly();
-  readonly vehiclesLoading = this.cache.loading.asReadonly();
-  readonly vehiclesError = this.cache.error.asReadonly();
+  readonly vehicles = this.cache.data;
+  readonly vehiclesLoading = this.cache.loading;
+  readonly vehiclesError = this.cache.error;
 
   /**
    * Fetches all vehicles from the catalog API.

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Shared catchError factory for catalog services. Classifies
+ * HTTP errors into typed CatalogError instances with entity-specific
+ * conflict codes (EntityInUse, DuplicateEntity).
+ */
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import {

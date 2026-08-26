@@ -98,13 +98,13 @@ export class TimelineEventsService {
   );
 
   /** Timeline events currently loaded, or `null` if not yet fetched. */
-  readonly events = this.eventsCache.data.asReadonly();
+  readonly events = this.eventsCache.data;
 
   /** Whether a fetch is currently in flight. */
-  readonly loading = this.eventsCache.loading.asReadonly();
+  readonly loading = this.eventsCache.loading;
 
   /** The last error message, or `null` when there is no error. */
-  readonly error = this.eventsCache.error.asReadonly();
+  readonly error = this.eventsCache.error;
 
   // ─── Public API ────────────────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ export class TimelineEventsService {
     }
 
     const request$ = this.fetchEventsWithRetry().pipe(
-      tap((events) => this.eventsCache.data.set(events)),
+      tap((events) => this.eventsCache.setData(events)),
     );
 
     return destroyRef ? request$.pipe(takeUntilDestroyed(destroyRef)) : request$;
@@ -193,7 +193,7 @@ export class TimelineEventsService {
           return;
         }
         const updated = current.map((ev: TimelineEvent) => (ev.id === eventId ? mapped : ev));
-        this.eventsCache.data.set(updated);
+        this.eventsCache.setData(updated);
       }),
       map(() => void 0),
       catchError((err: unknown) => {
@@ -275,7 +275,7 @@ export class TimelineEventsService {
     if (current === null) {
       return;
     }
-    this.eventsCache.data.set(current.filter((ev: TimelineEvent) => ev.id !== eventId));
+    this.eventsCache.setData(current.filter((ev: TimelineEvent) => ev.id !== eventId));
     this.logger.info('[TimelineEventsService] Removed event from cache', { eventId });
   }
 }

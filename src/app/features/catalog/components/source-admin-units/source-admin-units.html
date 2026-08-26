@@ -16,19 +16,16 @@
   @default {
     <ul class="unit-list">
       @for (displayGroup of host().getDisplayGroups(materialId()); track displayGroup.expandKey) {
+        @let seasonOpen = host().isSeasonExpanded(materialId(), displayGroup.expandKey);
         <li class="season-group">
           <div class="track-group-row">
             <button
               type="button"
               class="season-header"
-              [class.season-header--open]="
-                host().isSeasonExpanded(materialId(), displayGroup.expandKey)
-              "
+              [class.season-header--open]="seasonOpen"
               (click)="host().toggleSeason(materialId(), displayGroup.expandKey)"
             >
-              <span class="season-toggle">{{
-                host().isSeasonExpanded(materialId(), displayGroup.expandKey) ? '▾' : '▸'
-              }}</span>
+              <span class="season-toggle">{{ seasonOpen ? '▾' : '▸' }}</span>
               <span class="season-label">{{ displayGroup.label }}</span>
               <span class="season-count"
                 >{{ displayGroup.units.length }}
@@ -52,7 +49,7 @@
               </button>
             }
           </div>
-          @if (host().isSeasonExpanded(materialId(), displayGroup.expandKey)) {
+          @if (seasonOpen) {
             <ul class="season-episodes">
               @for (unit of displayGroup.units; track unit.id) {
                 <li class="unit-item">

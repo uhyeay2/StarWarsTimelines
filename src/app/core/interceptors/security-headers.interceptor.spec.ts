@@ -36,7 +36,19 @@ describe('securityHeadersInterceptor', () => {
     http.get('/api/test').subscribe();
 
     const req = httpMock.expectOne('/api/test');
-    req.flush({}, { headers: { 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY' } });
+    req.flush(
+      {},
+      {
+        headers: {
+          'x-content-type-options': 'nosniff',
+          'x-frame-options': 'DENY',
+          'strict-transport-security': 'max-age=31536000',
+          'content-security-policy': "default-src 'self'",
+          'referrer-policy': 'strict-origin-when-cross-origin',
+          'permissions-policy': 'camera=()',
+        },
+      },
+    );
 
     expect(warnSpy).not.toHaveBeenCalled();
     warnSpy.mockRestore();

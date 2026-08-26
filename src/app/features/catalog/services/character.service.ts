@@ -1,3 +1,7 @@
+/**
+ * @fileoverview CRUD service for catalog characters. Manages a SignalCache
+ * of character entities and exposes reactive signals for the UI.
+ */
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, tap } from 'rxjs';
@@ -26,9 +30,9 @@ export class CharacterService {
     CACHE_TTL_MS,
   );
 
-  readonly characters = this.cache.data.asReadonly();
-  readonly charactersLoading = this.cache.loading.asReadonly();
-  readonly charactersError = this.cache.error.asReadonly();
+  readonly characters = this.cache.data;
+  readonly charactersLoading = this.cache.loading;
+  readonly charactersError = this.cache.error;
 
   /**
    * Fetches all characters from the catalog API.

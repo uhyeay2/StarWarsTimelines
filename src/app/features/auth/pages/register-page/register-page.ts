@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { runOperation } from '../../../../shared/utils/async-operation';
+import { passwordVisibility } from '../../../../shared/utils/password-visibility';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,6 +27,8 @@ export class RegisterPage {
   readonly registeredEmail = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly showConfirmPassword = signal(false);
+  readonly passwordVisibility = passwordVisibility(this.showPassword);
+  readonly confirmPasswordVisibility = passwordVisibility(this.showConfirmPassword);
   readonly passwordsMatch = computed(
     () => this.confirmPassword() === '' || this.confirmPassword() === this.password(),
   );

@@ -21,14 +21,15 @@
 
       <!-- ─── Canon View Toggle ───────────────────────────────────────── -->
       <div class="view-toggle" role="group" aria-label="Continuity view">
+        @let canonView = filters().canonView;
         @for (view of views; track view) {
           <button
             type="button"
             role="switch"
             class="view-button"
-            [class.view-button--active]="filters().canonView === view"
-            [attr.aria-pressed]="filters().canonView === view"
-            [attr.aria-checked]="filters().canonView === view"
+            [class.view-button--active]="canonView === view"
+            [attr.aria-pressed]="canonView === view"
+            [attr.aria-checked]="canonView === view"
             (click)="selectView(view)"
           >
             {{ view }}

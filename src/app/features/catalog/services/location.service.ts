@@ -1,3 +1,7 @@
+/**
+ * @fileoverview CRUD service for catalog locations. Manages a SignalCache
+ * of location entities and exposes reactive signals for the UI.
+ */
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, Observable, tap } from 'rxjs';
@@ -25,9 +29,9 @@ export class LocationService {
     CACHE_TTL_MS,
   );
 
-  readonly locations = this.cache.data.asReadonly();
-  readonly locationsLoading = this.cache.loading.asReadonly();
-  readonly locationsError = this.cache.error.asReadonly();
+  readonly locations = this.cache.data;
+  readonly locationsLoading = this.cache.loading;
+  readonly locationsError = this.cache.error;
 
   /**
    * Fetches all locations from the catalog API.

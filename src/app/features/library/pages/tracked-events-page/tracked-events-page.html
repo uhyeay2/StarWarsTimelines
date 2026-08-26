@@ -20,21 +20,22 @@
       <!-- ─── Tracked Items Grouped By Medium ────────────────────────── -->
       @if (mediumGroups().length > 0) {
         @for (group of mediumGroups(); track group.medium) {
+          @let expanded = isMediumExpanded(group.medium);
           <div class="medium-group">
             <button
               type="button"
               class="medium-header"
-              [class.medium-header--open]="isMediumExpanded(group.medium)"
-              [attr.aria-expanded]="isMediumExpanded(group.medium)"
+              [class.medium-header--open]="expanded"
+              [attr.aria-expanded]="expanded"
               (click)="toggleMedium(group.medium)"
             >
-              <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+              <span class="medium-toggle">{{ expanded ? '▾' : '▸' }}</span>
               <span class="medium-label">{{ group.medium }}</span>
               <span class="medium-count"
                 >{{ group.items.length }} {{ group.items.length === 1 ? 'item' : 'items' }}</span
               >
             </button>
-            @if (isMediumExpanded(group.medium)) {
+            @if (expanded) {
               <ul class="item-list">
                 @for (item of group.items; track item.id) {
                   <li>

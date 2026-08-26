@@ -36,7 +36,7 @@
           <div class="password-input">
             <input
               name="password"
-              [type]="showPassword() ? 'text' : 'password'"
+              [type]="passwordVisibility.inputType()"
               [(ngModel)]="password"
               required
               minlength="6"
@@ -45,10 +45,10 @@
             <button
               type="button"
               class="password-toggle"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="passwordVisibility.toggleAriaLabel()"
               (click)="showPassword.set(!showPassword())"
             >
-              {{ showPassword() ? 'Hide' : 'Show' }}
+              {{ passwordVisibility.toggleText() }}
             </button>
           </div>
         </div>
@@ -58,7 +58,7 @@
           <div class="password-input">
             <input
               name="confirmPassword"
-              [type]="showConfirmPassword() ? 'text' : 'password'"
+              [type]="confirmPasswordVisibility.inputType()"
               [(ngModel)]="confirmPassword"
               required
               autocomplete="new-password"
@@ -66,10 +66,10 @@
             <button
               type="button"
               class="password-toggle"
-              [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="confirmPasswordVisibility.toggleAriaLabel()"
               (click)="showConfirmPassword.set(!showConfirmPassword())"
             >
-              {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+              {{ confirmPasswordVisibility.toggleText() }}
             </button>
           </div>
           @if (!passwordsMatch()) {

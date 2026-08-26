@@ -12,7 +12,7 @@
  * @see {@link TimelineEvent} for the output domain model.
  */
 
-import { Canon } from '../../../shared/models/canon';
+import { Canon, CANON_TIMELINES } from '../../../shared/models/canon';
 import { mediumFromApiCode } from '../../../shared/models/medium';
 import { EventSource, TimelineEvent } from '../models/timeline-event';
 import { unitTypeFromApiCode } from '../../../shared/models/unit-type';
@@ -199,7 +199,7 @@ export function mapEventSource(link: EventSourceMaterialLinkDto): EventSource {
  */
 function unionCanon(sources: readonly EventSource[]): readonly Canon[] {
   const canon: Canon[] = [];
-  for (const label of ['Canon', 'Legends'] as const) {
+  for (const label of CANON_TIMELINES) {
     if (sources.some((source) => source.canon.includes(label))) {
       canon.push(label);
     }

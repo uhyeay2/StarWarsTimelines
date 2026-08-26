@@ -1,3 +1,7 @@
+/**
+ * @fileoverview HTTP interceptor that logs all failed responses to the
+ * centralized logger for diagnostics and monitoring.
+ */
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';

@@ -5,12 +5,13 @@
   </div>
 
   <nav class="catalog-tabs" aria-label="Catalog sections">
+    @let active = activeTab();
     @for (tab of tabs; track tab.key) {
       <button
         type="button"
         class="catalog-tab"
-        [class.catalog-tab--active]="activeTab() === tab.key"
-        [attr.aria-pressed]="activeTab() === tab.key"
+        [class.catalog-tab--active]="active === tab.key"
+        [attr.aria-pressed]="active === tab.key"
         (click)="selectTab(tab.key)"
       >
         {{ tab.label }}

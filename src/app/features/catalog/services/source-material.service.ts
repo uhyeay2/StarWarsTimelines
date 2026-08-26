@@ -1,18 +1,24 @@
+/**
+ * @fileoverview CRUD service for source materials and their nested units.
+ * Manages two SignalCache instances (materials list + per-material units)
+ * and exposes reactive signals for the catalog UI.
+ */
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, tap } from 'rxjs';
 import { ApiSourceMaterial } from '../../../shared/models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../../shared/models/api-source-material-unit';
-import { canonTypeFromApiCode, canonTypeToApiCode } from '../../../shared/models/canon-type';
+import { canonTypeToApiCode } from '../../../shared/models/canon-type';
 import { catalogErrorHandler } from './catalog-error-handler';
 import { CATALOG_API_BASE, CACHE_TTL_MS } from './catalog-constants';
 import { CatalogErrorCode } from '../models/catalog-error';
 import { CreateSourceMaterialInput } from '../models/create-source-material-input';
 import { CreateSourceMaterialUnitInput } from '../models/create-source-material-unit-input';
-import { mediumFromApiCode, mediumToApiCode } from '../../../shared/models/medium';
-import { unitTypeFromApiCode, unitTypeToApiCode } from '../../../shared/models/unit-type';
+import { mediumToApiCode } from '../../../shared/models/medium';
+import { unitTypeToApiCode } from '../../../shared/models/unit-type';
 import { readProblemDetail } from '../../../shared/utils/problem-detail';
 import { SignalCache } from '../../../shared/utils/signal-cache';
+import { mapSourceMaterial, mapUnit } from './source-material.mapper';
 import { SourceMaterialDto, SourceMaterialUnitDto } from './catalog.dto';
 import { LoggerService } from '../../../core/services/logging/logger.service';
 
@@ -30,7 +36,7 @@ export class SourceMaterialService {
     () =>
       this.http
         .get<readonly SourceMaterialDto[]>(`${CATALOG_API_BASE}/source-materials`)
-        .pipe(map((items) => items.map((item) => this.mapSourceMaterial(item)))),
+        .pipe(map((items) => items.map((item) => mapSourceMaterial(item)))),
     (err) => {
       if (err instanceof HttpErrorResponse) {
         return readProblemDetail(err, 'Failed to load source materials');
@@ -45,9 +51,9 @@ export class SourceMaterialService {
 
   // ─── Public signals ──────────────────────────────────────────────────────
 
-  readonly sourceMaterials = this.materialsCache.data.asReadonly();
-  readonly sourceMaterialsLoading = this.materialsCache.loading.asReadonly();
-  readonly sourceMaterialsError = this.materialsCache.error.asReadonly();
+  readonly sourceMaterials = this.materialsCache.data;
+  readonly sourceMaterialsLoading = this.materialsCache.loading;
+  readonly sourceMaterialsError = this.materialsCache.error;
 
   // ─── Fetch methods ───────────────────────────────────────────────────────
 
@@ -116,7 +122,7 @@ export class SourceMaterialService {
             .get<readonly SourceMaterialUnitDto[]>(
               `${CATALOG_API_BASE}/source-materials/${sourceMaterialId}/units`,
             )
-            .pipe(map((items) => items.map((item) => this.mapUnit(item)))),
+            .pipe(map((items) => items.map((item) => mapUnit(item)))),
         (err) => {
           if (err instanceof HttpErrorResponse) {
             return readProblemDetail(err, 'Failed to load units');
@@ -188,7 +194,7 @@ export class SourceMaterialService {
             this.logger,
           ),
         ),
-        map((item) => this.mapSourceMaterial(item)),
+        map((item) => mapSourceMaterial(item)),
         tap(() => this.materialsCache.invalidate()),
       );
   }
@@ -218,7 +224,7 @@ export class SourceMaterialService {
             this.logger,
           ),
         ),
-        map((item) => this.mapSourceMaterial(item)),
+        map((item) => mapSourceMaterial(item)),
         tap(() => this.materialsCache.invalidate()),
       );
   }
@@ -271,7 +277,7 @@ export class SourceMaterialService {
             this.logger,
           ),
         ),
-        map((items) => items.map((item) => this.mapUnit(item))),
+        map((items) => items.map((item) => mapUnit(item))),
         tap(() => {
           this.materialsCache.invalidate();
           this.unitCaches.get(id)?.invalidate();
@@ -310,7 +316,7 @@ export class SourceMaterialService {
             this.logger,
           ),
         ),
-        map((item) => this.mapUnit(item)),
+        map((item) => mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
   }
@@ -346,7 +352,7 @@ export class SourceMaterialService {
             this.logger,
           ),
         ),
-        map((item) => this.mapUnit(item)),
+        map((item) => mapUnit(item)),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
   }
@@ -371,27 +377,5 @@ export class SourceMaterialService {
         ),
         tap(() => this.unitCaches.get(sourceMaterialId)?.invalidate()),
       );
-  }
-
-  // ─── Private helpers ─────────────────────────────────────────────────────
-
-  private mapSourceMaterial(item: SourceMaterialDto): ApiSourceMaterial {
-    return {
-      id: item.id,
-      title: item.title,
-      medium: mediumFromApiCode(item.medium),
-      canonType: canonTypeFromApiCode(item.canonType),
-    };
-  }
-
-  private mapUnit(item: SourceMaterialUnitDto): ApiSourceMaterialUnit {
-    return {
-      id: item.id,
-      sourceMaterialId: item.sourceMaterialId,
-      unitType: unitTypeFromApiCode(item.unitType),
-      number: item.number,
-      title: item.title,
-      parentUnitId: item.parentUnitId,
-    };
   }
 }

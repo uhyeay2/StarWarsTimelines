@@ -5,6 +5,7 @@ import { AuthError } from '../../models/auth-error';
 import { ROUTES } from '../../../../shared/constants/routes.constants';
 import { AuthService } from '../../services/auth.service';
 import { runOperation } from '../../../../shared/utils/async-operation';
+import { passwordVisibility } from '../../../../shared/utils/password-visibility';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,6 +23,7 @@ export class LoginPage {
   readonly error = signal<string | null>(null);
   readonly submitting = signal(false);
   readonly showPassword = signal(false);
+  readonly passwordVisibility = passwordVisibility(this.showPassword);
   readonly needsVerification = signal(false);
   readonly verificationSent = signal(false);
   readonly resending = signal(false);

@@ -377,7 +377,6 @@ describe('LibraryService', () => {
     });
 
     it('clears error signal on success', async () => {
-      service.error.set('previous error');
       const promise = firstValueFrom(service.getTracked('u1'));
       flushGetRequest().flush(makeItemList());
       await promise;

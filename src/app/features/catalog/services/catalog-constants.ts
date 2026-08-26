@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Shared constants for the catalog feature: API base URL,
+ * cache TTL, and the canonical list of entity types used in SSE events.
+ */
 import { environment } from '../../../../environments/environment';
 
 /** Base URL for all catalog API endpoints. */

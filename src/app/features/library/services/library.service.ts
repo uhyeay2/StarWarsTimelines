@@ -12,7 +12,7 @@
  * @see {@link Timeline} for the library-aware timeline view.
  */
 
-import { DestroyRef, inject, Injectable, WritableSignal } from '@angular/core';
+import { DestroyRef, inject, Injectable, Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -47,9 +47,9 @@ export class LibraryService {
 
   // ─── Delegate signals ───────────────────────────────────────────────────
 
-  readonly items: WritableSignal<readonly LibraryItem[]> = this.cache.items;
-  readonly loading: WritableSignal<boolean> = this.cache.loading;
-  readonly error: WritableSignal<string | null> = this.cache.error;
+  readonly items: Signal<readonly LibraryItem[]> = this.cache.items;
+  readonly loading: Signal<boolean> = this.cache.loading;
+  readonly error: Signal<string | null> = this.cache.error;
 
   // ─── Delegate cache operations ──────────────────────────────────────────
 

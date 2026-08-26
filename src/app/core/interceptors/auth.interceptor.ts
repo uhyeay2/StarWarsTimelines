@@ -1,3 +1,8 @@
+/**
+ * @fileoverview HTTP interceptor that attaches JWT access tokens to outgoing
+ * requests and transparently refreshes expired sessions using a mutex-guarded
+ * refresh-token flow.
+ */
 import { HttpErrorResponse, HttpEvent, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';

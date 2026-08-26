@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Centralized route-path constants used by the router
+ * configuration and navigation helpers.
+ */
 export const ROUTES = {
   HOME: '/',
   TIMELINE: '/timeline',

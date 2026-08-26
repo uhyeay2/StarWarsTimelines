@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Pure text-search utilities for filtering collections by
+ * case-insensitive substring match on a `name` property.
+ */
+/**
  * Filters items by case-insensitive substring match on their `name`.
  * An empty or whitespace-free search term returns the input untouched.
  */

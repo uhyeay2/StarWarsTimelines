@@ -5,6 +5,11 @@
  * and `error`. Supports automatic expiry (TTL) as a resilience fallback
  * and manual invalidation for event-driven cache busting.
  *
+ * Public signal properties are typed as `Signal<T>` (read-only). The class
+ * itself mutates via private `_data`/`_loading`/`_error` fields. External
+ * callers that need controlled write access (e.g., partial cache merges)
+ * can use {@link setData}, {@link setLoading}, and {@link setError}.
+ *
  * @example
  * ```ts
  * private readonly cache = new SignalCache(
@@ -13,29 +18,33 @@
  *   300_000, // 5-minute TTL
  * );
  *
- * readonly characters = this.cache.data.asReadonly();
- * readonly loading = this.cache.loading.asReadonly();
+ * readonly characters = this.cache.data;
+ * readonly loading = this.cache.loading;
  * ```
  */
 
-import { signal, WritableSignal } from '@angular/core';
+import { Signal, signal, WritableSignal } from '@angular/core';
 import { catchError, finalize, Observable, of } from 'rxjs';
 
 /**
  * A signal-backed cache that fetches data from an Observable source and
- * exposes the result as Angular signals.
+ * exposes the result as read-only Angular signals.
  *
  * @typeParam T  The cached data type.
  */
 export class SignalCache<T> {
+  private readonly _data: WritableSignal<T | null> = signal(null);
+  private readonly _loading: WritableSignal<boolean> = signal(false);
+  private readonly _error: WritableSignal<string | null> = signal(null);
+
   /** The cached data, or `null` when no data has been loaded / after invalidation. */
-  readonly data: WritableSignal<T | null> = signal(null);
+  readonly data: Signal<T | null> = this._data.asReadonly();
 
   /** Whether a fetch is currently in flight. */
-  readonly loading: WritableSignal<boolean> = signal(false);
+  readonly loading: Signal<boolean> = this._loading.asReadonly();
 
   /** The last error message, or `null` when there is no error. */
-  readonly error: WritableSignal<string | null> = signal(null);
+  readonly error: Signal<string | null> = this._error.asReadonly();
 
   private expirationTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -51,6 +60,21 @@ export class SignalCache<T> {
     private readonly ttlMs = 0,
   ) {}
 
+  /** Sets the cached data value directly. */
+  setData(value: T | null): void {
+    this._data.set(value);
+  }
+
+  /** Sets the loading state directly. */
+  setLoading(value: boolean): void {
+    this._loading.set(value);
+  }
+
+  /** Sets the error state directly. */
+  setError(value: string | null): void {
+    this._error.set(value);
+  }
+
   /**
    * Fetches data from the source and updates the signals.
    *
@@ -58,23 +82,23 @@ export class SignalCache<T> {
    * or data is already cached, this method is a no-op.
    */
   fetch(): void {
-    if (this.loading() || this.data() !== null) {
+    if (this._loading() || this._data() !== null) {
       return;
     }
 
-    this.loading.set(true);
-    this.error.set(null);
+    this._loading.set(true);
+    this._error.set(null);
 
     this.fetchFn()
       .pipe(
-        finalize(() => this.loading.set(false)),
+        finalize(() => this._loading.set(false)),
         catchError((err: unknown) => {
-          this.error.set(this.errorHandler?.(err) ?? 'Failed to load data');
+          this._error.set(this.errorHandler?.(err) ?? 'Failed to load data');
           return of(null as T | null);
         }),
       )
       .subscribe((data) => {
-        this.data.set(data);
+        this._data.set(data);
         this.scheduleExpiration();
       });
   }
@@ -87,7 +111,7 @@ export class SignalCache<T> {
    */
   invalidate(): void {
     this.clearExpiration();
-    this.data.set(null);
+    this._data.set(null);
     this.fetch();
   }
 
@@ -96,7 +120,7 @@ export class SignalCache<T> {
     this.clearExpiration();
     if (this.ttlMs > 0) {
       this.expirationTimer = setTimeout(() => {
-        this.data.set(null);
+        this._data.set(null);
         this.fetch();
       }, this.ttlMs);
     }

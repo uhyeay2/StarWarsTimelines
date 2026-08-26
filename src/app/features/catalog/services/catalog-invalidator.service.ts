@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Coordinates cache invalidation across all catalog entity
+ * types. Routes SSE-driven entity-type strings to the correct service's
+ * invalidation method.
+ */
 import { inject, Injectable } from '@angular/core';
 import { CharacterService } from './character.service';
 import { LocationService } from './location.service';

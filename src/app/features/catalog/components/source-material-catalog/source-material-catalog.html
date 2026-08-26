@@ -17,15 +17,16 @@
     </label>
 
     @for (group of mediumGroups(); track group.medium) {
+      @let mediumOpen = isMediumExpanded(group.medium);
       <div class="medium-group">
-        <div class="medium-header" [class.medium-header--open]="isMediumExpanded(group.medium)">
+        <div class="medium-header" [class.medium-header--open]="mediumOpen">
           <button
             type="button"
             class="medium-header-toggle"
             (click)="toggleMedium(group.medium)"
-            [attr.aria-expanded]="isMediumExpanded(group.medium)"
+            [attr.aria-expanded]="mediumOpen"
           >
-            <span class="medium-toggle">{{ isMediumExpanded(group.medium) ? '▾' : '▸' }}</span>
+            <span class="medium-toggle">{{ mediumOpen ? '▾' : '▸' }}</span>
             <span class="medium-label">{{ group.medium }}</span>
             <span class="medium-count"
               >{{ group.materials.length }}
@@ -44,7 +45,7 @@
             </button>
           }
         </div>
-        @if (isMediumExpanded(group.medium)) {
+        @if (mediumOpen) {
           <ul class="source-list">
             @for (material of group.materials; track material.id) {
               <li class="source-item">

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Global Angular ErrorHandler that delegates unhandled
+ * exceptions to the centralized LoggerService.
+ */
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { LoggerService } from '../../core/services/logging/logger.service';
 

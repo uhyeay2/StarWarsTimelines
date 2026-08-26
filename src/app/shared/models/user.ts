@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Domain-level user model and role constants.
+ */
 export const USER_ROLES = ['Standard', 'Admin'] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
