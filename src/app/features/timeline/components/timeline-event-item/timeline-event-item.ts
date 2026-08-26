@@ -57,6 +57,31 @@ export interface ToggleFacetEvent {
   values: readonly string[];
 }
 
+/** Precomputed render model for one depicting source material. */
+interface SourceRow {
+  /** Stable @for track key and tracking lookup key. */
+  readonly key: number | string;
+  /** Source display title (used in the dropdown aria-label). */
+  readonly title: string;
+  /** The original event source (passed back on tracking changes). */
+  readonly source: EventSource;
+  /** Plain-text pinned-unit detail, or null when suppressed. */
+  readonly unitText: string | null;
+  /** Dropdown state when tracking UI should render, else null. */
+  readonly dropdown: {
+    readonly options: readonly TrackSelectOption[];
+    readonly status: TrackingStatus | null;
+  } | null;
+}
+
+/** One non-empty facet group in the expanded details section. */
+interface DetailGroup {
+  readonly key: ToggleableFacetKey;
+  readonly label: string;
+  readonly values: readonly string[];
+  readonly selected: ReadonlySet<string>;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-timeline-event-item',
@@ -160,6 +185,53 @@ export class TimelineEventItem implements OnInit {
       });
     }
     return map;
+  });
+
+  /** Render rows per depicting source, with unit text and dropdown precomputed. */
+  readonly sourceRows = computed<readonly SourceRow[]>(() =>
+    this.event().sources.map((source) => {
+      const key = this.trackSource(source);
+      const detail = this.sourceDetail(source);
+      const nested = this.isNestedContainerUnit(source);
+      const data = this.sourceTrackingData().get(key);
+      return {
+        key,
+        title: source.title,
+        source,
+        unitText: !nested && detail !== undefined ? detail : null,
+        dropdown:
+          data !== undefined && data.showTracking
+            ? { options: data.options, status: data.status }
+            : null,
+      };
+    }),
+  );
+
+  /** Non-empty facet groups rendered inside the expanded details section. */
+  readonly detailGroups = computed<readonly DetailGroup[]>(() => {
+    const item = this.event();
+    return (
+      [
+        {
+          key: 'locations',
+          label: 'Locations',
+          values: item.locations,
+          selected: this.selectedLocationSet(),
+        },
+        {
+          key: 'characters',
+          label: 'Characters',
+          values: item.characters,
+          selected: this.selectedCharacterSet(),
+        },
+        {
+          key: 'vehicles',
+          label: 'Vehicles',
+          values: item.vehicles,
+          selected: this.selectedVehicleSet(),
+        },
+      ] as const
+    ).filter((group) => group.values.length > 0);
   });
 
   // ─── Tracking state ────────────────────────────────────────────────────

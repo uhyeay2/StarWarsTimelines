@@ -1,0 +1,29 @@
+@use '../../../../../styles/tokens' as *;
+@use '../../../../../styles/mixins' as *;
+
+.character-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.character-edit input,
+.character-edit select {
+  box-sizing: border-box;
+
+  @include dark-control;
+
+  padding: 0.45rem 0.6rem;
+  width: auto;
+  flex: 1 1 7rem;
+}
+
+.character-edit select option {
+  background: $color-on-accent;
+  color: $color-text;
+}
+
+.character-edit input::placeholder {
+  color: $color-placeholder;
+}

@@ -62,26 +62,22 @@
         [defaultExpandedDepth]="1"
         [(selected)]="sourceSelection"
       />
-      @if (hasLinks()) {
-        <ul class="link-chips">
-          @for (chip of resolvedLinks(); track $index) {
-            <li class="link-chip">
-              {{ chip.material }}
-              @if (chip.unit; as unit) {
-                <span class="link-chip-unit"> — {{ unit }}</span>
-              }
-              <button
-                type="button"
-                class="link-chip-remove"
-                (click)="removeLink(chip)"
-                [attr.aria-label]="'Remove ' + chip.material"
-              >
-                ×
-              </button>
-            </li>
-          }
-        </ul>
-      }
+      <ul class="link-chips">
+        @for (chip of resolvedLinks(); track $index) {
+          <li class="link-chip">
+            {{ chip.material }}
+            <span class="link-chip-unit" [hidden]="!chip.unit">— {{ chip.unit }}</span>
+            <button
+              type="button"
+              class="link-chip-remove"
+              (click)="removeLink(chip)"
+              [attr.aria-label]="'Remove ' + chip.material"
+            >
+              ×
+            </button>
+          </li>
+        }
+      </ul>
     </div>
 
     <div class="source-field">
@@ -91,23 +87,21 @@
         [options]="characterNodes()"
         [(selected)]="characterSelection"
       />
-      @if (characterChips().length > 0) {
-        <ul class="link-chips">
-          @for (chip of characterChips(); track chip.value) {
-            <li class="link-chip">
-              {{ chip.name }}
-              <button
-                type="button"
-                class="link-chip-remove"
-                (click)="removeCharacter(chip.value)"
-                [attr.aria-label]="'Remove ' + chip.name"
-              >
-                ×
-              </button>
-            </li>
-          }
-        </ul>
-      }
+      <ul class="link-chips">
+        @for (chip of characterChips(); track chip.value) {
+          <li class="link-chip">
+            {{ chip.name }}
+            <button
+              type="button"
+              class="link-chip-remove"
+              (click)="removeCharacter(chip.value)"
+              [attr.aria-label]="'Remove ' + chip.name"
+            >
+              ×
+            </button>
+          </li>
+        }
+      </ul>
     </div>
 
     <div class="source-field">
@@ -117,23 +111,21 @@
         [options]="locationNodes()"
         [(selected)]="locationSelection"
       />
-      @if (locationChips().length > 0) {
-        <ul class="link-chips">
-          @for (chip of locationChips(); track chip.value) {
-            <li class="link-chip">
-              {{ chip.name }}
-              <button
-                type="button"
-                class="link-chip-remove"
-                (click)="removeLocation(chip.value)"
-                [attr.aria-label]="'Remove ' + chip.name"
-              >
-                ×
-              </button>
-            </li>
-          }
-        </ul>
-      }
+      <ul class="link-chips">
+        @for (chip of locationChips(); track chip.value) {
+          <li class="link-chip">
+            {{ chip.name }}
+            <button
+              type="button"
+              class="link-chip-remove"
+              (click)="removeLocation(chip.value)"
+              [attr.aria-label]="'Remove ' + chip.name"
+            >
+              ×
+            </button>
+          </li>
+        }
+      </ul>
     </div>
 
     <div class="source-field">
@@ -143,23 +135,21 @@
         [options]="vehicleNodes()"
         [(selected)]="vehicleSelection"
       />
-      @if (vehicleChips().length > 0) {
-        <ul class="link-chips">
-          @for (chip of vehicleChips(); track chip.value) {
-            <li class="link-chip">
-              {{ chip.name }}
-              <button
-                type="button"
-                class="link-chip-remove"
-                (click)="removeVehicle(chip.value)"
-                [attr.aria-label]="'Remove ' + chip.name"
-              >
-                ×
-              </button>
-            </li>
-          }
-        </ul>
-      }
+      <ul class="link-chips">
+        @for (chip of vehicleChips(); track chip.value) {
+          <li class="link-chip">
+            {{ chip.name }}
+            <button
+              type="button"
+              class="link-chip-remove"
+              (click)="removeVehicle(chip.value)"
+              [attr.aria-label]="'Remove ' + chip.name"
+            >
+              ×
+            </button>
+          </li>
+        }
+      </ul>
     </div>
 
     <p class="admin-popup-hint">

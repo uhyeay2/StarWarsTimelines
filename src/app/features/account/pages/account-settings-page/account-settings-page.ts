@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  Signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { User } from '../../../../shared/models/user';
 import { AccountService } from '../../../auth/services/account.service';
@@ -7,6 +15,20 @@ import { runOperation } from '../../../../shared/utils/async-operation';
 import { LoginPrompt } from '../../../../shared/components/login-prompt/login-prompt';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface PasswordVisibility {
+  readonly inputType: Signal<'text' | 'password'>;
+  readonly toggleAriaLabel: Signal<string>;
+  readonly toggleText: Signal<string>;
+}
+
+function passwordVisibility(show: Signal<boolean>): PasswordVisibility {
+  return {
+    inputType: computed(() => (show() ? 'text' : 'password')),
+    toggleAriaLabel: computed(() => (show() ? 'Hide password' : 'Show password')),
+    toggleText: computed(() => (show() ? 'Hide' : 'Show')),
+  };
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,6 +64,30 @@ export class AccountSettingsPage implements OnInit {
   readonly showCurrentPassword = signal(false);
   readonly showNewPassword = signal(false);
   readonly showConfirmPassword = signal(false);
+
+  readonly currentPasswordVisibility = passwordVisibility(this.showCurrentPassword);
+  readonly newPasswordVisibility = passwordVisibility(this.showNewPassword);
+  readonly confirmPasswordVisibility = passwordVisibility(this.showConfirmPassword);
+
+  readonly displayNameButtonLabel = computed(() =>
+    this.displayNameSaving() ? 'Saving…' : 'Save display name',
+  );
+  readonly emailVerified = computed(() => this.account()?.emailVerified ?? false);
+  readonly emailBadgeClass = computed(() =>
+    this.emailVerified()
+      ? 'settings-badge settings-badge--verified'
+      : 'settings-badge settings-badge--unverified',
+  );
+  readonly emailBadgeLabel = computed(() => (this.emailVerified() ? 'Verified' : 'Unverified'));
+  readonly emailNote = computed(() =>
+    this.emailVerified()
+      ? 'Changing your email requires verifying the new address before you can log in again.'
+      : 'Check your inbox for a verification link before logging in again.',
+  );
+  readonly emailButtonLabel = computed(() => (this.emailSaving() ? 'Saving…' : 'Save email'));
+  readonly passwordButtonLabel = computed(() =>
+    this.passwordSaving() ? 'Saving…' : 'Change password',
+  );
 
   ngOnInit(): void {
     const currentUser = this.auth.getCurrentUser();

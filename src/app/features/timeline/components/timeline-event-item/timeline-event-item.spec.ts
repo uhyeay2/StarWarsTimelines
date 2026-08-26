@@ -408,7 +408,9 @@ describe('TimelineEventItem', () => {
       { label: 'Chapter 1', values: ['material-shatterpoint:chapter-1'] },
     ]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
+    const hiddenUnit = fixture.nativeElement.querySelector('.event-source-unit');
+    expect(hiddenUnit).not.toBeNull();
+    expect((hiddenUnit as HTMLElement).hidden).toBe(true);
   });
 
   it('renders a nested collection book as a chip instead of a plain-text detail', () => {
@@ -444,7 +446,9 @@ describe('TimelineEventItem', () => {
       { label: 'Book 1: Chaos Rising', values: ['23:u74'] },
     ]);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.event-source-unit')).toBeNull();
+    const nestedUnit = fixture.nativeElement.querySelector('.event-source-unit');
+    expect(nestedUnit).not.toBeNull();
+    expect((nestedUnit as HTMLElement).hidden).toBe(true);
     const bookChip = [
       ...(fixture.nativeElement as HTMLElement).querySelectorAll('.source-chip--source'),
     ].find((chip) => chip.textContent?.trim() === 'Book 1: Chaos Rising') as HTMLElement;

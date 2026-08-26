@@ -12,22 +12,11 @@
   color: $color-text;
 }
 
-.character-search input,
-.character-edit input,
-.character-edit select {
+.character-search input {
   box-sizing: border-box;
   width: 100%;
 
   @include dark-control;
-}
-
-.character-edit select option {
-  background: $color-on-accent;
-  color: $color-text;
-}
-
-.character-edit input::placeholder {
-  color: $color-placeholder;
 }
 
 .character-hint {
@@ -79,6 +68,10 @@
   font-size: 0.82rem;
 }
 
+.character-meta:empty {
+  display: none;
+}
+
 .character-actions {
   display: flex;
   gap: 0.4rem;
@@ -88,18 +81,4 @@
 .character-edit-wrap {
   flex: 1;
   min-width: 0;
-}
-
-.character-edit {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.character-edit input,
-.character-edit select {
-  padding: 0.45rem 0.6rem;
-  width: auto;
-  flex: 1 1 7rem;
 }

@@ -1,0 +1,54 @@
+@if (host().isAdmin()) {
+  @if (host().addMaterialMedium(); as popupMedium) {
+    <app-material-add-dialog
+      [medium]="popupMedium"
+      [titleLabel]="popupMedium === 'Book' ? 'Book Title or Collection Name' : 'Title'"
+      [(title)]="addTitle"
+      [(canonType)]="addCanonType"
+      [error]="host().addError()"
+      [saving]="host().adding()"
+      (save)="host().submitAddMaterial()"
+      (cancel)="host().cancelAddMaterial()"
+    />
+  }
+
+  @if (host().bookChoiceMaterialId() !== null) {
+    <app-book-choice-dialog
+      (chooseChapter)="host().chooseBookChapter(host().bookChoiceMaterialId()!)"
+      (chooseBook)="host().requestStartCollection(host().bookChoiceMaterialId()!)"
+      (cancel)="host().cancelBookChoice()"
+    />
+  }
+
+  @if (host().unitPopupContext(); as context) {
+    <app-unit-add-dialog
+      [heading]="host().unitPopupHeading(context)"
+      [(number)]="unitNumber"
+      [(title)]="unitTitle"
+      [error]="host().unitAddError()"
+      [saving]="host().addingUnitFor() === context.materialId"
+      (save)="host().submitAddUnit()"
+      (cancel)="host().cancelAddUnit()"
+    />
+  }
+
+  @if (host().convertPopupMaterialId() !== null) {
+    <app-convert-collection-dialog
+      [(title)]="convertTitle"
+      [error]="host().addError()"
+      [saving]="host().convertingId() === host().convertPopupMaterialId()"
+      (convert)="host().submitConvert()"
+      (cancel)="host().cancelConvert()"
+    />
+  }
+
+  @if (host().startCollectionMaterialId() !== null) {
+    <app-start-collection-dialog
+      [(collectionName)]="collectionName"
+      [error]="host().addError()"
+      [saving]="host().startingCollectionFor() === host().startCollectionMaterialId()"
+      (save)="host().submitStartCollection($event)"
+      (cancel)="host().cancelStartCollection()"
+    />
+  }
+}

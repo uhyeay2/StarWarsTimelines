@@ -16,7 +16,17 @@ import { TimelineEventsService } from '../../services/timeline-events.service';
 import { TimelineEvent, EventSource, formatGalacticYears } from '../../models/timeline-event';
 import { sourceUnitPathLabel } from '../../../../shared/models/source-material';
 import { TimelineEventAddDialog } from '../timeline-event-add-dialog/timeline-event-add-dialog';
+import {
+  EventCatalogDetails,
+  EventCatalogDetailsModel,
+} from '../event-catalog-details/event-catalog-details';
 import { TimelineEventCatalogPresenter } from './timeline-event-catalog-presenter';
+
+/** One catalog list row enriched with its precomputed details model. */
+interface CatalogRow {
+  readonly item: TimelineEvent;
+  readonly details: EventCatalogDetailsModel;
+}
 
 /**
  * Admin catalog tab listing every timeline event with add / edit / delete.
@@ -29,7 +39,7 @@ import { TimelineEventCatalogPresenter } from './timeline-event-catalog-presente
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-timeline-event-catalog',
-  imports: [FormsModule, TimelineEventAddDialog],
+  imports: [FormsModule, TimelineEventAddDialog, EventCatalogDetails],
   templateUrl: './timeline-event-catalog.html',
   styleUrl: './timeline-event-catalog.scss',
   providers: [TimelineEventCatalogPresenter],
@@ -89,6 +99,36 @@ export class TimelineEventCatalog implements OnInit {
       (a, b) =>
         a.yearStart - b.yearStart || a.sequence - b.sequence || a.title.localeCompare(b.title),
     );
+  });
+
+  /** Catalog rows enriched with precomputed details for the expandable grid. */
+  readonly rows = computed<readonly CatalogRow[]>(() =>
+    this.filteredItems().map((item) => ({
+      item,
+      details: {
+        description: item.description ?? '',
+        sources: item.sources.map((source) => ({
+          medium: source.medium,
+          label: this.sourceLabel(source),
+        })),
+        entities: [
+          { label: 'Characters', text: item.characters.join(', ') },
+          { label: 'Locations', text: item.locations.join(', ') },
+          { label: 'Vehicles', text: item.vehicles.join(', ') },
+        ].filter((entity) => entity.text.length > 0),
+      },
+    })),
+  );
+
+  /** Combined footer message: action error takes precedence over empty search results. */
+  readonly footerStatus = computed<{ text: string; css: string; role: string } | null>(() => {
+    if (this.actionError()) {
+      return { text: this.actionError()!, css: 'form-error', role: 'alert' };
+    }
+    if (this.searchTerm() && this.filteredItems().length === 0 && this.items().length > 0) {
+      return { text: 'No events match your search.', css: 'form-status', role: 'status' };
+    }
+    return null;
   });
 
   ngOnInit(): void {

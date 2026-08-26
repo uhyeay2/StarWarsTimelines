@@ -292,8 +292,10 @@ describe('SourceMaterialCatalog', () => {
     expect(component.expandedMaterialId()).toBeNull();
     expect(component.materialsWithUnits().has(11)).toBe(false);
 
-    const expandButton = fixture.nativeElement.querySelector('.source-expand[type="button"]');
-    expect(expandButton).toBeNull();
+    const expandButton = fixture.nativeElement.querySelector(
+      '.source-expand[type="button"]',
+    ) as HTMLButtonElement;
+    expect(expandButton.hidden).toBe(true);
     vi.useRealTimers();
   });
 
@@ -606,8 +608,9 @@ describe('SourceMaterialCatalog', () => {
   it('hides expand toggle when material has no units', () => {
     loadMaterials([{ id: 21, title: 'A New Hope', medium: 0, canonType: 0 }]);
 
-    const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
-    expect(expandButton()).toBeNull();
+    const expandButton = () =>
+      fixture.nativeElement.querySelector('.source-expand[type="button"]') as HTMLButtonElement;
+    expect(expandButton().hidden).toBe(true);
     expect(component.materialsWithUnits().has(21)).toBe(false);
   });
 
@@ -623,8 +626,9 @@ describe('SourceMaterialCatalog', () => {
     vi.useFakeTimers();
     loadMaterials([{ id: 21, title: 'Ahsoka', medium: 4, canonType: 0 }]);
 
-    const expandButton = () => fixture.nativeElement.querySelector('.source-expand[type="button"]');
-    expect(expandButton()).toBeNull();
+    const expandButton = () =>
+      fixture.nativeElement.querySelector('.source-expand[type="button"]') as HTMLButtonElement;
+    expect(expandButton().hidden).toBe(true);
 
     component.openAddUnitPopup({ materialId: 21, parentUnitId: null, childType: 'Episode' });
     component.popupNumber.set(1);
@@ -691,6 +695,13 @@ describe('SourceMaterialCatalog', () => {
       return row.querySelector('button[title="Add a unit to this source material"]');
     }
 
+    /** The row-level "Convert to Collection" button, if rendered. */
+    function convertButton(row: HTMLElement): HTMLButtonElement | null {
+      return row.querySelector(
+        'button[title="Turn this standalone book into a collection of books"]',
+      );
+    }
+
     /** Marks a material as having units and seeds its known unit list. */
     function seedUnits(id: number, units: ApiSourceMaterialUnit[]): void {
       component.materialsWithUnits.update((set) => new Set(set).add(id));
@@ -748,9 +759,9 @@ describe('SourceMaterialCatalog', () => {
       expect(component.unitPopupContext()!.childType).toBe('Volume');
       component.cancelAddUnit();
 
-      // Movies have no units to add: no button on the row (its medium header
-      // still offers creating a new movie source material).
-      expect(materialAddButton(rowFor('Film'))).toBeNull();
+      // Movies have no units to add: the row button is hidden (its medium
+      // header still offers creating a new movie source material).
+      expect(materialAddButton(rowFor('Film'))!.hidden).toBe(true);
     });
 
     it('opens the book choice dialog for a book without units and routes both options', () => {
@@ -972,12 +983,59 @@ describe('SourceMaterialCatalog', () => {
         },
       ]);
       expect(component.isConvertibleStandaloneBook(findMaterial(44))).toBe(false);
-      expect(rowFor('Collection').textContent).not.toContain('Convert to Collection');
+      expect(convertButton(rowFor('Collection'))!.hidden).toBe(true);
 
       loadMaterials([{ id: 45, title: 'Empty book', medium: 1, canonType: 0 }]);
       expect(component.isConvertibleStandaloneBook(findMaterial(45))).toBe(false);
-      expect(rowFor('Empty book').textContent).not.toContain('Convert to Collection');
+      expect(convertButton(rowFor('Empty book'))!.hidden).toBe(true);
     });
+    it('omits the collection unit itself from expanded display groups for admins', () => {
+      loadMaterials([{ id: 44, title: 'Thrawn Ascendancy Trilogy', medium: 1, canonType: 0 }]);
+      fixture.componentRef.setInput('isAdmin', true);
+      fixture.detectChanges();
+      seedUnits(44, [
+        {
+          id: 900,
+          sourceMaterialId: 44,
+          unitType: 'Collection',
+          parentUnitId: null,
+          number: 0,
+          title: 'Thrawn Ascendancy Trilogy',
+        },
+        {
+          id: 901,
+          sourceMaterialId: 44,
+          unitType: 'Book',
+          parentUnitId: 900,
+          number: 1,
+          title: 'Chaos Rising',
+        },
+        {
+          id: 902,
+          sourceMaterialId: 44,
+          unitType: 'Book',
+          parentUnitId: 900,
+          number: 2,
+          title: 'Alliances',
+        },
+        {
+          id: 801,
+          sourceMaterialId: 44,
+          unitType: 'Chapter',
+          parentUnitId: 901,
+          number: 1,
+          title: null,
+        },
+      ]);
+
+      // Only the books inside the collection are listed - never the
+      // collection itself.
+      expect(component.getDisplayGroups(44).map((g) => g.label)).toEqual([
+        'Chaos Rising',
+        'Alliances',
+      ]);
+    });
+
     it('labels the material title "Book Title or Collection Name" only when creating a book', () => {
       loadMaterials([
         { id: 21, title: 'Trilogy', medium: 1, canonType: 0 },
@@ -1331,6 +1389,36 @@ describe('SourceMaterialCatalog', () => {
 
       // Episodes must not have tracking dropdowns.
       expect(root.querySelectorAll('.season-episodes select').length).toBe(0);
+      vi.useRealTimers();
+    });
+
+    it('never offers tracking for the book-collection unit itself', async () => {
+      const root = await loadShowWithUnits([
+        {
+          id: 900,
+          sourceMaterialId: 21,
+          unitType: 6,
+          parentUnitId: null,
+          number: 0,
+          title: 'The Clone Wars Trilogy',
+        },
+        { id: 901, sourceMaterialId: 21, unitType: 7, parentUnitId: 900, number: 1, title: null },
+        {
+          id: 201,
+          sourceMaterialId: 21,
+          unitType: 1,
+          parentUnitId: 901,
+          number: 1,
+          title: 'Cat and Mouse',
+        },
+      ]);
+
+      // The collection groups its books; only the books get track dropdowns.
+      const headers = [...root.querySelectorAll('.season-header')].map((h) =>
+        h.textContent?.replace(/[▾▸]/g, '').trim(),
+      );
+      expect(headers).toEqual(['Book 1']);
+      expect(root.textContent).not.toContain('Track The Clone Wars Trilogy');
       vi.useRealTimers();
     });
 

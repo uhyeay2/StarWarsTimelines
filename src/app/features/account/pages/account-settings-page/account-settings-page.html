@@ -31,7 +31,7 @@
           </p>
         }
         <button class="btn btn-lg btn-primary" type="submit" [disabled]="displayNameSaving()">
-          {{ displayNameSaving() ? 'Saving…' : 'Save display name' }}
+          {{ displayNameButtonLabel() }}
         </button>
       </form>
 
@@ -41,18 +41,8 @@
           <input name="email" type="email" [(ngModel)]="email" required autocomplete="email" />
         </label>
         <p class="settings-email-status">
-          @if (account.emailVerified) {
-            <span class="settings-badge settings-badge--verified">Verified</span>
-          } @else {
-            <span class="settings-badge settings-badge--unverified">Unverified</span>
-          }
-          <span class="settings-email-note">
-            @if (account.emailVerified) {
-              Changing your email requires verifying the new address before you can log in again.
-            } @else {
-              Check your inbox for a verification link before logging in again.
-            }
-          </span>
+          <span [class]="emailBadgeClass()">{{ emailBadgeLabel() }}</span>
+          <span class="settings-email-note">{{ emailNote() }}</span>
         </p>
         @if (emailError()) {
           <p class="settings-error" role="alert">{{ emailError() }}</p>
@@ -63,7 +53,7 @@
           </p>
         }
         <button class="btn btn-lg btn-primary" type="submit" [disabled]="emailSaving()">
-          {{ emailSaving() ? 'Saving…' : 'Save email' }}
+          {{ emailButtonLabel() }}
         </button>
       </form>
     </div>
@@ -77,7 +67,7 @@
           <div class="password-input">
             <input
               name="currentPassword"
-              [type]="showCurrentPassword() ? 'text' : 'password'"
+              [type]="currentPasswordVisibility.inputType()"
               [(ngModel)]="currentPassword"
               required
               autocomplete="current-password"
@@ -85,10 +75,10 @@
             <button
               type="button"
               class="password-toggle"
-              [attr.aria-label]="showCurrentPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="currentPasswordVisibility.toggleAriaLabel()"
               (click)="showCurrentPassword.set(!showCurrentPassword())"
             >
-              {{ showCurrentPassword() ? 'Hide' : 'Show' }}
+              {{ currentPasswordVisibility.toggleText() }}
             </button>
           </div>
         </div>
@@ -98,7 +88,7 @@
           <div class="password-input">
             <input
               name="newPassword"
-              [type]="showNewPassword() ? 'text' : 'password'"
+              [type]="newPasswordVisibility.inputType()"
               [(ngModel)]="newPassword"
               required
               minlength="6"
@@ -107,10 +97,10 @@
             <button
               type="button"
               class="password-toggle"
-              [attr.aria-label]="showNewPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="newPasswordVisibility.toggleAriaLabel()"
               (click)="showNewPassword.set(!showNewPassword())"
             >
-              {{ showNewPassword() ? 'Hide' : 'Show' }}
+              {{ newPasswordVisibility.toggleText() }}
             </button>
           </div>
         </div>
@@ -120,7 +110,7 @@
           <div class="password-input">
             <input
               name="confirmPassword"
-              [type]="showConfirmPassword() ? 'text' : 'password'"
+              [type]="confirmPasswordVisibility.inputType()"
               [(ngModel)]="confirmPassword"
               required
               autocomplete="new-password"
@@ -128,10 +118,10 @@
             <button
               type="button"
               class="password-toggle"
-              [attr.aria-label]="showConfirmPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-label]="confirmPasswordVisibility.toggleAriaLabel()"
               (click)="showConfirmPassword.set(!showConfirmPassword())"
             >
-              {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+              {{ confirmPasswordVisibility.toggleText() }}
             </button>
           </div>
         </div>
@@ -145,7 +135,7 @@
           </p>
         }
         <button class="btn btn-lg btn-primary" type="submit" [disabled]="passwordSaving()">
-          {{ passwordSaving() ? 'Saving…' : 'Change password' }}
+          {{ passwordButtonLabel() }}
         </button>
       </form>
     </div>

@@ -37,6 +37,10 @@ textarea {
   padding: 0;
 }
 
+.link-chips:empty {
+  display: none;
+}
+
 .link-chip {
   display: inline-flex;
   align-items: center;

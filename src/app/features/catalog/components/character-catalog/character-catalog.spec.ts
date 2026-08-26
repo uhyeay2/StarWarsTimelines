@@ -461,7 +461,9 @@ describe('CharacterCatalog', () => {
     loadCharacters([{ id: 77, name: 'BD-1' }]);
 
     expect(component.detailLine({ id: 77, name: 'BD-1' })).toBeNull();
-    expect(fixture.nativeElement.querySelector('.character-meta')).toBeNull();
+    const meta = fixture.nativeElement.querySelector('.character-meta');
+    expect(meta).not.toBeNull();
+    expect(meta.textContent.trim()).toBe('');
   });
 
   it('hides admin actions for non-admin users', () => {

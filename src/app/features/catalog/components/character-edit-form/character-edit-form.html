@@ -1,0 +1,51 @@
+<form class="character-edit" (ngSubmit)="save.emit()">
+  <input name="editName" [(ngModel)]="name" aria-label="Character name" />
+  <select name="editSpeciesId" [(ngModel)]="speciesId" aria-label="Species">
+    <option [ngValue]="noSelection">Unknown</option>
+    @for (species of speciesOptions(); track species.id) {
+      <option [ngValue]="species.id">{{ species.name }}</option>
+    }
+  </select>
+  <select name="editPlanetBornOnId" [(ngModel)]="planetBornOnId" aria-label="Birth planet">
+    <option [ngValue]="noSelection">Unknown</option>
+    @for (location of locationOptions(); track location.id) {
+      <option [ngValue]="location.id">{{ location.name }}</option>
+    }
+  </select>
+  <input
+    name="editBirthFrom"
+    type="number"
+    step="1"
+    aria-label="Born from year"
+    placeholder="Born from (BBY is negative)"
+    [(ngModel)]="birthFrom"
+  />
+  <input
+    name="editBirthTo"
+    type="number"
+    step="1"
+    aria-label="Born to year"
+    placeholder="Born to"
+    [(ngModel)]="birthTo"
+  />
+  <input
+    name="editDeathFrom"
+    type="number"
+    step="1"
+    aria-label="Died from year"
+    placeholder="Died from (ABY is positive)"
+    [(ngModel)]="deathFrom"
+  />
+  <input
+    name="editDeathTo"
+    type="number"
+    step="1"
+    aria-label="Died to year"
+    placeholder="Died to"
+    [(ngModel)]="deathTo"
+  />
+  <button class="btn btn-sm" type="submit" [disabled]="saving()">
+    {{ saving() ? 'Saving…' : 'Save' }}
+  </button>
+  <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+</form>

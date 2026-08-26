@@ -59,39 +59,12 @@
 
       <!-- ─── Advanced Filter Groups ──────────────────────────────────── -->
       <div class="advanced-filters" [hidden]="!advancedOpen()">
-        @if (facetOptions().sources.length) {
+        @for (group of facetGroups(); track group.key) {
           <app-filter-group
-            label="Source"
-            [options]="facetOptions().sources"
-            [selected]="filters().sources"
-            (selectedChange)="updateFilter('sources', $event)"
-          />
-        }
-
-        @if (facetOptions().locations.length) {
-          <app-filter-group
-            label="Location"
-            [options]="facetOptions().locations"
-            [selected]="filters().locations"
-            (selectedChange)="updateFilter('locations', $event)"
-          />
-        }
-
-        @if (facetOptions().characters.length) {
-          <app-filter-group
-            label="Characters"
-            [options]="facetOptions().characters"
-            [selected]="filters().characters"
-            (selectedChange)="updateFilter('characters', $event)"
-          />
-        }
-
-        @if (facetOptions().vehicles.length) {
-          <app-filter-group
-            label="Vehicles"
-            [options]="facetOptions().vehicles"
-            [selected]="filters().vehicles"
-            (selectedChange)="updateFilter('vehicles', $event)"
+            [label]="group.label"
+            [options]="group.options"
+            [selected]="group.selected"
+            (selectedChange)="updateFilter(group.key, $event)"
           />
         }
       </div>

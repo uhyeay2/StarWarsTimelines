@@ -1,0 +1,20 @@
+@if (host().showsUnitsFor(materialId())) {
+  <div class="unit">
+    @if (host().unitsLoading()) {
+      <p class="form-status" role="status" aria-live="polite">Loading units…</p>
+    } @else if (host().unitsError()) {
+      <p class="form-error" role="alert" aria-live="polite">{{ host().unitsError() }}</p>
+    } @else {
+      @if (!host().isAdmin()) {
+        <app-source-nonadmin-units
+          [host]="host()"
+          [materialId]="materialId()"
+          [medium]="medium()"
+        />
+      }
+      @if (host().isAdmin()) {
+        <app-source-admin-units [host]="host()" [materialId]="materialId()" />
+      }
+    }
+  </div>
+}

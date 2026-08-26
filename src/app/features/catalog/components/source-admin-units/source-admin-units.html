@@ -1,0 +1,116 @@
+@switch (host().displayStrategy()[materialId()]) {
+  @case ('flat') {
+    <ul class="unit-list">
+      @for (unit of host().unitsByMaterial()[materialId()] ?? []; track unit.id) {
+        <li class="unit-item">
+          <ng-container
+            *ngTemplateOutlet="
+              adminUnitItem;
+              context: { $implicit: unit, materialId: materialId() }
+            "
+          ></ng-container>
+        </li>
+      }
+    </ul>
+  }
+  @default {
+    <ul class="unit-list">
+      @for (displayGroup of host().getDisplayGroups(materialId()); track displayGroup.expandKey) {
+        <li class="season-group">
+          <div class="track-group-row">
+            <button
+              type="button"
+              class="season-header"
+              [class.season-header--open]="
+                host().isSeasonExpanded(materialId(), displayGroup.expandKey)
+              "
+              (click)="host().toggleSeason(materialId(), displayGroup.expandKey)"
+            >
+              <span class="season-toggle">{{
+                host().isSeasonExpanded(materialId(), displayGroup.expandKey) ? '▾' : '▸'
+              }}</span>
+              <span class="season-label">{{ displayGroup.label }}</span>
+              <span class="season-count"
+                >{{ displayGroup.units.length }}
+                {{ displayGroup.units.length === 1 ? 'unit' : 'units' }}</span
+              >
+            </button>
+            @if (displayGroup.containerId !== null) {
+              <button
+                class="btn btn-sm container-add-button"
+                type="button"
+                [title]="'Add a unit inside ' + displayGroup.label"
+                (click)="
+                  host().openAddUnitPopup({
+                    materialId: materialId(),
+                    parentUnitId: displayGroup.containerId,
+                    childType: host().nestedChildTypeFor(displayGroup.containerType),
+                  })
+                "
+              >
+                + Add
+              </button>
+            }
+          </div>
+          @if (host().isSeasonExpanded(materialId(), displayGroup.expandKey)) {
+            <ul class="season-episodes">
+              @for (unit of displayGroup.units; track unit.id) {
+                <li class="unit-item">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      adminUnitItem;
+                      context: { $implicit: unit, materialId: materialId() }
+                    "
+                  ></ng-container>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+}
+
+<ng-template #adminUnitItem let-unit let-materialId="materialId">
+  @if (host().unitEditKey()?.unitId === unit.id) {
+    <app-unit-edit-form
+      [(number)]="editNumber"
+      [(title)]="editTitle"
+      [saving]="host().unitSavingKey()?.unitId === unit.id"
+      (save)="host().saveUnitEdit()"
+      (cancel)="host().cancelUnitEdit()"
+    />
+  } @else if (host().unitConfirmDeleteKey()?.unitId === unit.id) {
+    <span class="unit-delete-prompt">
+      Delete unit {{ host().unitLabel(unit) }}? This is blocked while it is used by a timeline event
+      or user progress.
+      <button
+        class="btn btn-sm btn-danger"
+        type="button"
+        [disabled]="host().unitDeletingKey()?.unitId === unit.id"
+        (click)="host().confirmUnitDelete()"
+      >
+        {{ host().unitDeletingKey()?.unitId === unit.id ? 'Deleting…' : 'Delete' }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="host().cancelUnitDelete()">Cancel</button>
+    </span>
+  } @else {
+    <span class="unit-label">
+      <span class="unit-type">{{ unit.unitType }}</span>
+      {{ host().unitLabel(unit) }}
+    </span>
+    <div class="unit-actions">
+      <button class="btn btn-sm" type="button" (click)="host().beginUnitEdit(materialId, unit)">
+        Edit
+      </button>
+      <button
+        class="btn btn-sm btn-danger"
+        type="button"
+        (click)="host().requestUnitDelete(materialId, unit)"
+      >
+        Delete
+      </button>
+    </div>
+  }
+</ng-template>

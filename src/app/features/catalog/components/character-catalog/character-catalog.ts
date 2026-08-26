@@ -17,6 +17,7 @@ import { formatGalacticYearRange } from '../../../../shared/utils/galactic-year'
 import { runOperation } from '../../../../shared/utils/async-operation';
 import { filterByName } from '../../../../shared/utils/text-search';
 import { CharacterAddDialog } from '../character-add-dialog/character-add-dialog';
+import { CharacterEditForm } from '../character-edit-form/character-edit-form';
 
 /** Sentinel select value representing "nothing selected"; catalog ids start at 1. */
 const NONE = 0;
@@ -24,7 +25,7 @@ const NONE = 0;
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-character-catalog',
-  imports: [FormsModule, CharacterAddDialog],
+  imports: [FormsModule, CharacterAddDialog, CharacterEditForm],
   templateUrl: './character-catalog.html',
   styleUrl: './character-catalog.scss',
 })
@@ -53,8 +54,25 @@ export class CharacterCatalog implements OnInit {
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
-  /** "Unknown" select sentinel, exposed for `[ngValue]` template bindings. */
-  protected readonly noSelection = NONE;
+  /** Rows enriched with the precomputed biography line for template rendering. */
+  readonly filteredRows = computed(() =>
+    this.filteredItems().map((item) => ({ item, details: this.detailLine(item) ?? '' })),
+  );
+
+  /** Combined footer message: action error takes precedence over empty search results. */
+  readonly footerStatus = computed<{ text: string; css: string; role: string } | null>(() => {
+    if (this.actionError()) {
+      return { text: this.actionError()!, css: 'form-error', role: 'alert' };
+    }
+    if (this.searchTerm() && this.filteredItems().length === 0 && this.items().length > 0) {
+      return {
+        text: 'No characters match your search.',
+        css: 'form-status',
+        role: 'status',
+      };
+    }
+    return null;
+  });
 
   readonly newName = signal('');
   readonly newPlanetBornOnId = signal(NONE);

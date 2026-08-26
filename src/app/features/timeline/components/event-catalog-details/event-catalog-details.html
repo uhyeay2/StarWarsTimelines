@@ -1,0 +1,20 @@
+<div class="event-details">
+  <p class="event-details-description">{{ model().description }}</p>
+  <dl class="event-details-grid">
+    <dt>Sources</dt>
+    <dd>
+      <ul>
+        @for (source of model().sources; track $index) {
+          <li>
+            <span class="event-details-medium">{{ source.medium }}</span>
+            {{ source.label }}
+          </li>
+        }
+      </ul>
+    </dd>
+    @for (entity of model().entities; track entity.label) {
+      <dt>{{ entity.label }}</dt>
+      <dd>{{ entity.text }}</dd>
+    }
+  </dl>
+</div>

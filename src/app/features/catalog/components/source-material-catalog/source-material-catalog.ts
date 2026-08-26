@@ -8,7 +8,6 @@ import {
   OnInit,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
 import { ApiSourceMaterial } from '../../../../shared/models/api-source-material';
 import { ApiSourceMaterialUnit } from '../../../../shared/models/api-source-material-unit';
 import { Medium } from '../../../../shared/models/medium';
@@ -21,29 +20,20 @@ import { MaterialCrudFacade } from './material-crud-facade';
 import { ConversionWorkflowFacade } from './conversion-workflow-facade';
 import { CatalogDisplayFacade, MaterialDisplayGroup } from './catalog-display-facade';
 import { TrackSelect } from '../../../library/components/track-select/track-select';
-import { UnitEditForm } from '../unit-edit-form/unit-edit-form';
-import { MaterialAddDialog } from '../material-add-dialog/material-add-dialog';
-import { UnitAddDialog } from '../unit-add-dialog/unit-add-dialog';
-import { BookChoiceDialog } from '../book-choice-dialog/book-choice-dialog';
-import { ConvertCollectionDialog } from '../convert-collection-dialog/convert-collection-dialog';
-import {
-  StartCollectionDialog,
-  StartCollectionPayload,
-} from '../start-collection-dialog/start-collection-dialog';
+import { SourceMaterialEditForm } from '../source-material-edit-form/source-material-edit-form';
+import { SourceMaterialUnits } from '../source-material-units/source-material-units';
+import { SourceMaterialPopups } from '../source-material-popups/source-material-popups';
+import { StartCollectionPayload } from '../start-collection-dialog/start-collection-dialog';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-source-material-catalog',
   imports: [
     FormsModule,
-    NgTemplateOutlet,
     TrackSelect,
-    UnitEditForm,
-    MaterialAddDialog,
-    UnitAddDialog,
-    BookChoiceDialog,
-    ConvertCollectionDialog,
-    StartCollectionDialog,
+    SourceMaterialEditForm,
+    SourceMaterialUnits,
+    SourceMaterialPopups,
   ],
   providers: [
     TrackingFacade,
@@ -66,6 +56,13 @@ export class SourceMaterialCatalog implements OnInit {
   private readonly materialCrud = inject(MaterialCrudFacade);
   private readonly conversion = inject(ConversionWorkflowFacade);
   private readonly display = inject(CatalogDisplayFacade);
+
+  /**
+   * Typed self-reference passed as the `host` input to the extracted
+   * child views (edit form, units sections, popup cluster) so they can
+   * reach this component's facades and state without large binding APIs.
+   */
+  readonly api: SourceMaterialCatalog = this;
 
   // ─── Data signals (search + material list) ────────────────────────────
 
@@ -141,6 +138,21 @@ export class SourceMaterialCatalog implements OnInit {
   readonly expandedMedia = this.display.expandedMedia;
   readonly expandedMaterialId = this.display.expandedMaterialId;
   readonly mediumGroups = computed(() => this.display.mediumGroups(this.filteredMaterials()));
+
+  /** Combined footer message: action error takes precedence over empty search results. */
+  readonly footerStatus = computed<{ text: string; css: string; role: string } | null>(() => {
+    if (this.actionError()) {
+      return { text: this.actionError()!, css: 'form-error', role: 'alert' };
+    }
+    if (this.searchTerm() && this.mediumGroups().length === 0 && this.materials().length > 0) {
+      return {
+        text: 'No source materials match your search.',
+        css: 'form-status',
+        role: 'status',
+      };
+    }
+    return null;
+  });
   readonly displayStrategy = this.display.displayStrategy;
   readonly autoExpandedMaterialIds = this.display.autoExpandedMaterialIds;
   readonly expandedSeasonKeys = this.display.expandedSeasonKeys;
@@ -346,6 +358,11 @@ export class SourceMaterialCatalog implements OnInit {
 
   shouldShowUnits(materialId: number): boolean {
     return this.display.shouldShowUnits(materialId);
+  }
+
+  /** Whether the units section renders for this material right now. */
+  showsUnitsFor(materialId: number): boolean {
+    return this.shouldShowUnits(materialId) && this.editId() !== materialId;
   }
 
   isAutoExpanded(materialId: number): boolean {

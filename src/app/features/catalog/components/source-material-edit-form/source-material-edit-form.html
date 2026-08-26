@@ -1,0 +1,17 @@
+<form class="source-edit" (ngSubmit)="save.emit()">
+  <input name="editTitle" [(ngModel)]="title" aria-label="Renamed source material" />
+  <select name="editMedium" [(ngModel)]="medium" aria-label="Medium">
+    @for (medium of media(); track medium) {
+      <option [value]="medium">{{ medium }}</option>
+    }
+  </select>
+  <select name="editCanonType" [(ngModel)]="canonType" aria-label="Canon type">
+    @for (canonType of canonTypes(); track canonType) {
+      <option [value]="canonType">{{ canonType }}</option>
+    }
+  </select>
+  <button class="btn btn-sm" type="submit" [disabled]="saving()">
+    {{ saving() ? 'Saving…' : 'Save' }}
+  </button>
+  <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+</form>

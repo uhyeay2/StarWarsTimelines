@@ -48,11 +48,9 @@
                 [attr.aria-label]="'Status for ' + (group.groupTitle || item().title)"
                 (change)="onGroupStatusChange(group.containerId, $event)"
               >
-                <option value="" disabled [selected]="getGroupStatus(group) === null" hidden>
-                  Track…
-                </option>
+                <option value="" disabled [selected]="group.status === null" hidden>Track…</option>
                 @for (status of statuses; track status) {
-                  <option [value]="status" [selected]="getGroupStatus(group) === status">
+                  <option [value]="status" [selected]="group.status === status">
                     {{ status }}
                   </option>
                 }

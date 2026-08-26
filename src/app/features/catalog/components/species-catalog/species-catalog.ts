@@ -45,6 +45,25 @@ export class SpeciesCatalog implements OnInit {
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
+  /** Rows enriched with the precomputed home-planet label for template rendering. */
+  readonly filteredRows = computed(() =>
+    this.filteredItems().map((item) => ({
+      item,
+      homeLabel: item.homePlanetName ? `Home: ${item.homePlanetName}` : '',
+    })),
+  );
+
+  /** Combined footer message: action error takes precedence over empty search results. */
+  readonly footerStatus = computed<{ text: string; css: string; role: string } | null>(() => {
+    if (this.actionError()) {
+      return { text: this.actionError()!, css: 'form-error', role: 'alert' };
+    }
+    if (this.searchTerm() && this.filteredItems().length === 0 && this.items().length > 0) {
+      return { text: 'No species match your search.', css: 'form-status', role: 'status' };
+    }
+    return null;
+  });
+
   /** "No home planet" select sentinel, exposed for `[ngValue]` template bindings. */
   protected readonly noPlanet = NO_PLANET;
 

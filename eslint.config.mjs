@@ -47,7 +47,10 @@ export default tseslint.config(
     },
     plugins: { '@angular-eslint/template': angularTemplate },
     rules: {
-      '@angular-eslint/template/no-call-expression': 'warn',
+      // Disabled: the rule predates Angular signals and flags every signal
+      // read (e.g. `{{ title() }}`, `[disabled]="first()"`) as a call
+      // expression, which is the recommended reactive pattern with OnPush.
+      // '@angular-eslint/template/no-call-expression': 'warn',
       '@angular-eslint/template/cyclomatic-complexity': ['warn', { maxComplexity: 8 }],
       '@angular-eslint/template/conditional-complexity': ['warn', { maxComplexity: 3 }],
       '@angular-eslint/template/no-negated-async': 'error',

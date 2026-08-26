@@ -1,0 +1,33 @@
+@use '../../../../../styles/tokens' as *;
+@use '../../../../../styles/mixins' as *;
+
+.source-edit {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+
+  input,
+  select {
+    @include dark-control;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  input {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  select option {
+    background: $color-on-accent;
+    color: $color-text;
+  }
+}
+
+@media (max-width: 720px) {
+  .source-edit {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

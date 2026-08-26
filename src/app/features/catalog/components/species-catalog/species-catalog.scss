@@ -67,6 +67,10 @@
   font-size: 0.85rem;
 }
 
+.species-meta:empty {
+  display: none;
+}
+
 .species-actions {
   display: flex;
   gap: 0.4rem;

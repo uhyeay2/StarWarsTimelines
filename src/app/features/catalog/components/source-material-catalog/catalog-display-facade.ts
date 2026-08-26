@@ -198,8 +198,12 @@ export class CatalogDisplayFacade {
       ];
     }
 
-    const containerIds = new Set(containers.map((c) => c.id));
-    const groups: MaterialDisplayGroup[] = containers
+    // The `Collection` unit is a book-collection's own root grouping; the
+    // material row already represents it, so it never renders as a group of
+    // itself. Its books are listed directly. Loose details parented to the
+    // collection fall through to the "Ungrouped" group below.
+    const displayContainers = containers.filter((c) => c.unitType !== 'Collection');
+    const groups: MaterialDisplayGroup[] = displayContainers
       .slice()
       .sort((a, b) => a.id - b.id)
       .map((container) => ({
@@ -210,19 +214,20 @@ export class CatalogDisplayFacade {
         units: details.filter((u) => u.parentUnitId === container.id),
       }));
 
-    const orphans = details.filter(
+    const displayContainerIds = new Set(displayContainers.map((c) => c.id));
+    const visibleOrphans = details.filter(
       (u) =>
         u.parentUnitId === null ||
         u.parentUnitId === undefined ||
-        !containerIds.has(u.parentUnitId),
+        !displayContainerIds.has(u.parentUnitId),
     );
-    if (orphans.length > 0) {
+    if (visibleOrphans.length > 0) {
       groups.push({
         expandKey: 'ungrouped',
         containerId: null,
         containerType: null,
         label: 'Ungrouped',
-        units: orphans,
+        units: visibleOrphans,
       });
     }
     return groups;

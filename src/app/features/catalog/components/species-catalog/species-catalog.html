@@ -1,4 +1,4 @@
-<section class="species-catalog">
+﻿<section class="species-catalog">
   <div class="catalog-header">
     <h2>Species</h2>
     @if (isAdmin()) {
@@ -17,9 +17,9 @@
     </label>
 
     <ul class="species-list">
-      @for (item of filteredItems(); track item.id) {
+      @for (row of filteredRows(); track row.item.id) {
         <li class="species-item">
-          @if (editId() === item.id) {
+          @if (editId() === row.item.id) {
             <form class="species-edit" (ngSubmit)="saveEdit()">
               <input name="editName" [(ngModel)]="editName" aria-label="Renamed species" />
               <select
@@ -32,41 +32,43 @@
                   <option [ngValue]="location.id">{{ location.name }}</option>
                 }
               </select>
-              <button class="btn btn-sm" type="submit" [disabled]="savingId() === item.id">
-                {{ savingId() === item.id ? 'Saving…' : 'Save' }}
+              <button class="btn btn-sm" type="submit" [disabled]="savingId() === row.item.id">
+                {{ savingId() === row.item.id ? 'Saving…' : 'Save' }}
               </button>
               <button class="btn btn-sm" type="button" (click)="cancelEdit()">Cancel</button>
             </form>
             <p class="species-edit-hint">Choose “No home planet” to clear the stored value.</p>
-          } @else if (confirmDeleteId() === item.id) {
+          } @else if (confirmDeleteId() === row.item.id) {
             <div class="delete-prompt">
               <p>
-                Delete “{{ item.name }}”? Characters of this species stay in the catalog, but their
-                species will be cleared.
+                Delete “{{ row.item.name }}”? Characters of this species stay in the catalog, but
+                their species will be cleared.
               </p>
               <div class="delete-actions">
                 <button
                   class="btn btn-sm btn-danger"
                   type="button"
-                  [disabled]="deletingId() === item.id"
+                  [disabled]="deletingId() === row.item.id"
                   (click)="confirmDelete()"
                 >
-                  {{ deletingId() === item.id ? 'Deleting…' : 'Delete' }}
+                  {{ deletingId() === row.item.id ? 'Deleting…' : 'Delete' }}
                 </button>
                 <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
               </div>
             </div>
           } @else {
             <span class="species-item-text">
-              <span class="species-name">{{ item.name }}</span>
-              @if (item.homePlanetName) {
-                <span class="species-meta">Home: {{ item.homePlanetName }}</span>
-              }
+              <span class="species-name">{{ row.item.name }}</span>
+              <span class="species-meta">{{ row.homeLabel }}</span>
             </span>
             @if (isAdmin()) {
               <div class="species-actions">
-                <button class="btn btn-sm" type="button" (click)="beginEdit(item)">Edit</button>
-                <button class="btn btn-sm btn-danger" type="button" (click)="requestDelete(item)">
+                <button class="btn btn-sm" type="button" (click)="beginEdit(row.item)">Edit</button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  type="button"
+                  (click)="requestDelete(row.item)"
+                >
                   Delete
                 </button>
               </div>
@@ -75,11 +77,8 @@
         </li>
       }
     </ul>
-    @if (searchTerm() && filteredItems().length === 0 && items().length > 0) {
-      <p class="form-status" role="status" aria-live="polite">No species match your search.</p>
-    }
-    @if (actionError()) {
-      <p class="form-error" role="alert" aria-live="polite">{{ actionError() }}</p>
+    @if (footerStatus(); as status) {
+      <p [class]="status.css" [attr.role]="status.role" aria-live="polite">{{ status.text }}</p>
     }
   }
 

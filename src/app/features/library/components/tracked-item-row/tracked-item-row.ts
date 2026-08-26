@@ -14,6 +14,8 @@ interface UnitGroup {
   unitType: UnitType;
   units: readonly LibraryUnit[];
   containerId: number;
+  /** Effective tracking status shown for the group's select. */
+  status: TrackingStatus | null;
 }
 
 @Component({
@@ -63,32 +65,17 @@ export class TrackedItemRow {
     return containersToDisplay.map((container): UnitGroup => {
       const children = detailUnits.filter((u) => u.parentUnitId === container.id);
       const label = container.title ?? `${container.unitType} ${container.number}`;
+      const childTracked = children.some((u) => u.status !== null);
       return {
         groupTitle: label,
         unitType: container.unitType,
         units: children,
         containerId: container.id,
+        // The container's own progress wins; otherwise derive from children.
+        status: container.status ?? (childTracked ? this.deriveGroupStatus(children) : null),
       };
     });
   });
-
-  getGroupStatus(group: UnitGroup): TrackingStatus | null {
-    const units = this.item().units ?? [];
-    const container = units.find(
-      (u) => u.id === group.containerId && isContainerOrCollectionUnit(u.unitType),
-    );
-    if (!container) {
-      return this.deriveGroupStatus(group.units);
-    }
-    if (container.status !== null) {
-      // The container has its own progress record; report it directly.
-      return container.status;
-    }
-    if (!group.units.some((u) => u.status !== null)) {
-      return null;
-    }
-    return this.deriveGroupStatus(group.units);
-  }
 
   private deriveGroupStatus(units: readonly LibraryUnit[]): TrackingStatus {
     if (units.length === 0 || units.every((u) => u.status === null)) {

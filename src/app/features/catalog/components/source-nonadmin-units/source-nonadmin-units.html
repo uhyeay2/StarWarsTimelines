@@ -1,0 +1,65 @@
+<!-- ─── Movies: no units to display ─── -->
+@if (medium() === 'Movie') {
+} @else if (
+  medium() === 'Comic' ||
+  medium() === 'Live Action Show' ||
+  medium() === 'Animated Show' ||
+  (medium() === 'Book' && host().materialTracksViaContainers(materialId()))
+) {
+  <!-- Comics/Shows/Book collections: season/volume/book groups with tracking.
+       Collection-type containers never appear here — the display facade
+       excludes them because the material row itself represents the
+       collection. -->
+  @for (displayGroup of host().getDisplayGroups(materialId()); track displayGroup.expandKey) {
+    <div class="group-track-section">
+      <div class="track-group-row">
+        <button
+          type="button"
+          class="season-header"
+          [class.season-header--open]="
+            host().isSeasonExpanded(materialId(), displayGroup.expandKey)
+          "
+          (click)="host().toggleSeason(materialId(), displayGroup.expandKey)"
+        >
+          <span class="season-toggle">{{
+            host().isSeasonExpanded(materialId(), displayGroup.expandKey) ? '▾' : '▸'
+          }}</span>
+          <span class="season-label">{{ displayGroup.label }}</span>
+        </button>
+        @if (displayGroup.containerId !== null) {
+          <app-track-select
+            variant="group"
+            [label]="'Track ' + displayGroup.label"
+            [options]="host().getGroupTrackingOptions(materialId(), displayGroup.containerId)"
+            [currentStatus]="host().getGroupCurrentStatus(materialId(), displayGroup.containerId)"
+            (statusChange)="host().onTrackGroupUnit(materialId(), displayGroup.containerId, $event)"
+          />
+        }
+      </div>
+      @if (host().isSeasonExpanded(materialId(), displayGroup.expandKey)) {
+        <ul class="season-episodes">
+          @for (childUnit of displayGroup.units; track childUnit.id) {
+            <li class="unit-item">
+              <span class="unit-label">
+                <span class="unit-type">{{ childUnit.unitType }}</span>
+                {{ host().unitLabel(childUnit) }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+} @else if (medium() === 'Book' || medium() === 'Video Game') {
+  <!-- Books/Games: units listed flat (no per-unit tracking) -->
+  <ul class="unit-list">
+    @for (unit of host().unitsByMaterial()[materialId()] ?? []; track unit.id) {
+      <li class="unit-item">
+        <span class="unit-label">
+          <span class="unit-type">{{ unit.unitType }}</span>
+          {{ host().unitLabel(unit) }}
+        </span>
+      </li>
+    }
+  </ul>
+}

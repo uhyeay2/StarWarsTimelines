@@ -18,6 +18,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -27,6 +28,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { CanonView } from '../../../../shared/models/canon';
 import { FacetKey } from '../../models/timeline-filters';
+import { FilterTreeNode } from '../../models/timeline-filters-types';
 import { TrackedScopeMap } from '../../../../shared/models/tracking-selection';
 import { TimelineEventItem, ToggleFacetEvent } from '../timeline-event-item/timeline-event-item';
 import { FilterGroup } from '../../../../shared/components/filter-group/filter-group';
@@ -34,6 +36,14 @@ import { ErrorState } from '../../../../shared/components/error-state/error-stat
 import { TimelineSkeleton } from '../timeline-skeleton/timeline-skeleton';
 import { TimelinePresenter } from './timeline-presenter';
 import { CANON_VIEWS } from '../../../../shared/models/canon';
+
+/** One renderable facet filter group in the advanced filters panel. */
+interface FacetGroup {
+  readonly key: FacetKey;
+  readonly label: string;
+  readonly options: readonly FilterTreeNode[];
+  readonly selected: readonly string[];
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +71,36 @@ export class Timeline {
   readonly filters = this.presenter.filters;
   protected readonly advancedOpen = this.presenter.advancedOpen;
   protected readonly facetOptions = this.presenter.facetOptions;
+
+  /** Non-empty facet filter groups rendered by the advanced filters panel. */
+  protected readonly facetGroups = computed<readonly FacetGroup[]>(() => {
+    const options = this.facetOptions();
+    const selected = this.filters();
+    return (
+      [
+        { key: 'sources', label: 'Source', options: options.sources, selected: selected.sources },
+        {
+          key: 'locations',
+          label: 'Location',
+          options: options.locations,
+          selected: selected.locations,
+        },
+        {
+          key: 'characters',
+          label: 'Characters',
+          options: options.characters,
+          selected: selected.characters,
+        },
+        {
+          key: 'vehicles',
+          label: 'Vehicles',
+          options: options.vehicles,
+          selected: selected.vehicles,
+        },
+      ] as const
+    ).filter((group) => group.options.length > 0);
+  });
+
   protected readonly sourceChipsByEvent = this.presenter.sourceChipsByEvent;
   protected readonly activeFacetCount = this.presenter.activeFacetCount;
   protected readonly filteredEvents = this.presenter.filteredEvents;
