@@ -56,13 +56,18 @@ describe('matchesFacetFilters', () => {
     expect(matchesFacetFilters(EVENT, filters)).toBe(false);
   });
 
-  it('matches when all selected locations are present', () => {
+  it('matches when any selected location is present', () => {
     const filters = { ...createEmptyFilters(), locations: ['Naboo', 'Coruscant'] };
     expect(matchesFacetFilters(EVENT, filters)).toBe(true);
   });
 
-  it('rejects when a selected location is missing', () => {
+  it('matches when at least one selected location is present', () => {
     const filters = { ...createEmptyFilters(), locations: ['Naboo', 'Endor'] };
+    expect(matchesFacetFilters(EVENT, filters)).toBe(true);
+  });
+
+  it('rejects when none of the selected locations are present', () => {
+    const filters = { ...createEmptyFilters(), locations: ['Endor', 'Dagobah'] };
     expect(matchesFacetFilters(EVENT, filters)).toBe(false);
   });
 
@@ -641,6 +646,25 @@ describe('collectTreeLeaves', () => {
       ],
     };
     expect(collectTreeLeaves(medium)).toEqual(['20:22', '20:77']);
+  });
+
+  it('includes a parent own value alongside its descendants when ownLeaf', () => {
+    const planet = {
+      value: 'Tatooine',
+      label: 'Tatooine',
+      ownLeaf: true,
+      children: [
+        { value: 'Mos Eisley', label: 'Mos Eisley' },
+        { value: 'Lars Homestead', label: 'Lars Homestead' },
+      ],
+    };
+    expect(collectTreeLeaves(planet)).toEqual(['Mos Eisley', 'Lars Homestead', 'Tatooine']);
+  });
+
+  it('returns a leaf own value when a tree node has no children', () => {
+    expect(collectTreeLeaves({ value: 'Mos Eisley', label: 'Mos Eisley', ownLeaf: true })).toEqual([
+      'Mos Eisley',
+    ]);
   });
 });
 

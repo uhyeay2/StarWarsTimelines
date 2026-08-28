@@ -75,10 +75,20 @@ describe('Timeline', () => {
   }
 
   function galaxyServiceMock(overrides?: {
-    regions?: { id: number; name: string }[];
-    subregions?: { id: number; name: string }[];
-    planetSystems?: { id: number; name: string }[];
-    planets?: { id: number; name: string }[];
+    regions?: { id: number; name: string; subregions?: { id: number; name: string }[] }[];
+    subregions?: {
+      id: number;
+      name: string;
+      regions?: { id: number; name: string }[];
+      planetSystems?: { id: number; name: string }[];
+    }[];
+    planetSystems?: { id: number; name: string; subregions?: { id: number; name: string }[] }[];
+    planets?: {
+      id: number;
+      name: string;
+      planetSystemId: number;
+      locations?: { id: number; name: string }[];
+    }[];
     planetLocations?: { id: number; name: string; planetId: number; planetName: string }[];
   }) {
     return {
@@ -115,7 +125,34 @@ describe('Timeline', () => {
     locations?: { id: number; name: string }[];
     vehicles?: { id: number; name: string }[];
     units?: { id: number; title?: string; unitType: string; number: number }[];
+    galaxy?: {
+      regions?: { id: number; name: string; subregions?: { id: number; name: string }[] }[];
+      subregions?: {
+        id: number;
+        name: string;
+        regions?: { id: number; name: string }[];
+        planetSystems?: { id: number; name: string }[];
+      }[];
+      planetSystems?: { id: number; name: string; subregions?: { id: number; name: string }[] }[];
+      planets?: {
+        id: number;
+        name: string;
+        planetSystemId: number;
+        locations?: { id: number; name: string }[];
+      }[];
+    };
   }) {
+    const galaxy =
+      overrides?.galaxy ??
+      (overrides?.locations !== undefined
+        ? {
+            planetLocations: overrides.locations.map((location) => ({
+              ...location,
+              planetId: 0,
+              planetName: '',
+            })),
+          }
+        : {});
     return [
       {
         provide: CharacterService,
@@ -125,17 +162,7 @@ describe('Timeline', () => {
       },
       {
         provide: GalaxyService,
-        useValue: galaxyServiceMock(
-          overrides?.locations !== undefined
-            ? {
-                planetLocations: overrides.locations.map((location) => ({
-                  ...location,
-                  planetId: 0,
-                  planetName: '',
-                })),
-              }
-            : {},
-        ),
+        useValue: galaxyServiceMock(galaxy),
       },
       {
         provide: VehicleService,
@@ -191,10 +218,34 @@ describe('Timeline', () => {
           { id: 7, name: 'Padme Amidala' },
           { id: 8, name: 'Darth Maul' },
         ],
-        locations: [
-          { id: 11, name: 'Naboo' },
-          { id: 12, name: 'Coruscant' },
-        ],
+        galaxy: {
+          regions: [{ id: 1, name: 'Inner Rim', subregions: [{ id: 2, name: 'Core Sector' }] }],
+          subregions: [
+            {
+              id: 2,
+              name: 'Core Sector',
+              regions: [{ id: 1, name: 'Inner Rim' }],
+              planetSystems: [{ id: 3, name: 'Gallant System' }],
+            },
+          ],
+          planetSystems: [
+            { id: 3, name: 'Gallant System', subregions: [{ id: 2, name: 'Core Sector' }] },
+          ],
+          planets: [
+            {
+              id: 11,
+              name: 'Naboo',
+              planetSystemId: 3,
+              locations: [{ id: 21, name: 'Theed' }],
+            },
+            {
+              id: 12,
+              name: 'Coruscant',
+              planetSystemId: 3,
+              locations: [{ id: 22, name: 'Galactic City' }],
+            },
+          ],
+        },
         vehicles: [{ id: 13, name: 'Sith Infiltrator' }],
       }),
       { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -488,10 +539,10 @@ describe('Timeline', () => {
     expect(naboo.classList.contains('chip--selected')).toBe(true);
   });
 
-  it('filters by multiple selected locations using AND semantics', () => {
+  it('filters by any selected location using OR semantics', () => {
     component.updateFilter('locations', ['Naboo', 'Coruscant']);
     fixture.detectChanges();
-    expect(eventTitles()).toEqual(['Both']);
+    expect(eventTitles()).toEqual(['Both', 'Canon Only']);
   });
 
   it('filters to events from any source under a medium', () => {
@@ -638,10 +689,28 @@ describe('Timeline', () => {
     await setupTimeline([
       { provide: TimelineEventsService, useValue: eventsServiceMock() },
       ...catalogProviders({
-        locations: [
-          { id: 11, name: 'Naboo' },
-          { id: 12, name: 'Tatooine' },
-        ],
+        galaxy: {
+          regions: [{ id: 1, name: 'Outer Rim' }],
+          subregions: [
+            {
+              id: 2,
+              name: 'Arkanis Sector',
+              regions: [{ id: 1, name: 'Outer Rim' }],
+              planetSystems: [{ id: 3, name: 'Tatoo' }],
+            },
+          ],
+          planetSystems: [
+            { id: 3, name: 'Tatoo', subregions: [{ id: 2, name: 'Arkanis Sector' }] },
+          ],
+          planets: [
+            {
+              id: 4,
+              name: 'Tatooine',
+              planetSystemId: 3,
+              locations: [{ id: 5, name: 'Mos Eisley' }],
+            },
+          ],
+        },
       }),
       { provide: CatalogEventService, useValue: catalogEventMock() },
       {
@@ -666,10 +735,24 @@ describe('Timeline', () => {
     const locationGroup = groups.find((g) => g.textContent?.includes('Location'))!;
     (locationGroup.querySelector('.filter-group-trigger') as HTMLElement).click();
     fixture.detectChanges();
-    const labels = [...locationGroup.querySelectorAll('.filter-option-label')].map((el) =>
-      el.textContent?.trim(),
-    );
-    expect(labels).toContain('Tatooine');
+    const labels = (): string[] =>
+      [...locationGroup.querySelectorAll('.filter-option-label')].map(
+        (el) => el.textContent?.trim() ?? '',
+      );
+    expect(labels()).toContain('Outer Rim');
+    expect(labels()).not.toContain('Tatooine');
+
+    (locationGroup.querySelector('.filter-option-expand') as HTMLElement).click();
+    fixture.detectChanges();
+    (locationGroup.querySelectorAll('.filter-option-expand')[1] as HTMLElement).click();
+    fixture.detectChanges();
+    (locationGroup.querySelectorAll('.filter-option-expand')[2] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(labels()).toContain('Tatooine');
+
+    (locationGroup.querySelectorAll('.filter-option-expand')[3] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(labels()).toContain('Mos Eisley');
   });
 
   it('selecting a catalog character not in any events yields zero results', async () => {
@@ -1107,14 +1190,14 @@ describe('Timeline', () => {
       expect(eventTitles()).toEqual(['Both']);
     });
 
-    it('applies location AND semantics', () => {
+    it('applies location OR semantics', () => {
       component.updateFilter('locations', ['Naboo']);
       fixture.detectChanges();
       expect(eventTitles()).toEqual(['Both', 'Canon Only']);
 
       component.updateFilter('locations', ['Naboo', 'Coruscant']);
       fixture.detectChanges();
-      expect(eventTitles()).toEqual(['Both']);
+      expect(eventTitles()).toEqual(['Both', 'Canon Only']);
     });
 
     it('applies vehicle AND semantics', () => {

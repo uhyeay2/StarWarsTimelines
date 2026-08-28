@@ -12,6 +12,7 @@ import {
   sourceChipsForEvent,
   TimelineFilters,
 } from '../../models/timeline-filters';
+import { buildLocationFilterTree } from '../../models/timeline-location-tree';
 import { CatalogEventService } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
 import { GalaxyService } from '../../../catalog/services/galaxy.service';
@@ -67,30 +68,6 @@ export class TimelinePresenter {
     ),
   );
 
-  /**
-   * Every galaxy-hierarchy place name (across all five levels), sorted and
-   * deduplicated — the facet options for the location filter.
-   */
-  readonly galaxyNames = computed(() => {
-    const names = new Set<string>();
-    for (const region of this.galaxyService.regions() ?? []) {
-      names.add(region.name);
-    }
-    for (const subregion of this.galaxyService.subregions() ?? []) {
-      names.add(subregion.name);
-    }
-    for (const system of this.galaxyService.planetSystems() ?? []) {
-      names.add(system.name);
-    }
-    for (const planet of this.galaxyService.planets() ?? []) {
-      names.add(planet.name);
-    }
-    for (const location of this.galaxyService.planetLocations()) {
-      names.add(location.name);
-    }
-    return [...names].sort((a, b) => a.localeCompare(b));
-  });
-
   readonly facetOptions = computed(() => {
     const eventFacets = collectFacetOptions(
       this.continuityEvents(),
@@ -108,7 +85,12 @@ export class TimelinePresenter {
     return {
       ...eventFacets,
       characters: (characters ?? []).map((c) => ({ value: c.name, label: c.name })),
-      locations: this.galaxyNames().map((name) => ({ value: name, label: name })),
+      locations: buildLocationFilterTree({
+        regions: this.galaxyService.regions(),
+        subregions: this.galaxyService.subregions(),
+        planetSystems: this.galaxyService.planetSystems(),
+        planets: this.galaxyService.planets(),
+      }),
       vehicles: (vehicles ?? []).map((v) => ({ value: v.name, label: v.name })),
     };
   });

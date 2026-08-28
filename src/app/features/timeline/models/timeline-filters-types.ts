@@ -114,9 +114,11 @@ export function eventSourceFacetKeys(event: TimelineEvent): readonly string[] {
 /**
  * Tests whether an event matches all active facet filters.
  *
- * Uses AND semantics for locations, characters, and vehicles — all
- * selected values in a category must be present on the event. Sources
- * match when ANY facet key of ANY depicting source is selected.
+ * Uses AND semantics for characters and vehicles — all selected values in a
+ * category must be present on the event. Locations and sources use OR
+ * semantics: the event matches when any selected place / source is present
+ * (a grouped location tree expands a selected region or planet into all of
+ * its descendant places, so an event at any of them qualifies).
  *
  * @param event    The timeline event to test.
  * @param filters  The current filter state.
@@ -129,10 +131,7 @@ export function matchesFacetFilters(event: TimelineEvent, filters: TimelineFilte
   ) {
     return false;
   }
-  if (
-    filters.locations.length > 0 &&
-    !filters.locations.every((l) => event.locations.includes(l))
-  ) {
+  if (filters.locations.length > 0 && !filters.locations.some((l) => event.locations.includes(l))) {
     return false;
   }
   if (
