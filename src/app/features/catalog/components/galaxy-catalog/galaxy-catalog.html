@@ -19,7 +19,7 @@
       (editLocation)="startEditLocation($event.location, $event.planetId)"
       (remove)="requestDelete($event.kind, $event.id, $event.name)"
     >
-      @if (formError()) {
+      @if (formError() && !formState()) {
         <p class="form-error" role="alert" aria-live="polite">{{ formError() }}</p>
       }
 
@@ -42,27 +42,28 @@
           </div>
         </div>
       }
-
-      @if (formState(); as form) {
-        <app-galaxy-item-form
-          [(name)]="formName"
-          [(description)]="formDescription"
-          [(sectorType)]="formSectorType"
-          [(coordinates)]="formCoordinates"
-          [(type)]="formType"
-          [(regionIds)]="formRegionIds"
-          [(subregionIds)]="formSubregionIds"
-          [kind]="form.kind"
-          [adding]="form.id === null"
-          [kindLabel]="formKindLabel()"
-          [context]="formContextLabel()"
-          [regionOptions]="sortedRegions()"
-          [subregionOptions]="sortedSubregions()"
-          [busy]="busy()"
-          (save)="submitForm()"
-          (cancel)="cancelForm()"
-        />
-      }
     </app-galaxy-browser>
+  }
+
+  @if (formState(); as form) {
+    <app-galaxy-item-dialog
+      [(name)]="formName"
+      [(description)]="formDescription"
+      [(sectorType)]="formSectorType"
+      [(coordinates)]="formCoordinates"
+      [(type)]="formType"
+      [(regionIds)]="formRegionIds"
+      [(subregionIds)]="formSubregionIds"
+      [kind]="form.kind"
+      [adding]="form.id === null"
+      [kindLabel]="formKindLabel()"
+      [context]="formContextLabel()"
+      [regionOptions]="sortedRegions()"
+      [subregionOptions]="sortedSubregions()"
+      [busy]="busy()"
+      [error]="formError()"
+      (save)="submitForm()"
+      (cancel)="cancelForm()"
+    />
   }
 </section>

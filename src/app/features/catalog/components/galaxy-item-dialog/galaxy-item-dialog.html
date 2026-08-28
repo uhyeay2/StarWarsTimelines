@@ -1,0 +1,99 @@
+<div
+  class="admin-popup-backdrop"
+  (click)="onBackdropClick()"
+  (keydown.escape)="cancel.emit()"
+  tabindex="-1"
+></div>
+<div
+  class="admin-popup admin-popup--galaxy"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="heading()"
+  cdkTrapFocus
+>
+  <h3>{{ heading() }}</h3>
+  <form (ngSubmit)="save.emit()">
+    <label class="source-field">
+      <span>Name</span>
+      <input name="galaxyName" [(ngModel)]="name" placeholder="Name…" required autofocus />
+    </label>
+
+    @if (showsSectorType()) {
+      <label class="source-field">
+        <span>Sector type</span>
+        <input
+          name="galaxySectorType"
+          [(ngModel)]="sectorType"
+          placeholder="e.g. sector, region, oversector…"
+        />
+      </label>
+    }
+
+    @if (showsCoordinates()) {
+      <label class="source-field">
+        <span>Coordinates</span>
+        <input
+          name="galaxyCoordinates"
+          [(ngModel)]="coordinates"
+          placeholder="e.g. R-16 (grid reference)"
+        />
+      </label>
+    }
+
+    @if (showsTypePicker()) {
+      <label class="source-field">
+        <span>Type</span>
+        <select name="galaxyType" [(ngModel)]="type" aria-label="Location type">
+          @for (type of planetLocationTypes(); track type) {
+            <option [ngValue]="type">{{ type }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    @if (showsDescription()) {
+      <label class="source-field">
+        <span>Description</span>
+        <input name="galaxyDescription" [(ngModel)]="description" placeholder="Details…" />
+      </label>
+    }
+
+    @if (linkField(); as field) {
+      <div class="source-field">
+        <span>{{ field.label }}</span>
+        <app-filter-group
+          [label]="field.label"
+          [options]="linkNodes()"
+          [selected]="linkValues()"
+          (selectedChange)="onLinkChange($event)"
+        />
+        <ul class="link-chips">
+          @for (chip of linkChips(); track chip.value) {
+            <li class="link-chip">
+              {{ chip.name }}
+              <button
+                type="button"
+                class="link-chip-remove"
+                (click)="removeLink(chip.value)"
+                [attr.aria-label]="'Remove ' + chip.name"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <p class="admin-popup-hint">{{ hint() }}</p>
+    @if (error()) {
+      <p class="form-error" role="alert">{{ error() }}</p>
+    }
+    <div class="admin-popup-actions">
+      <button class="btn btn-primary btn-sm" type="submit" [disabled]="busy()">
+        {{ submitLabel() }}
+      </button>
+      <button class="btn btn-sm" type="button" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</div>

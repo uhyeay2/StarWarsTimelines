@@ -802,21 +802,6 @@ describe('GalaxyCatalog', () => {
     expect(component.deleteTarget()).toBeNull();
   });
 
-  it('toggles region and subregion link selections', () => {
-    const regionId = 1;
-    const subregionId = 2;
-
-    component.toggleRegionLink(regionId);
-    expect(component.formRegionIds()).toEqual([regionId]);
-    component.toggleRegionLink(regionId);
-    expect(component.formRegionIds()).toEqual([]);
-
-    component.toggleSubregionLink(subregionId);
-    expect(component.formSubregionIds()).toEqual([subregionId]);
-    component.toggleSubregionLink(subregionId);
-    expect(component.formSubregionIds()).toEqual([]);
-  });
-
   it('deletes a subregion after inline confirmation', () => {
     const subregionName = 'Ryloth Sector';
     seedGalaxy(galaxyService, httpMock, fixture, {

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { GalaxyService } from '../../services/galaxy.service';
 import {
@@ -17,7 +16,7 @@ import {
   GalaxyLocationNode,
 } from '../../models/galaxy-catalog-models';
 import { GalaxyBrowser } from '../galaxy-browser/galaxy-browser';
-import { GalaxyItemForm } from '../galaxy-item-form/galaxy-item-form';
+import { GalaxyItemDialog } from '../galaxy-item-dialog/galaxy-item-dialog';
 
 /**
  * Admin catalog tab for the galaxy hierarchy. Renders the {@link GalaxyBrowser}
@@ -25,7 +24,7 @@ import { GalaxyItemForm } from '../galaxy-item-form/galaxy-item-form';
  * editor concerns on top of it:
  *
  * - the loading and error banner,
- * - the inline add/edit form projected below the browser header,
+ * - the add/edit modal dialog projected over the browser,
  * - the delete-confirmation prompt,
  * - the galaxy mutations that surface server-side validation and conflict
  *   messages inline.
@@ -37,7 +36,7 @@ import { GalaxyItemForm } from '../galaxy-item-form/galaxy-item-form';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-galaxy-catalog',
-  imports: [FormsModule, GalaxyBrowser, GalaxyItemForm],
+  imports: [GalaxyBrowser, GalaxyItemDialog],
   templateUrl: './galaxy-catalog.html',
   styleUrl: './galaxy-catalog.scss',
 })
@@ -239,22 +238,6 @@ export class GalaxyCatalog {
       .map((id) => list.find((entry) => entry.id === id)?.name)
       .filter((name): name is string => name !== undefined)
       .join(', ');
-  }
-
-  /** Toggles one region id in the subregion form's link selection. */
-  toggleRegionLink(regionId: number): void {
-    this.formRegionIds.update((current) =>
-      current.includes(regionId) ? current.filter((id) => id !== regionId) : [...current, regionId],
-    );
-  }
-
-  /** Toggles one subregion id in the system form's link selection. */
-  toggleSubregionLink(subregionId: number): void {
-    this.formSubregionIds.update((current) =>
-      current.includes(subregionId)
-        ? current.filter((id) => id !== subregionId)
-        : [...current, subregionId],
-    );
   }
 
   /** Validates the form and creates or replaces the active row. */
