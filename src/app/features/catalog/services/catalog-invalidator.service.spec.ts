@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { CatalogInvalidator } from './catalog-invalidator.service';
 import { CharacterService } from './character.service';
-import { LocationService } from './location.service';
+import { GalaxyService } from './galaxy.service';
 import { VehicleService } from './vehicle.service';
 import { SpeciesService } from './species.service';
 import { SourceMaterialService } from './source-material.service';
@@ -10,7 +10,13 @@ import { SourceMaterialService } from './source-material.service';
 describe('CatalogInvalidator', () => {
   let invalidator: CatalogInvalidator;
   let characterService: { invalidate: ReturnType<typeof vi.fn> };
-  let locationService: { invalidate: ReturnType<typeof vi.fn> };
+  let galaxyService: {
+    invalidateRegions: ReturnType<typeof vi.fn>;
+    invalidateSubregions: ReturnType<typeof vi.fn>;
+    invalidatePlanetSystems: ReturnType<typeof vi.fn>;
+    invalidatePlanets: ReturnType<typeof vi.fn>;
+    invalidatePlanetLocations: ReturnType<typeof vi.fn>;
+  };
   let vehicleService: { invalidate: ReturnType<typeof vi.fn> };
   let speciesService: { invalidate: ReturnType<typeof vi.fn> };
   let sourceMaterialService: {
@@ -22,7 +28,13 @@ describe('CatalogInvalidator', () => {
 
   beforeEach(() => {
     characterService = { invalidate: vi.fn() };
-    locationService = { invalidate: vi.fn() };
+    galaxyService = {
+      invalidateRegions: vi.fn(),
+      invalidateSubregions: vi.fn(),
+      invalidatePlanetSystems: vi.fn(),
+      invalidatePlanets: vi.fn(),
+      invalidatePlanetLocations: vi.fn(),
+    };
     vehicleService = { invalidate: vi.fn() };
     speciesService = { invalidate: vi.fn() };
     sourceMaterialService = {
@@ -36,7 +48,7 @@ describe('CatalogInvalidator', () => {
       providers: [
         CatalogInvalidator,
         { provide: CharacterService, useValue: characterService },
-        { provide: LocationService, useValue: locationService },
+        { provide: GalaxyService, useValue: galaxyService },
         { provide: VehicleService, useValue: vehicleService },
         { provide: SpeciesService, useValue: speciesService },
         { provide: SourceMaterialService, useValue: sourceMaterialService },
@@ -51,9 +63,31 @@ describe('CatalogInvalidator', () => {
     expect(characterService.invalidate).toHaveBeenCalledOnce();
   });
 
-  it('invalidates location caches for locations entity', () => {
-    invalidator.invalidateEntity('locations');
-    expect(locationService.invalidate).toHaveBeenCalledOnce();
+  it('invalidates regions for the regions entity', () => {
+    invalidator.invalidateEntity('regions');
+    expect(galaxyService.invalidateRegions).toHaveBeenCalledOnce();
+  });
+
+  it('invalidates subregions for the subregions entity', () => {
+    invalidator.invalidateEntity('subregions');
+    expect(galaxyService.invalidateSubregions).toHaveBeenCalledOnce();
+  });
+
+  it('invalidates planet systems for the planet-systems entity', () => {
+    invalidator.invalidateEntity('planet-systems');
+    expect(galaxyService.invalidatePlanetSystems).toHaveBeenCalledOnce();
+  });
+
+  it('invalidates planets plus character and species caches for the planets entity', () => {
+    invalidator.invalidateEntity('planets');
+    expect(galaxyService.invalidatePlanets).toHaveBeenCalledOnce();
+    expect(characterService.invalidate).toHaveBeenCalledOnce();
+    expect(speciesService.invalidate).toHaveBeenCalledOnce();
+  });
+
+  it('invalidates planet locations for the planet-locations entity', () => {
+    invalidator.invalidateEntity('planet-locations');
+    expect(galaxyService.invalidatePlanetLocations).toHaveBeenCalledOnce();
   });
 
   it('invalidates vehicle caches for vehicles entity', () => {
@@ -91,7 +125,10 @@ describe('CatalogInvalidator', () => {
   it('invalidateAll calls all services', () => {
     invalidator.invalidateAll();
     expect(characterService.invalidate).toHaveBeenCalledOnce();
-    expect(locationService.invalidate).toHaveBeenCalledOnce();
+    expect(galaxyService.invalidateRegions).toHaveBeenCalledOnce();
+    expect(galaxyService.invalidateSubregions).toHaveBeenCalledOnce();
+    expect(galaxyService.invalidatePlanetSystems).toHaveBeenCalledOnce();
+    expect(galaxyService.invalidatePlanets).toHaveBeenCalledOnce();
     expect(vehicleService.invalidate).toHaveBeenCalledOnce();
     expect(speciesService.invalidate).toHaveBeenCalledOnce();
     expect(sourceMaterialService.invalidateMaterials).toHaveBeenCalledOnce();

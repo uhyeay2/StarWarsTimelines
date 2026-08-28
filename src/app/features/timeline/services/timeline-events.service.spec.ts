@@ -44,7 +44,7 @@ const EVENT_DTO = [
       { id: 7, name: 'Darth Maul' },
       { id: 8, name: 'Qui-Gon Jinn' },
     ],
-    locations: [{ id: 12, name: 'Naboo' }],
+    locations: [{ locationHierarchyType: 4, locationId: 12, name: 'Naboo' }],
     vehicles: [{ id: 15, name: 'Sith Infiltrator' }],
   },
 ];
@@ -97,6 +97,7 @@ describe('TimelineEventsService', () => {
             },
           ],
           locations: ['Naboo'],
+          locationRefs: [{ locationHierarchyType: 'Planet', locationId: 12 }],
           characters: ['Darth Maul', 'Qui-Gon Jinn'],
           vehicles: ['Sith Infiltrator'],
           yearStart: -32,
@@ -221,7 +222,7 @@ describe('TimelineEventsService', () => {
         {
           ...EVENT_DTO[0]!,
           characters: [{ id: 7, name: '' }],
-          locations: [{ id: 12, name: 'Naboo' }],
+          locations: [{ locationHierarchyType: 4, locationId: 12, name: 'Naboo' }],
         },
       ]);
 

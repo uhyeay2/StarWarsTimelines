@@ -16,12 +16,15 @@ import { Canon, CANON_TIMELINES } from '../../../shared/models/canon';
 import { mediumFromApiCode } from '../../../shared/models/medium';
 import { EventSource, TimelineEvent } from '../models/timeline-event';
 import { unitTypeFromApiCode } from '../../../shared/models/unit-type';
+import { LocationReference } from '../../../shared/models/location-reference';
+import { LOCATION_HIERARCHY_TYPES } from '../../../shared/models/location-hierarchy-type';
 import {
   EventSourceMaterialDto,
   EventSourceMaterialLinkDto,
   EventSourceMaterialUnitDto,
   NamedEntityDto,
   TimelineEventDto,
+  TimelineEventLocationDto,
 } from './timeline-events.dto';
 
 // ─── Canon mapping ──────────────────────────────────────────────────────────
@@ -126,6 +129,37 @@ export function isValidSourceMaterialLinkDto(dto: unknown): dto is EventSourceMa
 
 /**
  * Type guard that verifies a raw value has the required shape or a
+ * {@link TimelineEventLocationDto}.
+ *
+ * @param dto  The value to validate.
+ * @returns `true` when the value satisfies the `TimelineEventLocationDto` contract.
+ */
+export function isValidTimelineEventLocationDto(dto: unknown): dto is TimelineEventLocationDto {
+  if (typeof dto !== 'object' || dto === null) {
+    return false;
+  }
+  const d = dto as Record<string, unknown>;
+  return typeof d['locationHierarchyType'] === 'number' && typeof d['locationId'] === 'number';
+}
+
+/**
+ * Converts a valid {@link TimelineEventLocationDto} to a domain-level
+ * {@link LocationReference}.
+ *
+ * @param location  The validated location DTO to convert.
+ * @returns A typed location reference, or `null` when the hierarchy type
+ *          code does not map to a known level.
+ */
+function toLocationReference(location: TimelineEventLocationDto): LocationReference | null {
+  const type = LOCATION_HIERARCHY_TYPES[location.locationHierarchyType - 1];
+  if (type === undefined) {
+    return null;
+  }
+  return { locationHierarchyType: type, locationId: location.locationId };
+}
+
+/**
+ * Type guard that verifies a raw value has the required shape or a
  * {@link TimelineEventDto}.
  *
  * Checks for the presence and correct type of every mandatory field.
@@ -219,13 +253,24 @@ function unionCanon(sources: readonly EventSource[]): readonly Canon[] {
  */
 export function mapTimelineEvent(dto: TimelineEventDto): TimelineEvent {
   const sources = dto.sourceMaterials.filter(isValidSourceMaterialLinkDto).map(mapEventSource);
+  const locations = dto.locations
+    .filter(isValidTimelineEventLocationDto)
+    .map((location) => ({
+      reference: toLocationReference(location),
+      name: location.name,
+    }))
+    .filter(
+      (entry): entry is { reference: LocationReference; name: string | null } =>
+        entry.reference !== null,
+    );
   return {
     id: dto.id,
     canon: unionCanon(sources),
     title: dto.title,
     description: dto.description,
     sources,
-    locations: dto.locations.filter(isValidNamedEntityDto).map((entity) => entity.name),
+    locations: locations.map((entry) => entry.name).filter((name): name is string => name !== null),
+    locationRefs: locations.map((entry) => entry.reference),
     characters: dto.characters.filter(isValidNamedEntityDto).map((entity) => entity.name),
     vehicles: dto.vehicles.filter(isValidNamedEntityDto).map((entity) => entity.name),
     yearStart: dto.yearStart,

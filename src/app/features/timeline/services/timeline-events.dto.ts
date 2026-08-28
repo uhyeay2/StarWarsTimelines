@@ -66,11 +66,37 @@ export interface EventSourceMaterialLinkDto {
 }
 
 /**
+ * A galaxy-hierarchy place reference embedded in a timeline event response.
+ *
+ * Places may sit at any level of the galaxy hierarchy (region, subregion,
+ * planet system, planet, or planet location). The `locationHierarchyType`
+ * field is a numeric index into the server-side enum, and `name` is the
+ * resolved display name — `null` when the referenced entry no longer exists.
+ */
+export interface TimelineEventLocationDto {
+  /** Numeric index into the server-side `LocationHierarchyType` enum. */
+  readonly locationHierarchyType: number;
+  /** Identifier of the place inside that hierarchy level's table. */
+  readonly locationId: number;
+  /** Display name of the referenced place, or `null` when it no longer exists. */
+  readonly name: string | null;
+}
+
+/** A galaxy placeholder reference used when persisting a timeline event. */
+export interface EventLocationReference {
+  /** Numeric index into the server-side `LocationHierarchyType` enum. */
+  readonly locationHierarchyType: number;
+  /** Identifier of the place inside that hierarchy level's table. */
+  readonly locationId: number;
+}
+
+/**
  * Raw timeline event response body from the API.
  *
- * All enum-typed fields (`medium`, `unitType`, `canonType`) are numeric
- * indices that must be mapped to domain string unions before use. Canon
- * coverage is per source material; an event has no canon of its own.
+ * All enum-typed fields (`medium`, `unitType`, `canonType`,
+ * `locationHierarchyType`) are numeric indices that must be mapped to domain
+ * string unions before use. Canon coverage is per source material; an event
+ * has no canon of its own.
  */
 export interface TimelineEventDto {
   /** Server-assigned unique identifier. */
@@ -89,8 +115,8 @@ export interface TimelineEventDto {
   readonly sourceMaterials: readonly EventSourceMaterialLinkDto[];
   /** Characters involved in this event. */
   readonly characters: readonly NamedEntityDto[];
-  /** Locations where this event takes place. */
-  readonly locations: readonly NamedEntityDto[];
+  /** Places where this event takes place (any galaxy-hierarchy level). */
+  readonly locations: readonly TimelineEventLocationDto[];
   /** Vehicles featured in this event. */
   readonly vehicles: readonly NamedEntityDto[];
 }
@@ -111,6 +137,6 @@ export interface CreateTimelineEventRequest {
     readonly sourceMaterialUnitId: number | null;
   }[];
   readonly characterIds: readonly number[];
-  readonly locationIds: readonly number[];
+  readonly locations: readonly EventLocationReference[];
   readonly vehicleIds: readonly number[];
 }

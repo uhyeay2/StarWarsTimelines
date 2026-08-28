@@ -1,8 +1,8 @@
 export interface ApiCharacter {
   readonly id: number;
   readonly name: string;
-  readonly planetBornOnId?: number | null;
-  readonly planetBornOnName?: string | null;
+  readonly bornOnPlanetId?: number | null;
+  readonly bornOnPlanetName?: string | null;
   readonly yearOfBirthEarliest?: number | null;
   readonly yearOfBirthLatest?: number | null;
   readonly yearOfDeathEarliest?: number | null;

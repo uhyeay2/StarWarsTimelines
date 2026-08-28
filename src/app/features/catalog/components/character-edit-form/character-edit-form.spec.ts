@@ -7,15 +7,15 @@ describe('CharacterEditForm', () => {
     { id: 1, name: 'Human' },
     { id: 2, name: "Twi'lek" },
   ];
-  const locationOptions = [{ id: 7, name: 'Tatooine' }];
+  const planetOptions = [{ id: 7, name: 'Tatooine' }];
 
   function create(): ComponentFixture<CharacterEditForm> {
     const fixture = TestBed.createComponent(CharacterEditForm);
     fixture.componentRef.setInput('name', 'Luke Skywalker');
     fixture.componentRef.setInput('speciesId', 1);
-    fixture.componentRef.setInput('planetBornOnId', 7);
+    fixture.componentRef.setInput('bornOnPlanetId', 7);
     fixture.componentRef.setInput('speciesOptions', speciesOptions);
-    fixture.componentRef.setInput('locationOptions', locationOptions);
+    fixture.componentRef.setInput('planetOptions', planetOptions);
     return fixture;
   }
 
@@ -39,7 +39,7 @@ describe('CharacterEditForm', () => {
     expect(speciesSelect.options.length).toBe(3);
     expect(speciesSelect.selectedIndex).toBe(1);
 
-    const planetSelect = el.querySelector('[name="editPlanetBornOnId"]') as HTMLSelectElement;
+    const planetSelect = el.querySelector('[name="editBornOnPlanetId"]') as HTMLSelectElement;
     expect(planetSelect.options.length).toBe(2);
     expect(planetSelect.selectedIndex).toBe(1);
   });

@@ -14,7 +14,7 @@ import {
 } from '../../models/timeline-filters';
 import { CatalogEventService } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
-import { LocationService } from '../../../catalog/services/location.service';
+import { GalaxyService } from '../../../catalog/services/galaxy.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { NavPreferencesService } from '../../../../shared/services/nav-preferences/nav-preferences.service';
@@ -29,7 +29,7 @@ export class TimelinePresenter {
   private readonly eventsService = inject(TimelineEventsService);
   private readonly route = inject(ActivatedRoute);
   private readonly characterService = inject(CharacterService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
   private readonly vehicleService = inject(VehicleService);
   private readonly sourceMaterialService = inject(SourceMaterialService);
   private readonly catalogEvent = inject(CatalogEventService);
@@ -67,6 +67,30 @@ export class TimelinePresenter {
     ),
   );
 
+  /**
+   * Every galaxy-hierarchy place name (across all five levels), sorted and
+   * deduplicated — the facet options for the location filter.
+   */
+  readonly galaxyNames = computed(() => {
+    const names = new Set<string>();
+    for (const region of this.galaxyService.regions() ?? []) {
+      names.add(region.name);
+    }
+    for (const subregion of this.galaxyService.subregions() ?? []) {
+      names.add(subregion.name);
+    }
+    for (const system of this.galaxyService.planetSystems() ?? []) {
+      names.add(system.name);
+    }
+    for (const planet of this.galaxyService.planets() ?? []) {
+      names.add(planet.name);
+    }
+    for (const location of this.galaxyService.planetLocations()) {
+      names.add(location.name);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  });
+
   readonly facetOptions = computed(() => {
     const eventFacets = collectFacetOptions(
       this.continuityEvents(),
@@ -80,12 +104,11 @@ export class TimelinePresenter {
       },
     );
     const characters = this.characterService.characters();
-    const locations = this.locationService.locations();
     const vehicles = this.vehicleService.vehicles();
     return {
       ...eventFacets,
       characters: (characters ?? []).map((c) => ({ value: c.name, label: c.name })),
-      locations: (locations ?? []).map((l) => ({ value: l.name, label: l.name })),
+      locations: this.galaxyNames().map((name) => ({ value: name, label: name })),
       vehicles: (vehicles ?? []).map((v) => ({ value: v.name, label: v.name })),
     };
   });
@@ -143,7 +166,7 @@ export class TimelinePresenter {
 
     effect(() => {
       this.characterService.fetchCharacters();
-      this.locationService.fetchLocations();
+      this.galaxyService.fetchAll();
       this.vehicleService.fetchVehicles();
     });
 

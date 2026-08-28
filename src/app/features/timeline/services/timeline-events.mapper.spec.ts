@@ -223,12 +223,13 @@ describe('mapTimelineEvent', () => {
     const mapped = mapTimelineEvent({
       ...eventDto(),
       characters: [named(7, 'Luke'), null],
-      locations: [named(8, 'Yavin 4'), { broken: true }],
+      locations: [{ locationHierarchyType: 4, locationId: 16, name: 'Yavin 4' }, { broken: true }],
       vehicles: [named(9, 'X-wing')],
-    } as TimelineEventDto);
+    } as unknown as TimelineEventDto);
 
     expect(mapped.characters).toEqual(['Luke']);
     expect(mapped.locations).toEqual(['Yavin 4']);
+    expect(mapped.locationRefs).toEqual([{ locationHierarchyType: 'Planet', locationId: 16 }]);
     expect(mapped.vehicles).toEqual(['X-wing']);
   });
 });

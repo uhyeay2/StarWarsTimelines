@@ -33,8 +33,8 @@ export class CharacterAddDialog {
   /** Species options sorted by name. */
   readonly speciesOptions = input<readonly CatalogSelectOption[]>([]);
 
-  /** Location options sorted by name. */
-  readonly locationOptions = input<readonly CatalogSelectOption[]>([]);
+  /** Planet options sorted by name, offered as birth planets. */
+  readonly planetOptions = input<readonly CatalogSelectOption[]>([]);
 
   /** The character name entered by the user. */
   readonly name = model('');
@@ -43,7 +43,7 @@ export class CharacterAddDialog {
   readonly speciesId = model(0);
 
   /** Birth planet id, or `0` when unknown. */
-  readonly planetBornOnId = model(0);
+  readonly bornOnPlanetId = model(0);
 
   /** Earliest birth year (negative = BBY), or null when unknown. */
   readonly birthFrom = model<number | null>(null);

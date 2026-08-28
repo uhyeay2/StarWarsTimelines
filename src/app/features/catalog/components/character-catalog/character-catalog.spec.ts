@@ -6,14 +6,14 @@ import { CharacterService } from '../../services/character.service';
 import { CharacterCatalog } from './character-catalog';
 
 const CHARACTERS_URL = '/api/characters';
-const LOCATIONS_URL = '/api/locations';
+const PLANET_SYSTEMS_URL = '/api/planet-systems';
 const SPECIES_URL = '/api/species';
 
 type BioFields = {
   id: number;
   name: string;
-  planetBornOnId?: number | null;
-  planetBornOnName?: string | null;
+  bornOnPlanetId?: number | null;
+  bornOnPlanetName?: string | null;
   yearOfBirthEarliest?: number | null;
   yearOfBirthLatest?: number | null;
   yearOfDeathEarliest?: number | null;
@@ -25,13 +25,7 @@ type BioFields = {
 /** Flushes the three initial GETs fired by ngOnInit. */
 function flushInitialFetch(httpMock: HttpTestingController, characters: BioFields[] = []): void {
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(CHARACTERS_URL)).flush(characters);
-  httpMock
-    .expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL))
-    .flush([
-      { id: 11, name: 'Tatooine' },
-      { id: 12, name: 'Coruscant' },
-      { id: 13, name: 'Naboo' },
-    ]);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(PLANET_SYSTEMS_URL)).flush([]);
   httpMock
     .expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL))
     .flush([
@@ -115,7 +109,7 @@ describe('CharacterCatalog', () => {
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(CHARACTERS_URL));
     expect(post.request.body).toEqual({
       name: 'BD-1',
-      planetBornOnId: null,
+      bornOnPlanetId: null,
       yearOfBirthEarliest: null,
       yearOfBirthLatest: null,
       yearOfDeathEarliest: null,
@@ -136,7 +130,7 @@ describe('CharacterCatalog', () => {
     component.openAdd();
     component.newName.set('Grogu');
     component.newSpeciesId.set(4);
-    component.newPlanetBornOnId.set(11);
+    component.newBornOnPlanetId.set(11);
     component.newBirthFrom.set(-41);
     component.newBirthTo.set(-41);
     component.newDeathFrom.set(12);
@@ -147,7 +141,7 @@ describe('CharacterCatalog', () => {
     const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith(CHARACTERS_URL));
     expect(post.request.body).toEqual({
       name: 'Grogu',
-      planetBornOnId: 11,
+      bornOnPlanetId: 11,
       yearOfBirthEarliest: -41,
       yearOfBirthLatest: -41,
       yearOfDeathEarliest: 12,
@@ -160,7 +154,7 @@ describe('CharacterCatalog', () => {
       {
         id: 8,
         name: 'Grogu',
-        planetBornOnName: 'Tatooine',
+        bornOnPlanetName: 'Tatooine',
         yearOfBirthEarliest: -41,
         yearOfBirthLatest: -41,
         yearOfDeathEarliest: 12,
@@ -172,7 +166,7 @@ describe('CharacterCatalog', () => {
     expect(component.items()[0]).toEqual({
       id: 8,
       name: 'Grogu',
-      planetBornOnName: 'Tatooine',
+      bornOnPlanetName: 'Tatooine',
       yearOfBirthEarliest: -41,
       yearOfBirthLatest: -41,
       yearOfDeathEarliest: 12,
@@ -230,8 +224,8 @@ describe('CharacterCatalog', () => {
       {
         id: 9,
         name: 'Palpatine',
-        planetBornOnId: 13,
-        planetBornOnName: 'Naboo',
+        bornOnPlanetId: 13,
+        bornOnPlanetName: 'Naboo',
         yearOfBirthEarliest: -88,
         yearOfBirthLatest: -84,
         yearOfDeathEarliest: 4,
@@ -243,8 +237,8 @@ describe('CharacterCatalog', () => {
     const original = {
       id: 9,
       name: 'Palpatine',
-      planetBornOnId: 13,
-      planetBornOnName: 'Naboo',
+      bornOnPlanetId: 13,
+      bornOnPlanetName: 'Naboo',
       yearOfBirthEarliest: -88,
       yearOfBirthLatest: -84,
       yearOfDeathEarliest: 4,
@@ -255,7 +249,7 @@ describe('CharacterCatalog', () => {
 
     component.beginEdit(original);
     component.editName.set('Emperor Palpatine');
-    component.editPlanetBornOnId.set(12);
+    component.editBornOnPlanetId.set(12);
     fixture.detectChanges();
     component.saveEdit();
 
@@ -264,7 +258,7 @@ describe('CharacterCatalog', () => {
     );
     expect(put.request.body).toEqual({
       name: 'Emperor Palpatine',
-      planetBornOnId: 12,
+      bornOnPlanetId: 12,
       yearOfBirthEarliest: -88,
       yearOfBirthLatest: -84,
       yearOfDeathEarliest: 4,
@@ -277,7 +271,7 @@ describe('CharacterCatalog', () => {
       {
         id: 9,
         name: 'Emperor Palpatine',
-        planetBornOnName: 'Coruscant',
+        bornOnPlanetName: 'Coruscant',
         yearOfBirthEarliest: -88,
         yearOfBirthLatest: -84,
         yearOfDeathEarliest: 4,
@@ -287,7 +281,7 @@ describe('CharacterCatalog', () => {
     ]);
 
     expect(component.editId()).toBeNull();
-    expect(component.items()[0]!.planetBornOnName).toBe('Coruscant');
+    expect(component.items()[0]!.bornOnPlanetName).toBe('Coruscant');
     expect(fixture.nativeElement.textContent).toContain(
       'Human \u00b7 Born Coruscant, 84\u201388 BBY \u00b7 Died 4\u201335 ABY',
     );
@@ -298,8 +292,8 @@ describe('CharacterCatalog', () => {
       {
         id: 9,
         name: 'Luke',
-        planetBornOnId: 11,
-        planetBornOnName: 'Tatooine',
+        bornOnPlanetId: 11,
+        bornOnPlanetName: 'Tatooine',
         yearOfBirthEarliest: -19,
         yearOfBirthLatest: -19,
         speciesId: 3,
@@ -310,8 +304,8 @@ describe('CharacterCatalog', () => {
     component.beginEdit({
       id: 9,
       name: 'Luke',
-      planetBornOnId: 11,
-      planetBornOnName: 'Tatooine',
+      bornOnPlanetId: 11,
+      bornOnPlanetName: 'Tatooine',
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
       speciesId: 3,
@@ -323,7 +317,7 @@ describe('CharacterCatalog', () => {
       'select[name="editSpeciesId"]',
     ) as HTMLSelectElement;
     const planetSelect = fixture.nativeElement.querySelector(
-      'select[name="editPlanetBornOnId"]',
+      'select[name="editBornOnPlanetId"]',
     ) as HTMLSelectElement;
     expect(Array.from(speciesSelect.options).some((o) => o.textContent?.trim() === 'Unknown')).toBe(
       true,
@@ -338,8 +332,8 @@ describe('CharacterCatalog', () => {
       {
         id: 9,
         name: 'Luke',
-        planetBornOnId: 11,
-        planetBornOnName: 'Tatooine',
+        bornOnPlanetId: 11,
+        bornOnPlanetName: 'Tatooine',
         yearOfBirthEarliest: -19,
         yearOfBirthLatest: -19,
         speciesId: 3,
@@ -350,8 +344,8 @@ describe('CharacterCatalog', () => {
     component.beginEdit({
       id: 9,
       name: 'Luke',
-      planetBornOnId: 11,
-      planetBornOnName: 'Tatooine',
+      bornOnPlanetId: 11,
+      bornOnPlanetName: 'Tatooine',
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
       speciesId: 3,
@@ -366,7 +360,7 @@ describe('CharacterCatalog', () => {
     );
     expect(http.request.body).toEqual({
       name: 'Luke',
-      planetBornOnId: 11,
+      bornOnPlanetId: 11,
       yearOfBirthEarliest: -19,
       yearOfBirthLatest: -19,
       yearOfDeathEarliest: null,
@@ -381,8 +375,8 @@ describe('CharacterCatalog', () => {
         {
           id: 9,
           name: 'Luke',
-          planetBornOnId: 11,
-          planetBornOnName: 'Tatooine',
+          bornOnPlanetId: 11,
+          bornOnPlanetName: 'Tatooine',
           yearOfBirthEarliest: -19,
           yearOfBirthLatest: -19,
           speciesId: 3,

@@ -29,13 +29,13 @@
               <app-character-edit-form
                 [(name)]="editName"
                 [(speciesId)]="editSpeciesId"
-                [(planetBornOnId)]="editPlanetBornOnId"
+                [(bornOnPlanetId)]="editBornOnPlanetId"
                 [(birthFrom)]="editBirthFrom"
                 [(birthTo)]="editBirthTo"
                 [(deathFrom)]="editDeathFrom"
                 [(deathTo)]="editDeathTo"
                 [speciesOptions]="sortedSpecies()"
-                [locationOptions]="sortedLocations()"
+                [planetOptions]="sortedPlanets()"
                 [saving]="savingId() === row.item.id"
                 (save)="saveEdit()"
                 (cancel)="cancelEdit()"
@@ -92,10 +92,10 @@
   @if (isAdmin() && addOpen()) {
     <app-character-add-dialog
       [speciesOptions]="sortedSpecies()"
-      [locationOptions]="sortedLocations()"
+      [planetOptions]="sortedPlanets()"
       [(name)]="newName"
       [(speciesId)]="newSpeciesId"
-      [(planetBornOnId)]="newPlanetBornOnId"
+      [(bornOnPlanetId)]="newBornOnPlanetId"
       [(birthFrom)]="newBirthFrom"
       [(birthTo)]="newBirthTo"
       [(deathFrom)]="newDeathFrom"

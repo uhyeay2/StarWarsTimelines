@@ -1,0 +1,66 @@
+@for (node of nodes(); track node.subregion.id) {
+  <li class="galaxy-node">
+    <div class="galaxy-row">
+      <button
+        class="galaxy-toggle"
+        type="button"
+        [attr.aria-expanded]="host().isExpanded('subregion-' + node.subregion.id)"
+        (click)="host().toggleExpanded('subregion-' + node.subregion.id)"
+      >
+        {{ host().isExpanded('subregion-' + node.subregion.id) ? '▾' : '▸' }}
+      </button>
+      <div class="galaxy-row-main">
+        <div class="galaxy-row-line">
+          <span class="galaxy-name">{{ node.subregion.name }}</span>
+          @if (node.subregion.sectorType) {
+            <span class="galaxy-meta">{{ node.subregion.sectorType }}</span>
+          }
+        </div>
+        @if (showChips() && node.subregion.regions.length > 0) {
+          <div class="galaxy-chips">
+            <span class="galaxy-chips-label">Part of</span>
+            @for (link of node.subregion.regions; track link.id) {
+              <span class="galaxy-chip">{{ link.name }}</span>
+            }
+          </div>
+        }
+      </div>
+      @if (host().isAdmin()) {
+        <div class="galaxy-actions">
+          <button
+            class="btn btn-sm"
+            type="button"
+            (click)="host().startEditSubregion(node.subregion)"
+          >
+            Edit
+          </button>
+          <button
+            class="btn btn-sm btn-danger"
+            type="button"
+            (click)="host().requestDelete('subregion', node.subregion.id, node.subregion.name)"
+          >
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (host().isExpanded('subregion-' + node.subregion.id)) {
+      <ul class="galaxy-children">
+        <app-galaxy-planet-system-list
+          [host]="host()"
+          [nodes]="node.systems"
+          [showAdd]="true"
+          [addParentId]="node.subregion.id"
+        />
+      </ul>
+    }
+  </li>
+}
+@if (showAdd()) {
+  <li class="galaxy-add-row">
+    <button class="btn btn-sm" type="button" (click)="host().openAddSubregion(addParentId())">
+      + Add subregion
+    </button>
+  </li>
+}

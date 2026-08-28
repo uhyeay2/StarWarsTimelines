@@ -1,0 +1,68 @@
+<section class="galaxy-catalog">
+  @if (loading()) {
+    <p class="form-status" role="status" aria-live="polite">Loading…</p>
+  } @else if (loadError(); as error) {
+    <p class="form-error" role="alert" aria-live="polite">{{ error }}</p>
+  } @else {
+    <app-galaxy-browser
+      [admin]="isAdmin()"
+      [busy]="busy()"
+      (addRegion)="openAddRegion()"
+      (addSubregion)="openAddSubregion($event)"
+      (addSystem)="openAddSystem($event)"
+      (addPlanet)="openAddPlanet($event)"
+      (addLocation)="openAddLocation($event)"
+      (editRegion)="startEditRegion($event)"
+      (editSubregion)="startEditSubregion($event)"
+      (editSystem)="startEditSystem($event)"
+      (editPlanet)="startEditPlanet($event)"
+      (editLocation)="startEditLocation($event.location, $event.planetId)"
+      (remove)="requestDelete($event.kind, $event.id, $event.name)"
+    >
+      @if (formError()) {
+        <p class="form-error" role="alert" aria-live="polite">{{ formError() }}</p>
+      }
+
+      @if (deleteTarget(); as target) {
+        <div class="delete-prompt">
+          <p>
+            Delete “{{ target.name }}”? Children and links below it are removed too; the server
+            blocks this while any row is referenced by a timeline event.
+          </p>
+          <div class="delete-actions">
+            <button
+              class="btn btn-sm btn-danger"
+              type="button"
+              [disabled]="busy()"
+              (click)="confirmDelete()"
+            >
+              {{ busy() ? 'Deleting…' : 'Delete' }}
+            </button>
+            <button class="btn btn-sm" type="button" (click)="cancelDelete()">Cancel</button>
+          </div>
+        </div>
+      }
+
+      @if (formState(); as form) {
+        <app-galaxy-item-form
+          [(name)]="formName"
+          [(description)]="formDescription"
+          [(sectorType)]="formSectorType"
+          [(coordinates)]="formCoordinates"
+          [(type)]="formType"
+          [(regionIds)]="formRegionIds"
+          [(subregionIds)]="formSubregionIds"
+          [kind]="form.kind"
+          [adding]="form.id === null"
+          [kindLabel]="formKindLabel()"
+          [context]="formContextLabel()"
+          [regionOptions]="sortedRegions()"
+          [subregionOptions]="sortedSubregions()"
+          [busy]="busy()"
+          (save)="submitForm()"
+          (cancel)="cancelForm()"
+        />
+      }
+    </app-galaxy-browser>
+  }
+</section>

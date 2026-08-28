@@ -63,7 +63,7 @@ describe('CharacterService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         name: 'Yoda',
-        planetBornOnId: null,
+        bornOnPlanetId: null,
         yearOfBirthEarliest: null,
         yearOfBirthLatest: null,
         yearOfDeathEarliest: null,
@@ -82,7 +82,7 @@ describe('CharacterService', () => {
       const promise = firstValueFrom(
         service.createCharacter({
           name: 'Leia',
-          planetBornOnId: 3,
+          bornOnPlanetId: 3,
           speciesId: 5,
           yearOfBirthEarliest: -19,
           yearOfBirthLatest: -19,
@@ -92,7 +92,7 @@ describe('CharacterService', () => {
       const req = httpMock.expectOne(BASE);
       expect(req.request.body).toEqual({
         name: 'Leia',
-        planetBornOnId: 3,
+        bornOnPlanetId: 3,
         yearOfBirthEarliest: -19,
         yearOfBirthLatest: -19,
         yearOfDeathEarliest: null,
@@ -114,7 +114,7 @@ describe('CharacterService', () => {
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({
         name: 'Luke (updated)',
-        planetBornOnId: null,
+        bornOnPlanetId: null,
         yearOfBirthEarliest: null,
         yearOfBirthLatest: null,
         yearOfDeathEarliest: null,

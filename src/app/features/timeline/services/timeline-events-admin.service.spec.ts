@@ -73,7 +73,7 @@ describe('TimelineEventsAdminService', () => {
         sequence: 1,
         sourceMaterials: [{ sourceMaterialId: 1, sourceMaterialUnitId: null }],
         characterIds: [2],
-        locationIds: [],
+        locations: [],
         vehicleIds: [],
       };
 
@@ -89,7 +89,7 @@ describe('TimelineEventsAdminService', () => {
         sequence: 1,
         sourceMaterials: [{ sourceMaterialId: 1, sourceMaterialUnitId: null }],
         characterIds: [2],
-        locationIds: [],
+        locations: [],
         vehicleIds: [],
       });
       req.flush(makeDto());
@@ -106,7 +106,7 @@ describe('TimelineEventsAdminService', () => {
           sequence: 1,
           sourceMaterials: [],
           characterIds: [],
-          locationIds: [],
+          locations: [],
           vehicleIds: [],
         })
         .subscribe({
@@ -136,7 +136,7 @@ describe('TimelineEventsAdminService', () => {
           sequence: 1,
           sourceMaterials: [],
           characterIds: [],
-          locationIds: [],
+          locations: [],
           vehicleIds: [],
         })
         .subscribe({ error: (e: unknown) => (error = e) });
@@ -159,7 +159,7 @@ describe('TimelineEventsAdminService', () => {
         sequence: 2,
         sourceMaterials: [],
         characterIds: [],
-        locationIds: [],
+        locations: [],
         vehicleIds: [],
       };
 
@@ -175,7 +175,7 @@ describe('TimelineEventsAdminService', () => {
         sequence: 2,
         sourceMaterials: [],
         characterIds: [],
-        locationIds: [],
+        locations: [],
         vehicleIds: [],
       });
       req.flush(makeDto({ id: 42, title: 'Updated' }));

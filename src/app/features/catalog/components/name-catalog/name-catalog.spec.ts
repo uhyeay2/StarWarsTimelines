@@ -2,16 +2,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { LocationService } from '../../services/location.service';
+import { VehicleService } from '../../services/vehicle.service';
 import { NameCatalog } from './name-catalog';
 
-const LOCATIONS_URL = '/api/locations';
+const VEHICLES_URL = '/api/vehicles';
 
 describe('NameCatalog', () => {
   let component: NameCatalog;
   let fixture: ComponentFixture<NameCatalog>;
   let httpMock: HttpTestingController;
-  let locationService: LocationService;
+  let vehicleService: VehicleService;
 
   beforeEach(async () => {
     sessionStorage.clear();
@@ -21,17 +21,17 @@ describe('NameCatalog', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(NameCatalog);
-    fixture.componentRef.setInput('catalog', 'locations');
-    fixture.componentRef.setInput('title', 'Locations');
-    fixture.componentRef.setInput('noun', 'location');
+    fixture.componentRef.setInput('catalog', 'vehicles');
+    fixture.componentRef.setInput('title', 'Vehicles');
+    fixture.componentRef.setInput('noun', 'vehicle');
     fixture.componentRef.setInput('isAdmin', true);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    locationService = TestBed.inject(LocationService);
+    vehicleService = TestBed.inject(VehicleService);
     fixture.detectChanges();
 
     // Flush the initial fetch triggered by ngOnInit.
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush([]);
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(VEHICLES_URL)).flush([]);
     fixture.detectChanges();
   });
 
@@ -40,32 +40,32 @@ describe('NameCatalog', () => {
   });
 
   /** Triggers a new fetch and flushes it with the given items. */
-  function loadLocations(items: { id: number; name: string }[]): void {
-    locationService.invalidate();
-    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush(items);
+  function loadVehicles(items: { id: number; name: string }[]): void {
+    vehicleService.invalidate();
+    httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(VEHICLES_URL)).flush(items);
     fixture.detectChanges();
   }
 
   it('renders the title and empty state', () => {
-    expect(fixture.nativeElement.textContent).toContain('Locations');
+    expect(fixture.nativeElement.textContent).toContain('Vehicles');
     expect(component.items()).toEqual([]);
   });
 
   it('opens the add dialog from the header button and cancels it', () => {
     const header = fixture.nativeElement.querySelector('.catalog-header') as HTMLElement;
     const addButton = header.querySelector('.catalog-add-button') as HTMLButtonElement;
-    expect(header.querySelector('h2')?.textContent).toContain('Locations');
+    expect(header.querySelector('h2')?.textContent).toContain('Vehicles');
     expect(header.lastElementChild).toBe(addButton);
 
     addButton.click();
     fixture.detectChanges();
     expect(component.addOpen()).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain('Add Location');
+    expect(fixture.nativeElement.textContent).toContain('Add Vehicle');
 
     (fixture.nativeElement.querySelector('.admin-popup-backdrop') as HTMLElement).click();
     fixture.detectChanges();
     expect(component.addOpen()).toBe(false);
-    expect(fixture.nativeElement.textContent).not.toContain('Add Location');
+    expect(fixture.nativeElement.textContent).not.toContain('Add Vehicle');
   });
 
   it('shows a validation error for a blank name on add', () => {
@@ -79,21 +79,21 @@ describe('NameCatalog', () => {
     expect(component.addOpen()).toBe(true);
   });
 
-  it('creates a location through the dialog and reloads the list', () => {
+  it('creates a vehicle through the dialog and reloads the list', () => {
     component.openAdd();
     component.newName.set('Naboo');
     fixture.detectChanges();
     component.submitAdd();
 
-    const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/locations'));
+    const post = httpMock.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/vehicles'));
     expect(post.request.body).toEqual({ name: 'Naboo' });
     post.flush({ id: 12, name: 'Naboo' });
     fixture.detectChanges();
 
     // Mutation auto-invalidates the cache → re-fetch fires automatically.
-    locationService.fetchLocations();
+    vehicleService.fetchVehicles();
     httpMock
-      .expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL))
+      .expectOne((r) => r.method === 'GET' && r.url.endsWith(VEHICLES_URL))
       .flush([{ id: 12, name: 'Naboo' }]);
     fixture.detectChanges();
 
@@ -112,40 +112,36 @@ describe('NameCatalog', () => {
     httpMock
       .expectOne((r) => r.method === 'POST')
       .flush(
-        { detail: 'A location with this name already exists.' },
+        { detail: 'A vehicle with this name already exists.' },
         { status: 400, statusText: 'Bad Request' },
       );
     fixture.detectChanges();
 
-    expect(component.addError()).toBe('A location with this name already exists.');
+    expect(component.addError()).toBe('A vehicle with this name already exists.');
     expect(component.addOpen()).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain(
-      'A location with this name already exists.',
-    );
+    expect(fixture.nativeElement.textContent).toContain('A vehicle with this name already exists.');
   });
 
-  it('edits an existing location and reloads the list', () => {
-    loadLocations([{ id: 11, name: 'Old' }]);
+  it('edits an existing vehicle and reloads the list', () => {
+    loadVehicles([{ id: 11, name: 'Old' }]);
 
     component.beginEdit({ id: 11, name: 'Old' });
     component.editName.set('New name');
     fixture.detectChanges();
     component.saveEdit();
 
-    const put = httpMock.expectOne(
-      (r) => r.method === 'PUT' && r.url.endsWith('/api/locations/11'),
-    );
+    const put = httpMock.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/vehicles/11'));
     expect(put.request.body).toEqual({ name: 'New name' });
     put.flush({ id: 11, name: 'New name' });
 
-    loadLocations([{ id: 11, name: 'New name' }]);
+    loadVehicles([{ id: 11, name: 'New name' }]);
 
     expect(component.editId()).toBeNull();
     expect(component.items()).toEqual([{ id: 11, name: 'New name' }]);
   });
 
   it('requires a name when saving an edit', () => {
-    loadLocations([{ id: 11, name: 'Old' }]);
+    loadVehicles([{ id: 11, name: 'Old' }]);
 
     component.beginEdit({ id: 11, name: 'Old' });
     component.editName.set('   ');
@@ -156,8 +152,8 @@ describe('NameCatalog', () => {
     expect(component.savingId()).toBeNull();
   });
 
-  it('deletes a location after inline confirmation', () => {
-    loadLocations([{ id: 11, name: 'Delete me' }]);
+  it('deletes a vehicle after inline confirmation', () => {
+    loadVehicles([{ id: 11, name: 'Delete me' }]);
 
     component.requestDelete({ id: 11, name: 'Delete me' });
     fixture.detectChanges();
@@ -167,18 +163,18 @@ describe('NameCatalog', () => {
     component.confirmDelete();
 
     const del = httpMock.expectOne(
-      (r) => r.method === 'DELETE' && r.url.endsWith('/api/locations/11'),
+      (r) => r.method === 'DELETE' && r.url.endsWith('/api/vehicles/11'),
     );
     del.flush(null, { status: 204, statusText: 'No Content' });
 
-    loadLocations([]);
+    loadVehicles([]);
 
     expect(component.confirmDeleteId()).toBeNull();
     expect(component.items()).toEqual([]);
   });
 
-  it('surfaces the conflict message when deleting a linked location', () => {
-    loadLocations([{ id: 11, name: 'Linked' }]);
+  it('surfaces the conflict message when deleting a linked vehicle', () => {
+    loadVehicles([{ id: 11, name: 'Linked' }]);
 
     component.requestDelete({ id: 11, name: 'Linked' });
     component.confirmDelete();
@@ -186,20 +182,20 @@ describe('NameCatalog', () => {
     httpMock
       .expectOne((r) => r.method === 'DELETE')
       .flush(
-        { detail: 'Location is linked to one or more timeline events and cannot be deleted.' },
+        { detail: 'Vehicle is linked to one or more timeline events and cannot be deleted.' },
         { status: 409, statusText: 'Conflict' },
       );
     fixture.detectChanges();
 
     expect(component.actionError()).toBe(
-      'Location is linked to one or more timeline events and cannot be deleted.',
+      'Vehicle is linked to one or more timeline events and cannot be deleted.',
     );
     expect(fixture.nativeElement.textContent).toContain('timeline events');
     expect(component.confirmDeleteId()).toBe(11);
   });
 
   it('cancels an in-progress delete', () => {
-    loadLocations([{ id: 11, name: 'Keep me' }]);
+    loadVehicles([{ id: 11, name: 'Keep me' }]);
 
     component.requestDelete({ id: 11, name: 'Keep me' });
     component.cancelDelete();
@@ -209,37 +205,37 @@ describe('NameCatalog', () => {
   });
 
   it('filters items by search term', () => {
-    loadLocations([
-      { id: 11, name: 'Luke Skywalker' },
-      { id: 12, name: 'Leia Organa' },
-      { id: 13, name: 'Yoda' },
+    loadVehicles([
+      { id: 11, name: 'X-wing' },
+      { id: 12, name: 'TIE fighter' },
+      { id: 13, name: 'Y-wing' },
     ]);
 
-    component.searchTerm.set('leia');
+    component.searchTerm.set('tie');
     fixture.detectChanges();
 
-    expect(component.filteredItems()).toEqual([{ id: 12, name: 'Leia Organa' }]);
-    expect(fixture.nativeElement.textContent).toContain('Leia Organa');
-    expect(fixture.nativeElement.textContent).not.toContain('Luke Skywalker');
+    expect(component.filteredItems()).toEqual([{ id: 12, name: 'TIE fighter' }]);
+    expect(fixture.nativeElement.textContent).toContain('TIE fighter');
+    expect(fixture.nativeElement.textContent).not.toContain('X-wing');
   });
 
   it('shows a no-results message when the search matches nothing', () => {
-    loadLocations([{ id: 11, name: 'Yoda' }]);
+    loadVehicles([{ id: 11, name: 'Y-wing' }]);
 
-    component.searchTerm.set('Vader');
+    component.searchTerm.set('landspeeder');
     fixture.detectChanges();
 
     expect(component.filteredItems()).toEqual([]);
-    expect(fixture.nativeElement.textContent).toContain('No locations match your search.');
+    expect(fixture.nativeElement.textContent).toContain('No vehicles match your search.');
   });
 
   it('clears the search to show all items again', () => {
-    loadLocations([
-      { id: 11, name: 'Luke' },
-      { id: 12, name: 'Yoda' },
+    loadVehicles([
+      { id: 11, name: 'X-wing' },
+      { id: 12, name: 'Y-wing' },
     ]);
 
-    component.searchTerm.set('Luke');
+    component.searchTerm.set('X-wing');
     fixture.detectChanges();
     expect(component.filteredItems()).toHaveLength(1);
 
@@ -249,10 +245,10 @@ describe('NameCatalog', () => {
   });
 
   it('search is case-insensitive', () => {
-    loadLocations([{ id: 11, name: 'Chewbacca' }]);
+    loadVehicles([{ id: 11, name: 'Landspeeder' }]);
 
-    component.searchTerm.set('CHEWBACCA');
+    component.searchTerm.set('LANDSPEEDER');
 
-    expect(component.filteredItems()).toEqual([{ id: 11, name: 'Chewbacca' }]);
+    expect(component.filteredItems()).toEqual([{ id: 11, name: 'Landspeeder' }]);
   });
 });

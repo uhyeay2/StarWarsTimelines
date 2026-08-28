@@ -8,6 +8,7 @@ import {
   NavPreferencesService,
 } from '../../../../shared/services/nav-preferences/nav-preferences.service';
 import { CharacterCatalog } from '../../components/character-catalog/character-catalog';
+import { GalaxyCatalog } from '../../components/galaxy-catalog/galaxy-catalog';
 import { NameCatalog } from '../../components/name-catalog/name-catalog';
 import { SourceMaterialCatalog } from '../../components/source-material-catalog/source-material-catalog';
 import { SpeciesCatalog } from '../../components/species-catalog/species-catalog';
@@ -18,6 +19,7 @@ import { TimelineEventCatalog } from '../../../timeline/components/timeline-even
   selector: 'app-catalog-page',
   imports: [
     CharacterCatalog,
+    GalaxyCatalog,
     NameCatalog,
     SourceMaterialCatalog,
     SpeciesCatalog,
@@ -42,7 +44,7 @@ export class CatalogPage {
     { key: 'events', label: 'Timeline events' },
     { key: 'characters', label: 'Characters' },
     { key: 'vehicles', label: 'Vehicles' },
-    { key: 'locations', label: 'Locations' },
+    { key: 'galaxy', label: 'Galaxy' },
     { key: 'species', label: 'Species' },
   ];
 

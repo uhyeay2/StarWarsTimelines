@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { LocationService } from '../../services/location.service';
 import { VehicleService } from '../../services/vehicle.service';
 import { runOperation } from '../../../../shared/utils/async-operation';
 import { filterByName } from '../../../../shared/utils/text-search';
@@ -20,7 +19,7 @@ interface NameItem {
   name: string;
 }
 
-export type NameCatalogKind = 'locations' | 'vehicles';
+export type NameCatalogKind = 'vehicles';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,37 +34,15 @@ export class NameCatalog implements OnInit {
   readonly noun = input.required<string>();
   readonly isAdmin = input<boolean>(false);
 
-  private readonly locationService = inject(LocationService);
   private readonly vehicleService = inject(VehicleService);
 
   readonly searchTerm = signal('');
 
-  readonly items = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.locations() ?? [];
-      case 'vehicles':
-        return this.vehicleService.vehicles() ?? [];
-    }
-  });
+  readonly items = computed(() => this.vehicleService.vehicles() ?? []);
 
-  readonly loading = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.locationsLoading();
-      case 'vehicles':
-        return this.vehicleService.vehiclesLoading();
-    }
-  });
+  readonly loading = computed(() => this.vehicleService.vehiclesLoading());
 
-  readonly loadError = computed(() => {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.locationsError();
-      case 'vehicles':
-        return this.vehicleService.vehiclesError();
-    }
-  });
+  readonly loadError = computed(() => this.vehicleService.vehiclesError());
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
 
@@ -95,14 +72,7 @@ export class NameCatalog implements OnInit {
   }
 
   load(): void {
-    switch (this.catalog()) {
-      case 'locations':
-        this.locationService.fetchLocations();
-        break;
-      case 'vehicles':
-        this.vehicleService.fetchVehicles();
-        break;
-    }
+    this.vehicleService.fetchVehicles();
   }
 
   /** Opens the add dialog with a blank name. */
@@ -132,7 +102,7 @@ export class NameCatalog implements OnInit {
       busyValue: true,
       idleValue: false,
       error: this.addError,
-      operation: this.create(name),
+      operation: this.vehicleService.createVehicle(name),
       onSuccess: (item) => {
         if (item) {
           this.newName.set('');
@@ -170,7 +140,7 @@ export class NameCatalog implements OnInit {
       busyValue: id,
       idleValue: null,
       error: this.actionError,
-      operation: this.update(id, name),
+      operation: this.vehicleService.updateVehicle(id, name),
       onSuccess: (updated) => {
         if (updated) {
           this.editId.set(null);
@@ -201,35 +171,20 @@ export class NameCatalog implements OnInit {
       busyValue: id,
       idleValue: null,
       error: this.actionError,
-      operation: this.remove(id),
+      operation: this.vehicleService.deleteVehicle(id),
       onSuccess: () => this.confirmDeleteId.set(null),
     });
   }
 
   private create(name: string): Observable<NameItem | null> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.createLocation(name);
-      case 'vehicles':
-        return this.vehicleService.createVehicle(name);
-    }
+    return this.vehicleService.createVehicle(name);
   }
 
   private update(id: number, name: string): Observable<NameItem | null> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.updateLocation(id, name);
-      case 'vehicles':
-        return this.vehicleService.updateVehicle(id, name);
-    }
+    return this.vehicleService.updateVehicle(id, name);
   }
 
   private remove(id: number): Observable<void> {
-    switch (this.catalog()) {
-      case 'locations':
-        return this.locationService.deleteLocation(id);
-      case 'vehicles':
-        return this.vehicleService.deleteVehicle(id);
-    }
+    return this.vehicleService.deleteVehicle(id);
   }
 }

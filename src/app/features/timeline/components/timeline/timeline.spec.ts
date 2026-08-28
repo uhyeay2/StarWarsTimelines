@@ -9,7 +9,7 @@ import { CatalogEvent } from '../../../catalog/services/catalog-event.service';
 import { TimelineEvent } from '../../models/timeline-event';
 import { CatalogEventService } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
-import { LocationService } from '../../../catalog/services/location.service';
+import { GalaxyService } from '../../../catalog/services/galaxy.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
@@ -23,6 +23,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     description: '',
     sources: [{ title: 'Source A', medium: 'Movie', canon: ['Canon'], sourceId: 10 }],
     locations: ['Naboo'],
+    locationRefs: [],
     characters: ['Padme Amidala'],
     vehicles: [],
     yearStart: 1,
@@ -36,6 +37,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     description: '',
     sources: [{ title: 'Source B', medium: 'Book', canon: ['Legends'], sourceId: 20 }],
     locations: ['Coruscant'],
+    locationRefs: [],
     characters: ['Darth Maul'],
     vehicles: ['Sith Infiltrator'],
     yearStart: 2,
@@ -49,6 +51,7 @@ const FIXTURE_EVENTS: readonly TimelineEvent[] = [
     description: '',
     sources: [{ title: 'Source C', medium: 'Movie', canon: ['Canon', 'Legends'], sourceId: 30 }],
     locations: ['Naboo', 'Coruscant'],
+    locationRefs: [],
     characters: ['Padme Amidala', 'Darth Maul'],
     vehicles: ['Sith Infiltrator'],
     yearStart: 0,
@@ -71,10 +74,20 @@ describe('Timeline', () => {
     };
   }
 
-  function locationServiceMock(overrides?: { locations?: { id: number; name: string }[] }) {
+  function galaxyServiceMock(overrides?: {
+    regions?: { id: number; name: string }[];
+    subregions?: { id: number; name: string }[];
+    planetSystems?: { id: number; name: string }[];
+    planets?: { id: number; name: string }[];
+    planetLocations?: { id: number; name: string; planetId: number; planetName: string }[];
+  }) {
     return {
-      fetchLocations: vi.fn(),
-      locations: signal(overrides?.locations ?? null),
+      fetchAll: vi.fn(),
+      regions: signal(overrides?.regions ?? null),
+      subregions: signal(overrides?.subregions ?? null),
+      planetSystems: signal(overrides?.planetSystems ?? null),
+      planets: signal(overrides?.planets ?? null),
+      planetLocations: signal(overrides?.planetLocations ?? []),
     };
   }
 
@@ -111,9 +124,17 @@ describe('Timeline', () => {
         ),
       },
       {
-        provide: LocationService,
-        useValue: locationServiceMock(
-          overrides?.locations !== undefined ? { locations: overrides.locations } : {},
+        provide: GalaxyService,
+        useValue: galaxyServiceMock(
+          overrides?.locations !== undefined
+            ? {
+                planetLocations: overrides.locations.map((location) => ({
+                  ...location,
+                  planetId: 0,
+                  planetName: '',
+                })),
+              }
+            : {},
         ),
       },
       {
@@ -249,6 +270,7 @@ describe('Timeline', () => {
           },
         ],
         locations: [],
+        locationRefs: [],
         characters: [],
         vehicles: [],
         yearStart: -21,
@@ -270,6 +292,7 @@ describe('Timeline', () => {
           },
         ],
         locations: [],
+        locationRefs: [],
         characters: [],
         vehicles: [],
         yearStart: -19,
@@ -578,7 +601,7 @@ describe('Timeline', () => {
     await setupTimeline([
       { provide: TimelineEventsService, useValue: eventsServiceMock() },
       { provide: CharacterService, useValue: characterSvc },
-      { provide: LocationService, useValue: locationServiceMock() },
+      { provide: GalaxyService, useValue: galaxyServiceMock() },
       { provide: VehicleService, useValue: vehicleServiceMock() },
       { provide: SourceMaterialService, useValue: sourceMaterialServiceMock() },
       { provide: CatalogEventService, useValue: catalogEventMock() },
@@ -690,6 +713,7 @@ describe('Timeline', () => {
       description: '',
       sources: [{ title: 'Source D', medium: 'Book', canon: ['Canon'], sourceId: 40 }],
       locations: [],
+      locationRefs: [],
       characters: [],
       vehicles: [],
       yearStart: 3,
@@ -765,6 +789,7 @@ describe('Timeline', () => {
         description: '',
         sources: [{ title: 'Unknown', medium: 'Book', canon: ['Canon'] }],
         locations: [],
+        locationRefs: [],
         characters: [],
         vehicles: [],
         yearStart: 5,
@@ -815,6 +840,7 @@ describe('Timeline', () => {
             },
           ],
           locations: [],
+          locationRefs: [],
           characters: [],
           vehicles: [],
           yearStart: -22,
@@ -836,6 +862,7 @@ describe('Timeline', () => {
             },
           ],
           locations: [],
+          locationRefs: [],
           characters: [],
           vehicles: [],
           yearStart: -19,
@@ -856,6 +883,7 @@ describe('Timeline', () => {
             },
           ],
           locations: [],
+          locationRefs: [],
           characters: [],
           vehicles: [],
           yearStart: -21,
@@ -907,6 +935,7 @@ describe('Timeline', () => {
             },
           ],
           locations: [],
+          locationRefs: [],
           characters: [],
           vehicles: [],
           yearStart: -2,

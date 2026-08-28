@@ -28,7 +28,7 @@ function eventDto(overrides: Record<string, unknown> = {}): Record<string, unkno
       },
     ],
     characters: [{ id: 7, name: 'Darth Maul' }],
-    locations: [{ id: 12, name: 'Naboo' }],
+    locations: [{ locationHierarchyType: 4, locationId: 12, name: 'Naboo' }],
     vehicles: [],
     ...overrides,
   };
@@ -42,9 +42,14 @@ function flushInitialFetch(httpMock: HttpTestingController): void {
   httpMock
     .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/characters'))
     .flush([{ id: 7, name: 'Darth Maul' }]);
-  httpMock
-    .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/locations'))
-    .flush([{ id: 12, name: 'Naboo' }]);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/regions')).flush([]);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/subregions')).flush([]);
+  const systems = httpMock.match(
+    (r) => r.method === 'GET' && r.url.endsWith('/api/planet-systems'),
+  );
+  for (const request of systems) {
+    request.flush([]);
+  }
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/vehicles')).flush([]);
   httpMock
     .expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/source-materials'))
@@ -210,7 +215,7 @@ describe('TimelineEventCatalog', () => {
       sequence: 0,
       sourceMaterials: [{ sourceMaterialId: 100, sourceMaterialUnitId: null }],
       characterIds: [7],
-      locationIds: [],
+      locations: [],
       vehicleIds: [],
     });
     post.flush(eventDto({ id: 3, title: 'Order 66', yearStart: -19 }));
@@ -236,7 +241,7 @@ describe('TimelineEventCatalog', () => {
     expect(component.title()).toBe('The Invasion of Naboo');
     expect(component.sourceSelection()).toEqual(['100']);
     expect(component.characterSelection()).toEqual(['7']);
-    expect(component.locationSelection()).toEqual(['12']);
+    expect(component.locationSelection()).toEqual(['4:12']);
 
     component.title.set('The Invasion of Naboo (edited)');
     component.submitDialog();
@@ -276,6 +281,7 @@ describe('TimelineEventCatalog', () => {
         },
       ],
       locations: [],
+      locationRefs: [],
       characters: [],
       vehicles: [],
       yearStart: -5,

@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CharacterService } from '../../services/character.service';
-import { LocationService } from '../../services/location.service';
+import { GalaxyService } from '../../services/galaxy.service';
 import { SpeciesService } from '../../services/species.service';
 import { ApiCharacter } from '../../../../shared/models/api-character';
 import { CreateCharacterInput } from '../../models/create-character-input';
@@ -33,7 +33,7 @@ export class CharacterCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly characterService = inject(CharacterService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
   private readonly speciesService = inject(SpeciesService);
 
   readonly searchTerm = signal('');
@@ -41,12 +41,12 @@ export class CharacterCatalog implements OnInit {
   readonly items = computed(() => this.characterService.characters() ?? []);
   readonly loading = computed(() => this.characterService.charactersLoading());
   readonly loadError = computed(() => this.characterService.charactersError());
-  readonly locations = computed(() => this.locationService.locations() ?? []);
+  readonly planets = computed(() => this.galaxyService.planets() ?? []);
   readonly speciesList = computed(() => this.speciesService.species() ?? []);
 
   /** Lookup options sorted by name so the dropdowns are easy to scan. */
-  readonly sortedLocations = computed(() =>
-    [...this.locations()].sort((a, b) => a.name.localeCompare(b.name)),
+  readonly sortedPlanets = computed(() =>
+    [...this.planets()].sort((a, b) => a.name.localeCompare(b.name)),
   );
   readonly sortedSpecies = computed(() =>
     [...this.speciesList()].sort((a, b) => a.name.localeCompare(b.name)),
@@ -75,7 +75,7 @@ export class CharacterCatalog implements OnInit {
   });
 
   readonly newName = signal('');
-  readonly newPlanetBornOnId = signal(NONE);
+  readonly newBornOnPlanetId = signal(NONE);
   readonly newSpeciesId = signal(NONE);
   readonly newBirthFrom = signal<number | null>(null);
   readonly newBirthTo = signal<number | null>(null);
@@ -89,7 +89,7 @@ export class CharacterCatalog implements OnInit {
 
   readonly editId = signal<number | null>(null);
   readonly editName = signal('');
-  readonly editPlanetBornOnId = signal(NONE);
+  readonly editBornOnPlanetId = signal(NONE);
   readonly editSpeciesId = signal(NONE);
   readonly editBirthFrom = signal<number | null>(null);
   readonly editBirthTo = signal<number | null>(null);
@@ -103,7 +103,7 @@ export class CharacterCatalog implements OnInit {
 
   ngOnInit(): void {
     this.characterService.fetchCharacters();
-    this.locationService.fetchLocations();
+    this.galaxyService.fetchPlanets();
     this.speciesService.fetchSpecies();
   }
 
@@ -119,10 +119,10 @@ export class CharacterCatalog implements OnInit {
     }
 
     const bornYears = formatGalacticYearRange(item.yearOfBirthEarliest, item.yearOfBirthLatest);
-    if (item.planetBornOnName && bornYears) {
-      parts.push(`Born ${item.planetBornOnName}, ${bornYears}`);
-    } else if (item.planetBornOnName) {
-      parts.push(`Born ${item.planetBornOnName}`);
+    if (item.bornOnPlanetName && bornYears) {
+      parts.push(`Born ${item.bornOnPlanetName}, ${bornYears}`);
+    } else if (item.bornOnPlanetName) {
+      parts.push(`Born ${item.bornOnPlanetName}`);
     } else if (bornYears) {
       parts.push(`Born ${bornYears}`);
     }
@@ -158,7 +158,7 @@ export class CharacterCatalog implements OnInit {
 
     const input: CreateCharacterInput = {
       name,
-      planetBornOnId: this.newPlanetBornOnId() || null,
+      bornOnPlanetId: this.newBornOnPlanetId() || null,
       speciesId: this.newSpeciesId() || null,
       yearOfBirthEarliest: this.newBirthFrom(),
       yearOfBirthLatest: this.newBirthTo(),
@@ -191,7 +191,7 @@ export class CharacterCatalog implements OnInit {
     this.actionError.set(null);
     this.editId.set(item.id);
     this.editName.set(item.name);
-    this.editPlanetBornOnId.set(item.planetBornOnId ?? NONE);
+    this.editBornOnPlanetId.set(item.bornOnPlanetId ?? NONE);
     this.editSpeciesId.set(item.speciesId ?? NONE);
     this.editBirthFrom.set(item.yearOfBirthEarliest ?? null);
     this.editBirthTo.set(item.yearOfBirthLatest ?? null);
@@ -202,7 +202,7 @@ export class CharacterCatalog implements OnInit {
   cancelEdit(): void {
     this.editId.set(null);
     this.editName.set('');
-    this.editPlanetBornOnId.set(NONE);
+    this.editBornOnPlanetId.set(NONE);
     this.editSpeciesId.set(NONE);
     this.editBirthFrom.set(null);
     this.editBirthTo.set(null);
@@ -223,7 +223,7 @@ export class CharacterCatalog implements OnInit {
 
     const input: CreateCharacterInput = {
       name,
-      planetBornOnId: this.editPlanetBornOnId() || null,
+      bornOnPlanetId: this.editBornOnPlanetId() || null,
       speciesId: this.editSpeciesId() || null,
       yearOfBirthEarliest: this.editBirthFrom(),
       yearOfBirthLatest: this.editBirthTo(),
@@ -279,7 +279,7 @@ export class CharacterCatalog implements OnInit {
 
   private resetAddForm(): void {
     this.newName.set('');
-    this.newPlanetBornOnId.set(NONE);
+    this.newBornOnPlanetId.set(NONE);
     this.newSpeciesId.set(NONE);
     this.newBirthFrom.set(null);
     this.newBirthTo.set(null);

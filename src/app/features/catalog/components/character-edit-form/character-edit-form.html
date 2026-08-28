@@ -6,10 +6,10 @@
       <option [ngValue]="species.id">{{ species.name }}</option>
     }
   </select>
-  <select name="editPlanetBornOnId" [(ngModel)]="planetBornOnId" aria-label="Birth planet">
+  <select name="editBornOnPlanetId" [(ngModel)]="bornOnPlanetId" aria-label="Birth planet">
     <option [ngValue]="noSelection">Unknown</option>
-    @for (location of locationOptions(); track location.id) {
-      <option [ngValue]="location.id">{{ location.name }}</option>
+    @for (planet of planetOptions(); track planet.id) {
+      <option [ngValue]="planet.id">{{ planet.name }}</option>
     }
   </select>
   <input

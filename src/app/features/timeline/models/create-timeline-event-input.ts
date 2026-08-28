@@ -1,5 +1,9 @@
 /**
- * One source material depicting a timeline event, optionally pinned to a
+ * @fileoverview Write-side payload for creating or replacing a timeline event.
+ */
+import { LocationReference } from '../../../shared/models/location-reference';
+
+/** One source material depicting a timeline event, optionally pinned to a
  * single sub-unit of that material. The API stores at most one association
  * per event + material pair, so a material appears at most once.
  */
@@ -24,8 +28,8 @@ export interface CreateTimelineEventInput {
   readonly sourceMaterials: readonly EventSourceLinkInput[];
   /** Identifiers of the characters appearing in the event. */
   readonly characterIds: readonly number[];
-  /** Identifiers of the locations the event takes place in. */
-  readonly locationIds: readonly number[];
+  /** Places where the event takes place, at any galaxy-hierarchy level. */
+  readonly locations: readonly LocationReference[];
   /** Identifiers of the vehicles appearing in the event. */
   readonly vehicleIds: readonly number[];
 }

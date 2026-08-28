@@ -45,7 +45,7 @@ describe('CatalogPage', () => {
       'Timeline events',
       'Characters',
       'Vehicles',
-      'Locations',
+      'Galaxy',
       'Species',
     ]);
   });
@@ -93,7 +93,7 @@ describe('CatalogPage', () => {
     );
     speciesRequest.flush([]);
     const locationsRequest = httpMock.expectOne(
-      (r) => r.method === 'GET' && r.url.endsWith('/api/locations'),
+      (r) => r.method === 'GET' && r.url.endsWith('/api/planet-systems'),
     );
     locationsRequest.flush([]);
     fixture.detectChanges();

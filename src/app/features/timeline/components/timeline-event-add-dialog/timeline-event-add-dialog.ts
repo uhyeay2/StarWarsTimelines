@@ -21,6 +21,7 @@ import {
   SourceOptionContext,
 } from '../../models/event-source-options';
 import { FilterGroup } from '../../../../shared/components/filter-group/filter-group';
+import { FilterTreeNode } from '../../../../shared/models/filter-tree';
 
 /** A resolved source link rendered as a removable summary chip. */
 export interface SourceLinkChip {
@@ -69,8 +70,8 @@ export class TimelineEventAddDialog {
   /** Character options sorted by name. */
   readonly characterOptions = input<readonly { id: number; name: string }[]>([]);
 
-  /** Location options sorted by name. */
-  readonly locationOptions = input<readonly { id: number; name: string }[]>([]);
+  /** Galaxy-hierarchy places grouped by level, offered as linkable locations. */
+  readonly galaxyNodes = input<readonly FilterTreeNode[]>([]);
 
   /** Vehicle options sorted by name. */
   readonly vehicleOptions = input<readonly { id: number; name: string }[]>([]);
@@ -117,9 +118,6 @@ export class TimelineEventAddDialog {
   protected readonly sourceOptions = computed(() => buildSourceOptions(this.sourceContext()));
 
   /** Flat id/name options for each linked-entity dropdown. */
-  protected readonly locationNodes = computed(() =>
-    this.locationOptions().map((o) => ({ value: String(o.id), label: o.name })),
-  );
   protected readonly characterNodes = computed(() =>
     this.characterOptions().map((o) => ({ value: String(o.id), label: o.name })),
   );
@@ -147,7 +145,7 @@ export class TimelineEventAddDialog {
     this.entityChips(this.characterOptions(), this.characterSelection()),
   );
   protected readonly locationChips = computed(() =>
-    this.entityChips(this.locationOptions(), this.locationSelection()),
+    this.treeChips(this.galaxyNodes(), this.locationSelection()),
   );
   protected readonly vehicleChips = computed(() =>
     this.entityChips(this.vehicleOptions(), this.vehicleSelection()),
@@ -217,6 +215,27 @@ export class TimelineEventAddDialog {
       value,
       name: options.find((o) => String(o.id) === value)?.name ?? `#${value}`,
     }));
+  }
+
+  /** Resolves selected leaf values to chips using a nested option tree. */
+  private treeChips(
+    nodes: readonly FilterTreeNode[],
+    selected: readonly string[],
+  ): readonly EntityChip[] {
+    const byValue = new Map<string, string>();
+    const collect = (node: FilterTreeNode): void => {
+      if (node.children !== undefined && node.children.length > 0) {
+        for (const child of node.children) {
+          collect(child);
+        }
+      } else {
+        byValue.set(node.value, node.label);
+      }
+    };
+    for (const node of nodes) {
+      collect(node);
+    }
+    return selected.map((value) => ({ value, name: byValue.get(value) ?? `#${value}` }));
   }
 
   private removeValue(selection: ModelSignal<readonly string[]>, value: string): void {

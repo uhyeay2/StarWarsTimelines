@@ -28,8 +28,8 @@
                 aria-label="Home planet"
               >
                 <option [ngValue]="noPlanet">No home planet</option>
-                @for (location of sortedLocations(); track location.id) {
-                  <option [ngValue]="location.id">{{ location.name }}</option>
+                @for (planet of sortedPlanets(); track planet.id) {
+                  <option [ngValue]="planet.id">{{ planet.name }}</option>
                 }
               </select>
               <button class="btn btn-sm" type="submit" [disabled]="savingId() === row.item.id">
@@ -84,7 +84,7 @@
 
   @if (isAdmin() && addOpen()) {
     <app-species-add-dialog
-      [locationOptions]="sortedLocations()"
+      [planetOptions]="sortedPlanets()"
       [(name)]="newName"
       [(homePlanetId)]="newHomePlanetId"
       [error]="addError()"

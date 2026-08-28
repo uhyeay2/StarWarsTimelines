@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SpeciesService } from '../../services/species.service';
-import { LocationService } from '../../services/location.service';
+import { GalaxyService } from '../../services/galaxy.service';
 import { ApiSpecies } from '../../../../shared/models/api-species';
 import { runOperation } from '../../../../shared/utils/async-operation';
 import { filterByName } from '../../../../shared/utils/text-search';
@@ -29,18 +29,18 @@ export class SpeciesCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly speciesService = inject(SpeciesService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
 
   readonly searchTerm = signal('');
 
   readonly items = computed(() => this.speciesService.species() ?? []);
   readonly loading = computed(() => this.speciesService.speciesLoading());
   readonly loadError = computed(() => this.speciesService.speciesError());
-  readonly locations = computed(() => this.locationService.locations() ?? []);
+  readonly planets = computed(() => this.galaxyService.planets() ?? []);
 
   /** Home planet options sorted by name so the dropdown is easy to scan. */
-  readonly sortedLocations = computed(() =>
-    [...this.locations()].sort((a, b) => a.name.localeCompare(b.name)),
+  readonly sortedPlanets = computed(() =>
+    [...this.planets()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
   readonly filteredItems = computed(() => filterByName(this.items(), this.searchTerm()));
@@ -86,7 +86,7 @@ export class SpeciesCatalog implements OnInit {
 
   ngOnInit(): void {
     this.speciesService.fetchSpecies();
-    this.locationService.fetchLocations();
+    this.galaxyService.fetchPlanets();
   }
 
   /** Opens the add dialog with a blank name. */

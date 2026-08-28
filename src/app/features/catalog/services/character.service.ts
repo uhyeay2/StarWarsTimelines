@@ -57,7 +57,7 @@ export class CharacterService {
     return this.http
       .post<ApiCharacter>(`${CATALOG_API_BASE}/characters`, {
         name: input.name,
-        planetBornOnId: input.planetBornOnId ?? null,
+        bornOnPlanetId: input.bornOnPlanetId ?? null,
         yearOfBirthEarliest: input.yearOfBirthEarliest ?? null,
         yearOfBirthLatest: input.yearOfBirthLatest ?? null,
         yearOfDeathEarliest: input.yearOfDeathEarliest ?? null,
@@ -87,7 +87,7 @@ export class CharacterService {
     return this.http
       .put<ApiCharacter>(`${CATALOG_API_BASE}/characters/${id}`, {
         name: input.name,
-        planetBornOnId: input.planetBornOnId ?? null,
+        bornOnPlanetId: input.bornOnPlanetId ?? null,
         yearOfBirthEarliest: input.yearOfBirthEarliest ?? null,
         yearOfBirthLatest: input.yearOfBirthLatest ?? null,
         yearOfDeathEarliest: input.yearOfDeathEarliest ?? null,

@@ -32,7 +32,7 @@ export class CharacterEditForm {
   readonly speciesId = model(NO_SELECTION);
 
   /** Selected birth planet id, or {@link NO_SELECTION} for unknown. */
-  readonly planetBornOnId = model(NO_SELECTION);
+  readonly bornOnPlanetId = model(NO_SELECTION);
 
   /** Earliest birth year (BBY is negative). */
   readonly birthFrom = model<number | null>(null);
@@ -49,8 +49,8 @@ export class CharacterEditForm {
   /** Species options for the species select. */
   readonly speciesOptions = input<readonly CharacterEditOption[]>([]);
 
-  /** Location options for the birth planet select. */
-  readonly locationOptions = input<readonly CharacterEditOption[]>([]);
+  /** Planet options for the birth planet select. */
+  readonly planetOptions = input<readonly CharacterEditOption[]>([]);
 
   /** Whether the save request is in flight. */
   readonly saving = input(false);

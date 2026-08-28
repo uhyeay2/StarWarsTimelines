@@ -19,7 +19,7 @@ export const CATALOG_TABS = [
   'events',
   'characters',
   'vehicles',
-  'locations',
+  'galaxy',
   'species',
 ] as const;
 

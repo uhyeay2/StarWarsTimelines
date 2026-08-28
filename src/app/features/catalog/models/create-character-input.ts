@@ -18,7 +18,7 @@ export interface CreateCharacterInput {
   /** The character's display name. */
   readonly name: string;
   /** ID of the planet the character was born on, or `null` when unknown. */
-  readonly planetBornOnId?: number | null;
+  readonly bornOnPlanetId?: number | null;
   /** Chronologically earliest birth year, or `null` when unknown. */
   readonly yearOfBirthEarliest?: number | null;
   /** Chronologically latest birth year, or `null` when unknown. */

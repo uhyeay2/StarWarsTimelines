@@ -28,8 +28,8 @@ export type { CatalogSelectOption };
   styleUrl: './species-add-dialog.scss',
 })
 export class SpeciesAddDialog {
-  /** Location options sorted by name, offered as home planets. */
-  readonly locationOptions = input<readonly CatalogSelectOption[]>([]);
+  /** Planet options sorted by name, offered as home planets. */
+  readonly planetOptions = input<readonly CatalogSelectOption[]>([]);
 
   /** The species name entered by the user. */
   readonly name = model('');

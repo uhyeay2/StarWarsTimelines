@@ -1,0 +1,49 @@
+<ul class="galaxy-tree">
+  @for (node of nodes(); track node.region.id) {
+    <li class="galaxy-node">
+      <div class="galaxy-row">
+        <button
+          class="galaxy-toggle"
+          type="button"
+          [attr.aria-expanded]="host().isExpanded('region-' + node.region.id)"
+          (click)="host().toggleExpanded('region-' + node.region.id)"
+        >
+          {{ host().isExpanded('region-' + node.region.id) ? '▾' : '▸' }}
+        </button>
+        <div class="galaxy-row-main">
+          <div class="galaxy-row-line">
+            <span class="galaxy-name">{{ node.region.name }}</span>
+            @if (node.region.description) {
+              <span class="galaxy-meta">{{ node.region.description }}</span>
+            }
+          </div>
+        </div>
+        @if (host().isAdmin()) {
+          <div class="galaxy-actions">
+            <button class="btn btn-sm" type="button" (click)="host().startEditRegion(node.region)">
+              Edit
+            </button>
+            <button
+              class="btn btn-sm btn-danger"
+              type="button"
+              (click)="host().requestDelete('region', node.region.id, node.region.name)"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (host().isExpanded('region-' + node.region.id)) {
+        <ul class="galaxy-children">
+          <app-galaxy-subregion-list
+            [host]="host()"
+            [nodes]="node.subregions"
+            [showAdd]="true"
+            [addParentId]="node.region.id"
+          />
+        </ul>
+      }
+    </li>
+  }
+</ul>

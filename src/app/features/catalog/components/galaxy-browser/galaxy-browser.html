@@ -1,0 +1,68 @@
+<div class="catalog-header">
+  <h2>Galaxy</h2>
+  @if (admin()) {
+    <button
+      class="btn btn-sm catalog-add-button"
+      type="button"
+      [disabled]="busy()"
+      (click)="addForActiveView()"
+    >
+      {{ addLabel() }}
+    </button>
+  }
+</div>
+
+<ng-content />
+
+<div class="galaxy-view-switch" role="tablist" aria-label="Galaxy browsing view">
+  @for (view of views; track view.key) {
+    <button
+      type="button"
+      role="tab"
+      class="galaxy-view-switch__tab"
+      [class.galaxy-view-switch__tab--active]="activeView() === view.key"
+      [attr.aria-selected]="activeView() === view.key"
+      (click)="selectView(view.key)"
+    >
+      {{ view.label }}
+    </button>
+  }
+</div>
+
+<label class="galaxy-search">
+  <span class="sr-only">Search the galaxy</span>
+  <input
+    name="galaxySearch"
+    type="search"
+    placeholder="Search the galaxy…"
+    [(ngModel)]="searchTerm"
+  />
+</label>
+
+@switch (activeView()) {
+  @case ('regions') {
+    <app-galaxy-region-list [host]="api" [nodes]="filteredRegionRows()" />
+  }
+  @case ('subregions') {
+    <ul class="galaxy-tree">
+      <app-galaxy-subregion-list
+        [host]="api"
+        [nodes]="filteredSubregionRows()"
+        [showChips]="true"
+      />
+    </ul>
+  }
+  @default {
+    <ul class="galaxy-tree">
+      <app-galaxy-planet-system-list
+        [host]="api"
+        [nodes]="filteredSystemRows()"
+        [showChips]="true"
+      />
+    </ul>
+  }
+}
+
+@if (statusMessage(); as status) {
+  <p [class]="status.css" [attr.role]="status.role" aria-live="polite">{{ status.text }}</p>
+}

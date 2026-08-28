@@ -26,13 +26,8 @@
     @case ('vehicles') {
       <app-name-catalog [isAdmin]="isAdmin()" catalog="vehicles" title="Vehicles" noun="vehicle" />
     }
-    @case ('locations') {
-      <app-name-catalog
-        [isAdmin]="isAdmin()"
-        catalog="locations"
-        title="Locations"
-        noun="location"
-      />
+    @case ('galaxy') {
+      <app-galaxy-catalog [isAdmin]="isAdmin()" />
     }
     @case ('species') {
       <app-species-catalog [isAdmin]="isAdmin()" />

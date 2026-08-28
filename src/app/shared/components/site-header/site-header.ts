@@ -25,7 +25,7 @@ const CATALOG_TAB_LABELS: Record<(typeof CATALOG_TABS)[number], string> = {
   events: 'Timeline Events',
   characters: 'Characters',
   vehicles: 'Vehicles',
-  locations: 'Locations',
+  galaxy: 'Galaxy',
   species: 'Species',
 };
 

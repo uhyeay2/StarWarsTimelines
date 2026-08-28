@@ -11,7 +11,7 @@ import { User } from '../../../../shared/models/user';
 import { AuthService } from '../../../auth/services/auth.service';
 import { CatalogEventService, CatalogEvent } from '../../../catalog/services/catalog-event.service';
 import { CharacterService } from '../../../catalog/services/character.service';
-import { LocationService } from '../../../catalog/services/location.service';
+import { GalaxyService } from '../../../catalog/services/galaxy.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { LibraryService } from '../../../library/services/library.service';
@@ -88,10 +88,14 @@ async function setup(
         },
       },
       {
-        provide: LocationService,
+        provide: GalaxyService,
         useValue: {
-          fetchLocations: () => {},
-          locations: signal(null),
+          fetchAll: () => {},
+          regions: signal(null),
+          subregions: signal(null),
+          planetSystems: signal(null),
+          planets: signal(null),
+          planetLocations: signal([]),
         },
       },
       {

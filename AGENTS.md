@@ -94,6 +94,13 @@ core/  <--  shared/  <--  features/
 - **Never** import from a feature into another feature directly (use shared abstractions)
 - **Never** import from `shared/` into `core/`
 
+### Domain Overview (API contracts)
+
+- **Source materials, characters, species, vehicles, timeline events**: each has a catalog service under `features/<name>/services/` backed by a `SignalCache`. Mutations `invalidate()` their own cache and the global `catalog-invalidator` service (`features/catalog/services/catalog-invalidator.service.ts`) busts related caches across features.
+- **Galaxy hierarchy** — the five admin-managed levels `Region` → `Subregion` → `PlanetSystem` → `Planet` → `PlanetLocation` are all driven by `GalaxyService` (`features/catalog/services/galaxy.service.ts`). It keeps one `SignalCache` per level plus a shared aggregated `planets` list. The planets cache fetches `GET /api/planet-systems` and then fires one `GET /api/planet-systems/{id}/planets` per returned system — only when the systems array is non-empty. `fetchAll()` fetches regions + subregions + systems + planets; the Galaxy catalog tab (`components/galaxy-catalog`) assembles a nested read-only/admin tree from the flat per-level lists.
+- **Character/species planet links**: birth/home planets are `Planet` ids; the dropdown options come from the aggregated `planets` list resolved by name.
+- **Timeline event locations** are typed, any-level references — never raw strings: `LocationReference { locationHierarchyType, locationId }` (`shared/models/location-reference.ts`), where `locationHierarchyType` is `Region | Subregion | PlanetSystem | Planet | PlanetLocation` (`shared/models/location-hierarchy-type.ts`, API codes 1..5). The event-edit dialogs build their picker from galaxy data via `TimelineEventCatalogPresenter`'s `galaxyNodes` tree and encode selections as `"<typeCode>:<id>"` (e.g. Planet 12 → `'4:12'`).
+
 ---
 
 ## Conventions
@@ -139,6 +146,7 @@ core/  <--  shared/  <--  features/
 - Co-locate specs next to source files: `foo.ts` → `foo.spec.ts`
 - Use `HttpTestingController` for HTTP tests — always call `httpMock.verify()` in `afterEach`
 - Assert URL, HTTP method, and request body for all requests
+- When a component's initial fetch reaches `GalaxyService`, the planets aggregate fires `GET /api/planet-systems` (and, when systems are returned, one `GET /api/planet-systems/{id}/planets` per system). Component specs flush the aggregate with `[]` to avoid the follow-ups (see the `flushInitialFetch` helpers in the character/species catalog specs) — a non-empty aggregate leaves per-system requests open and `httpMock.verify()` fails.
 - Test public behavior, not private methods
 - Use `ComponentFixture` + `fixture.nativeElement` for DOM queries (ComponentHarness adoption in progress)
 - Use nested `describe` blocks organized by behavior/feature
@@ -204,16 +212,28 @@ export class ComponentName {
 @Injectable({ providedIn: 'root' })
 export class NameService {
   private readonly http = inject(HttpClient);
-  private readonly cache = new SignalCache<Item[]>({
-    fetch: () => this.http.get<readonly ItemDto[]>(URL).pipe(map(items => items.map(mapItem))),
-    ttlMs: CACHE_TTL_MS,
-  });
+  // SignalCache(fetchFn, errorHandler?, ttlMs?) — positional, not an options object
+  private readonly cache = new SignalCache<readonly Item[]>(
+    () => this.http.get<readonly ItemDto[]>(URL).pipe(map((items) => items.map(mapItem))),
+    (err) => (err instanceof HttpErrorResponse ? readProblemDetail(err, 'Failed to load items') : 'Failed to load items'),
+    CACHE_TTL_MS,
+  );
 
-  readonly items = this.cache.data.asReadonly();
-  readonly loading = this.cache.loading.asReadonly();
-  readonly error = this.cache.error.asReadonly();
+  readonly items = this.cache.data;      // Signal<readonly Item[] | null>
+  readonly loading = this.cache.loading; // Signal<boolean>
+  readonly error = this.cache.error;     // Signal<string | null>
+
+  fetchItems(): void {
+    this.cache.fetch(); // no-op when data is already cached or a fetch is in flight
+  }
+
+  invalidate(): void {
+    this.cache.invalidate(); // clears data and re-fetches immediately (use after mutations)
+  }
 }
 ```
+
+> **Testing gotcha:** `SignalCache.fetch()` short-circuits when `data` is non-null, so a spec that reloads a list after a mutation must call the service's `invalidate()` (which clears the cached value first) — a bare `fetch()` on an already-cached `[]` fires no request and `httpMock.expectOne` fails with "found none". See the `loadSpecies`/`loadVehicles` helpers in the catalog component specs.
 
 ### HTTP Error Handling
 
@@ -249,6 +269,11 @@ export class NameService {
 | Signal cache utility | `src/app/shared/utils/signal-cache.ts` |
 | Error detail parser | `src/app/shared/utils/problem-detail.ts` |
 | Route constants | `src/app/shared/constants/routes.constants.ts` |
+| Galaxy CRUD service | `src/app/features/catalog/services/galaxy.service.ts` |
+| Galaxy catalog tab | `src/app/features/catalog/components/galaxy-catalog/galaxy-catalog.ts` |
+| Location reference model | `src/app/shared/models/location-reference.ts` |
+| Hierarchy type + API codes | `src/app/shared/models/location-hierarchy-type.ts` |
+| Cross-catalog cache busting | `src/app/features/catalog/services/catalog-invalidator.service.ts` |
 | Catalog error handler | `src/app/features/catalog/services/catalog-error-handler.ts` |
 | Auth guard | `src/app/features/auth/guards/auth.guard.ts` |
 

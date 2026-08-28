@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CharacterService } from '../../../catalog/services/character.service';
-import { LocationService } from '../../../catalog/services/location.service';
+import { GalaxyService } from '../../../catalog/services/galaxy.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { TimelineEventsService } from '../../services/timeline-events.service';
@@ -48,7 +48,7 @@ export class TimelineEventCatalog implements OnInit {
   readonly isAdmin = input<boolean>(false);
 
   private readonly characterService = inject(CharacterService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
   private readonly vehicleService = inject(VehicleService);
   private readonly sourceMaterialService = inject(SourceMaterialService);
   private readonly eventsService = inject(TimelineEventsService);
@@ -81,7 +81,7 @@ export class TimelineEventCatalog implements OnInit {
   readonly dialogSubmitLabel = this.presenter.dialogSubmitLabel;
   readonly deletingId = this.presenter.deletingId;
   readonly sortedCharacters = this.presenter.sortedCharacters;
-  readonly sortedLocations = this.presenter.sortedLocations;
+  readonly galaxyNodes = this.presenter.galaxyNodes;
   readonly sortedVehicles = this.presenter.sortedVehicles;
   readonly sourceContext = this.presenter.sourceContext;
 
@@ -134,7 +134,7 @@ export class TimelineEventCatalog implements OnInit {
   ngOnInit(): void {
     this.eventsService.getEvents();
     this.characterService.fetchCharacters();
-    this.locationService.fetchLocations();
+    this.galaxyService.fetchAll();
     this.vehicleService.fetchVehicles();
     this.sourceMaterialService.fetchSourceMaterials();
   }

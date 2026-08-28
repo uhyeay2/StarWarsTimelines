@@ -52,7 +52,7 @@ describe('TimelineEventAddDialog', () => {
     fixture = TestBed.createComponent(TimelineEventAddDialog);
     fixture.componentRef.setInput('sourceContext', CONTEXT);
     fixture.componentRef.setInput('characterOptions', [{ id: 7, name: 'Darth Maul' }]);
-    fixture.componentRef.setInput('locationOptions', [{ id: 12, name: 'Naboo' }]);
+    fixture.componentRef.setInput('galaxyNodes', [{ value: '12', label: 'Naboo' }]);
     fixture.componentRef.setInput('vehicleOptions', []);
     fixture.autoDetectChanges();
     element = fixture.nativeElement as HTMLElement;

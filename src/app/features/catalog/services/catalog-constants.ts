@@ -13,9 +13,13 @@ export const CACHE_TTL_MS = 5 * 60 * 1000;
 /** Known entity types broadcast via catalog SSE events. */
 export const CATALOG_ENTITY_TYPES = [
   'characters',
-  'locations',
   'vehicles',
   'species',
+  'regions',
+  'subregions',
+  'planet-systems',
+  'planets',
+  'planet-locations',
   'source-materials',
   'source-material-units',
 ] as const;

@@ -1,6 +1,7 @@
 import { Canon } from '../../../shared/models/canon';
 import { Medium } from '../../../shared/models/medium';
 import { SourceMaterialUnit } from '../../../shared/models/source-material';
+import { LocationReference } from '../../../shared/models/location-reference';
 import { formatGalacticYear, formatGalacticYearRange } from '../../../shared/utils/galactic-year';
 
 /**
@@ -32,7 +33,14 @@ export interface TimelineEvent {
   readonly description: string;
   /** Every source material (with optional pinned unit) depicting this event. */
   readonly sources: readonly EventSource[];
+  /** Display names of the places linked to this event (dangling refs omitted). */
   readonly locations: readonly string[];
+  /**
+   * Typed any-level galaxy references backing `locations`, kept so admin
+   * edit round-trips the exact target (dangling refs whose names are `null`
+   * are preserved here so they stay removable).
+   */
+  readonly locationRefs: readonly LocationReference[];
   readonly characters: readonly string[];
   readonly vehicles: readonly string[];
   /** Earliest in-universe year the event could have occurred (negative BBY). */

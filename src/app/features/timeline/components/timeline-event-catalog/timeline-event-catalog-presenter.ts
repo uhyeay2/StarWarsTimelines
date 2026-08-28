@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { CharacterService } from '../../../catalog/services/character.service';
-import { LocationService } from '../../../catalog/services/location.service';
+import { GalaxyService } from '../../../catalog/services/galaxy.service';
 import { VehicleService } from '../../../catalog/services/vehicle.service';
 import { SourceMaterialService } from '../../../catalog/services/source-material.service';
 import { TimelineEventsAdminService } from '../../services/timeline-events-admin.service';
@@ -9,13 +9,19 @@ import { CreateTimelineEventInput } from '../../models/create-timeline-event-inp
 import { SourceOptionContext, resolveSourceLinks } from '../../models/event-source-options';
 import { editSourceSelectionKeys } from '../../models/source-option-keys';
 import { TimelineEvent } from '../../models/timeline-event';
+import { LocationReference } from '../../../../shared/models/location-reference';
+import {
+  LOCATION_HIERARCHY_TYPES,
+  locationHierarchyTypeToApiCode,
+} from '../../../../shared/models/location-hierarchy-type';
+import { FilterTreeNode } from '../../../../shared/models/filter-tree';
 import { runOperation } from '../../../../shared/utils/async-operation';
 
 // eslint-disable-next-line @angular-eslint/use-injectable-provided-in -- component-scoped
 @Injectable()
 export class TimelineEventCatalogPresenter {
   private readonly characterService = inject(CharacterService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
   private readonly vehicleService = inject(VehicleService);
   private readonly sourceMaterialService = inject(SourceMaterialService);
   private readonly adminService = inject(TimelineEventsAdminService);
@@ -43,11 +49,23 @@ export class TimelineEventCatalogPresenter {
   readonly sortedCharacters = computed(() =>
     [...(this.characterService.characters() ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
   );
-  readonly sortedLocations = computed(() =>
-    [...(this.locationService.locations() ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
-  );
   readonly sortedVehicles = computed(() =>
     [...(this.vehicleService.vehicles() ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+  );
+
+  /**
+   * Flat galaxy-hierarchy entries grouped by level, offered as linkable
+   * places. Leaf values encode `"<typeCode>:<id>"` so the exact hierarchy
+   * row survives the selection round-trip.
+   */
+  readonly galaxyNodes = computed<readonly FilterTreeNode[]>(() =>
+    [
+      this.treeGroup('Regions', 'Region', this.galaxyService.regions() ?? []),
+      this.treeGroup('Subregions', 'Subregion', this.galaxyService.subregions() ?? []),
+      this.treeGroup('Planet systems', 'PlanetSystem', this.galaxyService.planetSystems() ?? []),
+      this.treeGroup('Planets', 'Planet', this.galaxyService.planets() ?? []),
+      this.treeGroup('Planet locations', 'PlanetLocation', this.galaxyService.planetLocations()),
+    ].filter((group) => (group.children?.length ?? 0) > 0),
   );
 
   private readonly unitsByMaterial = signal<
@@ -99,7 +117,7 @@ export class TimelineEventCatalogPresenter {
     this.sequence.set(item.sequence);
     this.sourceSelection.set(editSourceSelectionKeys(item.sources));
     this.characterSelection.set(this.idsForNames(item.characters, this.sortedCharacters()));
-    this.locationSelection.set(this.idsForNames(item.locations, this.sortedLocations()));
+    this.locationSelection.set(this.refsToSelection(item.locationRefs));
     this.vehicleSelection.set(this.idsForNames(item.vehicles, this.sortedVehicles()));
     this.editingId.set(item.id);
     this.dialogOpen.set(true);
@@ -140,7 +158,7 @@ export class TimelineEventCatalogPresenter {
       sequence: this.sequence() ?? 0,
       sourceMaterials: links,
       characterIds: this.selectionToIds(this.characterSelection()),
-      locationIds: this.selectionToIds(this.locationSelection()),
+      locations: this.locationSelectionToRefs(this.locationSelection()),
       vehicleIds: this.selectionToIds(this.vehicleSelection()),
     };
 
@@ -230,6 +248,44 @@ export class TimelineEventCatalogPresenter {
 
   private selectionToIds(selection: readonly string[]): number[] {
     return selection.map(Number).filter((id) => Number.isFinite(id) && id > 0);
+  }
+
+  /** Converts encoded `"<typeCode>:<id>"` selections into typed location refs. */
+  private locationSelectionToRefs(selection: readonly string[]): LocationReference[] {
+    const refs: LocationReference[] = [];
+    for (const value of selection) {
+      const [typePart, idPart] = value.split(':');
+      const typeCode = Number(typePart);
+      const id = Number(idPart);
+      const type = LOCATION_HIERARCHY_TYPES[typeCode - 1];
+      if (type !== undefined && Number.isFinite(id) && id > 0) {
+        refs.push({ locationHierarchyType: type, locationId: id });
+      }
+    }
+    return refs;
+  }
+
+  /** Encodes stored location refs into `"<typeCode>:<id>"` selections. */
+  private refsToSelection(refs: readonly LocationReference[]): string[] {
+    return refs.map(
+      (ref) => `${locationHierarchyTypeToApiCode(ref.locationHierarchyType)}:${ref.locationId}`,
+    );
+  }
+
+  /** Builds one non-checkable level group over flat id/name entries. */
+  private treeGroup(
+    label: string,
+    type: (typeof LOCATION_HIERARCHY_TYPES)[number],
+    items: readonly { id: number; name: string }[],
+  ): FilterTreeNode {
+    return {
+      value: '',
+      label,
+      children: items.map((item) => ({
+        value: `${locationHierarchyTypeToApiCode(type)}:${item.id}`,
+        label: item.name,
+      })),
+    };
   }
 
   private idsForNames(

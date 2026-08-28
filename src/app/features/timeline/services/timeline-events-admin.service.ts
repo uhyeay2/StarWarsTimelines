@@ -16,6 +16,7 @@ import { TimelineError, TimelineErrorCode } from '../models/timeline-error';
 import { LoggerService } from '../../../core/services/logging/logger.service';
 import { TimelineEventDto, CreateTimelineEventRequest } from './timeline-events.dto';
 import { isValidTimelineEventDto, mapTimelineEvent } from './timeline-events.mapper';
+import { locationHierarchyTypeToApiCode } from '../../../shared/models/location-hierarchy-type';
 import { TimelineEventsService } from './timeline-events.service';
 import { classifyTimelineError, mapTimelineError } from './timeline-error-handler';
 
@@ -122,7 +123,10 @@ function toRequestPayload(input: CreateTimelineEventInput): CreateTimelineEventR
     sequence: input.sequence,
     sourceMaterials: links,
     characterIds: [...input.characterIds],
-    locationIds: [...input.locationIds],
+    locations: input.locations.map((ref) => ({
+      locationHierarchyType: locationHierarchyTypeToApiCode(ref.locationHierarchyType),
+      locationId: ref.locationId,
+    })),
     vehicleIds: [...input.vehicleIds],
   };
 }

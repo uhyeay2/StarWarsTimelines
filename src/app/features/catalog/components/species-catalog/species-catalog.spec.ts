@@ -6,7 +6,7 @@ import { SpeciesService } from '../../services/species.service';
 import { SpeciesCatalog } from './species-catalog';
 
 const SPECIES_URL = '/api/species';
-const LOCATIONS_URL = '/api/locations';
+const PLANET_SYSTEMS_URL = '/api/planet-systems';
 
 /** Flushes the two initial GETs fired by ngOnInit. */
 function flushInitialFetch(
@@ -17,10 +17,9 @@ function flushInitialFetch(
     homePlanetId: number | null;
     homePlanetName: string | null;
   }[] = [],
-  locations: { id: number; name: string }[] = [],
 ): void {
   httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(SPECIES_URL)).flush(species);
-  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(LOCATIONS_URL)).flush(locations);
+  httpMock.expectOne((r) => r.method === 'GET' && r.url.endsWith(PLANET_SYSTEMS_URL)).flush([]);
 }
 
 describe('SpeciesCatalog', () => {
@@ -43,14 +42,7 @@ describe('SpeciesCatalog', () => {
     speciesService = TestBed.inject(SpeciesService);
     fixture.detectChanges();
 
-    flushInitialFetch(
-      httpMock,
-      [],
-      [
-        { id: 11, name: 'Tatooine' },
-        { id: 12, name: 'Coruscant' },
-      ],
-    );
+    flushInitialFetch(httpMock, []);
     fixture.detectChanges();
   });
 

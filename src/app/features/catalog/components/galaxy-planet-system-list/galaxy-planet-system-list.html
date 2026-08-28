@@ -1,0 +1,61 @@
+@for (node of nodes(); track node.system.id) {
+  <li class="galaxy-node">
+    <div class="galaxy-row">
+      <button
+        class="galaxy-toggle"
+        type="button"
+        [attr.aria-expanded]="host().isExpanded('system-' + node.system.id)"
+        (click)="host().toggleExpanded('system-' + node.system.id)"
+      >
+        {{ host().isExpanded('system-' + node.system.id) ? '▾' : '▸' }}
+      </button>
+      <div class="galaxy-row-main">
+        <div class="galaxy-row-line">
+          <span class="galaxy-name">{{ node.system.name }}</span>
+          @if (node.system.coordinates) {
+            <span class="galaxy-meta">{{ node.system.coordinates }}</span>
+          }
+        </div>
+        @if (showChips() && node.system.subregions.length > 0) {
+          <div class="galaxy-chips">
+            <span class="galaxy-chips-label">Inside</span>
+            @for (link of node.system.subregions; track link.id) {
+              <span class="galaxy-chip">{{ link.name }}</span>
+            }
+          </div>
+        }
+      </div>
+      @if (host().isAdmin()) {
+        <div class="galaxy-actions">
+          <button class="btn btn-sm" type="button" (click)="host().startEditSystem(node.system)">
+            Edit
+          </button>
+          <button
+            class="btn btn-sm btn-danger"
+            type="button"
+            (click)="host().requestDelete('planet-system', node.system.id, node.system.name)"
+          >
+            Delete
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (host().isExpanded('system-' + node.system.id)) {
+      <ul class="galaxy-children">
+        <app-galaxy-planet-list
+          [host]="host()"
+          [nodes]="node.planets"
+          [addParentId]="node.system.id"
+        />
+      </ul>
+    }
+  </li>
+}
+@if (showAdd()) {
+  <li class="galaxy-add-row">
+    <button class="btn btn-sm" type="button" (click)="host().openAddSystem(addParentId())">
+      + Add planet system
+    </button>
+  </li>
+}

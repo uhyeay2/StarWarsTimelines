@@ -7,7 +7,7 @@ describe('CharacterAddDialog', () => {
     { id: 3, name: 'Human' },
     { id: 4, name: 'Wookiee' },
   ];
-  const LOCATIONS: CatalogSelectOption[] = [{ id: 11, name: 'Tatooine' }];
+  const PLANETS: CatalogSelectOption[] = [{ id: 11, name: 'Tatooine' }];
 
   let fixture: ComponentFixture<CharacterAddDialog>;
   let element: HTMLElement;
@@ -19,7 +19,7 @@ describe('CharacterAddDialog', () => {
 
     fixture = TestBed.createComponent(CharacterAddDialog);
     fixture.componentRef.setInput('speciesOptions', SPECIES);
-    fixture.componentRef.setInput('locationOptions', LOCATIONS);
+    fixture.componentRef.setInput('planetOptions', PLANETS);
     fixture.autoDetectChanges();
     element = fixture.nativeElement as HTMLElement;
   });
@@ -59,7 +59,7 @@ describe('CharacterAddDialog', () => {
   it('two-way binds every field to its model', async () => {
     fixture.componentInstance.name.set('Grogu');
     fixture.componentInstance.speciesId.set(4);
-    fixture.componentInstance.planetBornOnId.set(11);
+    fixture.componentInstance.bornOnPlanetId.set(11);
     fixture.componentInstance.birthFrom.set(-41);
     fixture.componentInstance.deathTo.set(15);
     await fixture.whenStable();

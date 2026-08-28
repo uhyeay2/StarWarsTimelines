@@ -5,7 +5,7 @@
  */
 import { inject, Injectable } from '@angular/core';
 import { CharacterService } from './character.service';
-import { LocationService } from './location.service';
+import { GalaxyService } from './galaxy.service';
 import { VehicleService } from './vehicle.service';
 import { SpeciesService } from './species.service';
 import { SourceMaterialService } from './source-material.service';
@@ -21,7 +21,7 @@ import { CatalogEntityType } from './catalog-constants';
 @Injectable({ providedIn: 'root' })
 export class CatalogInvalidator {
   private readonly characterService = inject(CharacterService);
-  private readonly locationService = inject(LocationService);
+  private readonly galaxyService = inject(GalaxyService);
   private readonly vehicleService = inject(VehicleService);
   private readonly speciesService = inject(SpeciesService);
   private readonly sourceMaterialService = inject(SourceMaterialService);
@@ -37,8 +37,24 @@ export class CatalogInvalidator {
       case 'characters':
         this.characterService.invalidate();
         break;
-      case 'locations':
-        this.locationService.invalidate();
+      case 'regions':
+        this.galaxyService.invalidateRegions();
+        break;
+      case 'subregions':
+        this.galaxyService.invalidateSubregions();
+        break;
+      case 'planet-systems':
+        this.galaxyService.invalidatePlanetSystems();
+        break;
+      case 'planets':
+        this.galaxyService.invalidatePlanets();
+        // Character/species responses embed planet names, so a planet
+        // rename/delete must refresh them too.
+        this.characterService.invalidate();
+        this.speciesService.invalidate();
+        break;
+      case 'planet-locations':
+        this.galaxyService.invalidatePlanetLocations();
         break;
       case 'vehicles':
         this.vehicleService.invalidate();
@@ -67,7 +83,10 @@ export class CatalogInvalidator {
    */
   invalidateAll(): void {
     this.characterService.invalidate();
-    this.locationService.invalidate();
+    this.galaxyService.invalidateRegions();
+    this.galaxyService.invalidateSubregions();
+    this.galaxyService.invalidatePlanetSystems();
+    this.galaxyService.invalidatePlanets();
     this.vehicleService.invalidate();
     this.speciesService.invalidate();
     this.sourceMaterialService.invalidateMaterials();

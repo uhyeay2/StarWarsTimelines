@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { SpeciesAddDialog, CatalogSelectOption } from './species-add-dialog';
 
 describe('SpeciesAddDialog', () => {
-  const LOCATIONS: CatalogSelectOption[] = [
+  const PLANETS: CatalogSelectOption[] = [
     { id: 11, name: 'Kashyyyk' },
     { id: 12, name: 'Corellia' },
   ];
@@ -17,7 +17,7 @@ describe('SpeciesAddDialog', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(SpeciesAddDialog);
-    fixture.componentRef.setInput('locationOptions', LOCATIONS);
+    fixture.componentRef.setInput('planetOptions', PLANETS);
     fixture.autoDetectChanges();
     element = fixture.nativeElement as HTMLElement;
   });
